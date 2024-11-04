@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "fedai"
+  site-url: "https://Ahmed-Khaled-Saleh.github.io/fedai"
+  description: "A minimalist Library for doing Federated learning research."
+  repo-branch: main
+  repo-url: "https://github.com/Ahmed-Khaled-Saleh/fedai"
