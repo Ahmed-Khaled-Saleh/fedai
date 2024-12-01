@@ -28,7 +28,7 @@ class BaseServer:
         self.model = model
         self.holdout_ds = holdout_ds
         self.lst_data_dict = lst_data_dict
-        self.client_list = LazyInit(self, Client_mira)
+        self.client_list = LazyList(self, Client_mira)  # type: ignore # noqa: F405
         self.__str__ = self.__repr__
        
     def __str__(self) -> str:
