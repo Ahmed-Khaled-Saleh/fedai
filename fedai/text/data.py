@@ -18,8 +18,9 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 import transformers
+from fastcore.utils import *
 
-# %% ../../nbs/04_text.data.ipynb 36
+# %% ../../nbs/04_text.data.ipynb 31
 from enum import Enum
 class DefaultToken(Enum):
     PAD_TOKEN = "[PAD]"
@@ -29,7 +30,7 @@ class DefaultToken(Enum):
     IGNORE_INDEX = -100
 
 
-# %% ../../nbs/04_text.data.ipynb 37
+# %% ../../nbs/04_text.data.ipynb 32
 PROMPT_DICT = {
     "prompt_input": (
         "Below is an instruction that describes a task, "
@@ -44,7 +45,7 @@ PROMPT_DICT = {
 }
 
 
-# %% ../../nbs/04_text.data.ipynb 39
+# %% ../../nbs/04_text.data.ipynb 34
 class MTLDataSet(Dataset):
     def __init__(self,
                  list_data_dict,
@@ -90,7 +91,7 @@ class MTLDataSet(Dataset):
                     categories=self.categories[i],
                     tasks=self.tasks[i])
 
-# %% ../../nbs/04_text.data.ipynb 40
+# %% ../../nbs/04_text.data.ipynb 35
 @patch
 def _tokenize_fn(self: MTLDataSet, strings, tokenizer):
         tokenized_list = [
@@ -116,7 +117,7 @@ def _tokenize_fn(self: MTLDataSet, strings, tokenizer):
             labels_lens=labels_lens,
         )
 
-# %% ../../nbs/04_text.data.ipynb 41
+# %% ../../nbs/04_text.data.ipynb 36
 @patch
 def preprocess(self: MTLDataSet, sources, targets, tokenizer, generation):
         if generation:
