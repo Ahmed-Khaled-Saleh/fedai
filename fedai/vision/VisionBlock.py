@@ -18,7 +18,7 @@ import ujson
 import torchvision.transforms as transforms
 from fastcore.utils import *
 from ..utils import *
-from ..vision.data import *
+from .downloader import *
 
 # %% ../../nbs/04_data.tensorf.ipynb 4
 random.seed(42)

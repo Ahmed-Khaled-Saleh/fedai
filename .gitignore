@@ -150,3 +150,22 @@ checklink/cookies.txt
 
 # Quarto
 .quarto
+
+# compressed files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tgz
+
+# dataset files
+*.csv
+*.tsv
+*.json
+*.pkl
+*.h5
+*.npy
+*.npz
+
+# anyhting in the data folder
+data/

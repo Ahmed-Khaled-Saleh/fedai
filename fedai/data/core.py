@@ -25,14 +25,14 @@ torch.manual_seed(42)
 class FDownloader:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.config_path = self.cfg.data.dir_path + "config.json"
-        self.train_path = self.cfg.data.dir_path + "train/"
-        self.test_path = self.cfg.data.dir_path + "test/"
-
-        self.partitioner_obj = get_class('fedai.data.partitioners', self.cfg.data.partitioner)  # noqa: F405
+        self.config_path = os.path.join(self.cfg.data.dir_path , "config.json")
+        self.train_path = os.path.join(self.cfg.data.dir_path , "train")
+        self.test_path = os.path.join(self.cfg.data.dir_path , "test")
+        print(self.train_path, self.test_path)
+        self.partitioner_obj = get_class('fedai.data.partitioners', self.cfg.data.partitioner)(self.cfg) # noqa: F405
         self.dataidx_map = {}
         
-        self.data = self.load_data(self.cfg.data.name)
+        self.data = self.load_data()
         self.dataset_content, self.dataset_label = self.data if self.data is not None else (None, None)
 
 # %% ../../nbs/04_data.core.ipynb 6
@@ -52,13 +52,13 @@ def check(self: FDownloader):
             print("\nDataset already generated.\n")
             return True
 
-    dir_path = os.path.dirname(self.train_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+    print(f"\nDataset not found, Downloading the dataset: {self.cfg.data.name}.\n")
+   
+    if not os.path.exists(self.train_path):
+        os.makedirs(self.train_path)
 
-    dir_path = os.path.dirname(self.test_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+    if not os.path.exists(self.test_path):
+        os.makedirs(self.test_path)
 
     return False
 
@@ -90,7 +90,6 @@ def split_data(self: FDownloader, X, y):
     print("The number of test samples:", num_samples['test'])
     print()
     del X, y
-    # gc.collect()
 
     return train_data, test_data
 
@@ -100,7 +99,6 @@ def split_data(self: FDownloader, X, y):
 def partition(self: FDownloader):
     # choose a paritioning method (iid, noniid, ext-nonidd) and split the data into train and test sets for all clients
     least_samples = int(min(self.cfg.data.batch_size / (1- self.cfg.data.train_ratio), len(self.dataset_label) / self.cfg.num_clients / 2))
-    
     X, y, statistic = self.partitioner_obj.partition(self.dataset_content, self.dataset_label, least_samples, self.dataidx_map)
     
     for client in range(self.cfg.num_clients):
@@ -111,11 +109,11 @@ def partition(self: FDownloader):
     del self.data
 
     train_data, test_data = self.split_data(X, y)
-    return train_data, test_data
+    return train_data, test_data, statistic
 
 # %% ../../nbs/04_data.core.ipynb 10
 @patch
-def save_partitions(self: FDownloader, cfg, train_data, test_data, statistic):
+def save_partitions(self: FDownloader, train_data, test_data, statistic):
     """
     Save partitions using HDF5 format.
     
@@ -126,11 +124,11 @@ def save_partitions(self: FDownloader, cfg, train_data, test_data, statistic):
         statistic: Statistical information to save.
     """
     config = {
-        'num_clients': cfg.num_clients,
-        'num_classes': cfg.data.num_classes,
-        'non_iid': cfg.data.niid,
-        'balance': cfg.data.balance,
-        'partition': cfg.data.partitioner,
+        'num_clients': self.cfg.num_clients,
+        'num_classes': self.cfg.data.num_classes,
+        'non_iid': self.cfg.data.niid,
+        'balance': self.cfg.data.balance,
+        'partition': self.cfg.data.partitioner,
         'Size of samples for labels in clients': statistic,
         'alpha': self.cfg.data.alpha,
         'batch_size': self.cfg.data.batch_size,
@@ -139,14 +137,14 @@ def save_partitions(self: FDownloader, cfg, train_data, test_data, statistic):
     print("Saving to disk in HDF5 format.\n")
 
     # Save training data
-    with h5py.File(self.train_path + 'train_data.h5', 'w') as train_h5:
+    with h5py.File(os.path.join(self.train_path, 'train_data.h5'), 'w') as train_h5:
         for idx, train_dict in enumerate(train_data):
             group = train_h5.create_group(f'client_{idx}')
             for key, value in train_dict.items():
                 group.create_dataset(key, data=value)
 
     # Save test data
-    with h5py.File(self.test_path + 'test_data.h5', 'w') as test_h5:
+    with h5py.File(os.path.join(self.test_path, 'test_data.h5'), 'w') as test_h5:
         for idx, test_dict in enumerate(test_data):
             group = test_h5.create_group(f'client_{idx}')
             for key, value in test_dict.items():
@@ -156,8 +154,21 @@ def save_partitions(self: FDownloader, cfg, train_data, test_data, statistic):
     with open(self.config_path, 'w') as f:
         ujson.dump(config, f)
 
+    self.save_space(train_data, test_data, statistic)
 
 # %% ../../nbs/04_data.core.ipynb 11
+@patch
+def save_space(self: FDownloader, train_data, test_data, statistic):
+    import gc
+    del self.dataset_content
+    del self.dataset_label
+    del train_data
+    del test_data
+    del statistic
+    gc.collect()
+    
+
+# %% ../../nbs/04_data.core.ipynb 12
 @patch
 def save_partitions_np(self: FDownloader, cfg, train_data, test_data, statistic):
     
@@ -186,14 +197,14 @@ def save_partitions_np(self: FDownloader, cfg, train_data, test_data, statistic)
         ujson.dump(config, f)
 
 
-# %% ../../nbs/04_data.core.ipynb 12
+# %% ../../nbs/04_data.core.ipynb 13
 @patch
 def tensorify(self: FDownloader, data):
     X = torch.Tensor(data['x']).type(torch.float32)
     y = torch.Tensor(data['y']).type(torch.int64)
     return {'x': X, 'y': y}
 
-# %% ../../nbs/04_data.core.ipynb 13
+# %% ../../nbs/04_data.core.ipynb 14
 @patch
 def load_partition(self: FDownloader, idx, split= 'train'):
     # loads the data for a client indexed by idx. 
@@ -208,12 +219,12 @@ def load_partition(self: FDownloader, idx, split= 'train'):
 
     return data_dict
 
-# %% ../../nbs/04_data.core.ipynb 14
+# %% ../../nbs/04_data.core.ipynb 15
 @patch
 def load_split(self: FDownloader, split= 'train'):
     # load the data of all clients. By default, it loads the training data for all clients
     pass
 
-# %% ../../nbs/04_data.core.ipynb 16
+# %% ../../nbs/04_data.core.ipynb 17
 class LLMDataCollator:
     pass

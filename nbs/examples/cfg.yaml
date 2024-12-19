@@ -2,15 +2,19 @@ version: 1.0
 project_name: example_project
 logging_level: INFO
 random_seed: 42
+num_clients: 20
 
 # Data configuration
 data:
-  train_dir: /path/to/train_data
-  val_dir: /path/to/val_data
-  test_dir: /path/to/test_data
-  batch_size: 32
-  num_workers: 4
-  partitioner: noniid
+  dir_path: data
+  batch_size: 10
+  name: CIFAR10
+  niid: false
+  balance: false
+  partitioner: DirPartitioner
+  alpha: 0.1
+  train_ratio: 0.75
+  num_classes: 2
 
 # Model configuration
 model:
