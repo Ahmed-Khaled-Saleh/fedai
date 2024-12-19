@@ -8,11 +8,8 @@ __all__ = ['BasePartitioner']
 # %% ../../nbs/04_data.partitioners.ipynb 3
 import numpy as np
 import os
-import sys
 import random
 import torch
-import torchvision
-import torchvision.transforms as transforms
 from fastcore.utils import *
 
 # %% ../../nbs/04_data.partitioners.ipynb 4

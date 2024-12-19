@@ -1,0 +1,21 @@
+version: 1.0
+project_name: example_project
+logging_level: INFO
+random_seed: 42
+
+# Data configuration
+data:
+  train_dir: /path/to/train_data
+  val_dir: /path/to/val_data
+  test_dir: /path/to/test_data
+  batch_size: 32
+  num_workers: 4
+  partitioner: noniid
+
+# Model configuration
+model:
+  name: MyModel
+  type: transformer
+  num_layers: 12
+  hidden_size: 768
+  dropout_rate: 0.1

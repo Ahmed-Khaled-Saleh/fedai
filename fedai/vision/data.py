@@ -25,7 +25,7 @@ torch.manual_seed(42)
 
 # %% ../../nbs/04_vision.data.ipynb 6
 @patch
-def load_data(self: FvisionBlock):
+def load_data(self: FVDownloader):
     if not os.path.exists(self.cfg.data.dir_path):
         os.makedirs(self.cfg.data.dir_path)
     
