@@ -11,8 +11,7 @@ import os
 import random
 import torch
 import torchvision.transforms as transforms
-from ..data.core import *
-from ..data import *
+from ..data.downloader import *
 from ..utils import *
 from fastcore.utils import patch
 
@@ -55,9 +54,9 @@ def load_data(self: VisionDownloader):
         return
     
     trainset = ds_class(
-        root=os.path.join(self.cfg.data.dir_path, "rawdata"), train=True, download=True, transform=self.transform)
+        root=os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "rawdata"), train=True, download=True, transform=self.transform)
     testset = ds_class(
-        root=os.path.join(self.cfg.data.dir_path, "rawdata"), train=False, download=True, transform=self.transform)
+        root=os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "rawdata"), train=False, download=True, transform=self.transform)
     
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=len(trainset.data), shuffle=False)

@@ -10,6 +10,7 @@ import numpy as np
 import os
 import sys
 import random
+import gc
 import h5py
 import torch
 import torchvision
@@ -17,7 +18,6 @@ from sklearn.model_selection import train_test_split
 import ujson
 import torchvision.transforms as transforms
 from fastcore.utils import *
-from ..utils import *
 from .downloader import *
 
 # %% ../../nbs/04_vision.VisionBlock.ipynb 4
@@ -27,36 +27,38 @@ torch.manual_seed(42)
 
 # %% ../../nbs/04_vision.VisionBlock.ipynb 5
 class VisionBlock(torch.utils.data.Dataset):
-    def __init__(self, cfg, train= True, download= True, transform=None):
+    def __init__(self, cfg, id, train= True, download= True, transform=None):
         self.cfg = cfg
         self.config_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "config.json")
         self.train_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "train")
         self.test_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "test")
         self.train = train
-        self.downloader = VisionDownloader(self.cfg, transform)
+        self.transform = transform
+        self.id = id
+
         if download:
             self.download_data()
-
-        del self.downloader
-        import gc
-        gc.collect()
-
+        
     def download_data(self):
+        self.downloader = VisionDownloader(self.cfg, self.transform)
         if isinstance(self.downloader.dataset_content, (list, tuple, np.ndarray)):
             train_data, test_data, stats = self.downloader.partition()
             print('saving')
             self.downloader.save_partitions(train_data, test_data, stats)
+            del self.downloader
+            gc.collect()
             
     def tensorify(self, data):
-        X = torch.Tensor(data['x']).type(torch.float32)
-        y = torch.Tensor(data['y']).type(torch.int64)
+        X = torch.tensor(data['x'], dtype= torch.float32)
+        y = torch.tensor(data['y'], dtype= torch.int64)
         return {'x': X, 'y': y}
 
     def load_single_client_data(self, idx):
         path, dir = (self.train_path, 'train') if self.train else (self.test_path, 'test')
+
         with h5py.File(os.path.join(path, f'{dir}_data.h5'), 'r') as hf_file:
-            client_data = hf_file[f'client_{idx}']
-            data = {key: client_data[key][:] for key in client_data.keys()}
+            client_data = hf_file[f'client_{self.id}']
+            data = {key: client_data[key][idx] for key in client_data.keys()}
             data = self.tensorify(data)
         return data
     
@@ -68,4 +70,5 @@ class VisionBlock(torch.utils.data.Dataset):
     def __len__(self):
         path, dir = (self.train_path, 'train') if self.train else (self.test_path, 'test')
         with h5py.File(os.path.join(path, f'{dir}_data.h5'), 'r') as hf_file:
-            return len(hf_file.keys())
+            client_data = hf_file[f'client_{self.id}']
+            return len(client_data['x'])

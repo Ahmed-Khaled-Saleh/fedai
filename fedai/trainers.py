@@ -11,7 +11,7 @@ import torch
 import numpy as np
 from fastcore.all import *
 from fastcore.utils import *
-
+from loguru import logger
 from .utils import *
 from .metrics import *
 
@@ -23,12 +23,13 @@ class Trainer:
         self.cfg = client.cfg
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
-        self.client.train_loader = self.prepare_dl(self.client.train_ds)
-        self.client.test_loader = self.prepare_dl(self.client.test_ds)
+        self.client.train_loader = prepare_dl(self.cfg, self.client.train_ds)  # noqa: F405
+        self.client.test_loader = prepare_dl(self.cfg, self.client.test_ds) # noqa: F405
 
         self.training_metrics = Metrics(list(self.cfg.training_metrics))  # noqa: F405
         self.test_metrics = Metrics(list(self.cfg.test_metrics))  # noqa: F405
 
+        self.data_key, self.label_key = 'x', 'y'
 
 # %% ../nbs/03_trainers.ipynb.ipynb 10
 @patch
@@ -38,7 +39,7 @@ def get_batch(self: Trainer, batch):
 # %% ../nbs/03_trainers.ipynb.ipynb 12
 @patch
 def _forward(self: Trainer, batch):
-    X, y = batch
+    X, y = batch['x'], batch['y']
     outputs = self.client.model(X)
     loss = self.client.criterion(outputs, y)
     return loss, outputs
@@ -48,8 +49,9 @@ def _forward(self: Trainer, batch):
 def _closure(self: Trainer, batch: dict) -> tuple:
     try:
         loss, logits = self._forward(batch)
-        y_pred = logits.argmax(dim= -1).view(-1)
-        y_true = batch['labels'].view(-1)
+        probs =  torch.nn.functional.softmax(logits, dim= -1)
+        y_pred = probs.argmax(dim= -1)#.view(-1)
+        y_true = batch[self.label_key]#.view(-1)
 
         if self.cfg.training_metrics:
 
@@ -62,7 +64,7 @@ def _closure(self: Trainer, batch: dict) -> tuple:
             metrcis = {}
             
     except Exception as e:
-        print(f"Error in loss calculation: {e}")
+        # print(f"Error in loss calculation: {e}")
         return torch.tensor(float(0), device=self.device), {}
         
     return loss, metrcis
@@ -101,13 +103,13 @@ def _run_epoch(self: Trainer):
         if num_trained == 0:
             num_trained = 1e-10
 
-        print(f'Batch loss is {loss}')
+        # print(f'Batch loss is {loss}')
         progress_bar.update(1)
-        progress_bar.set_description(f'client {self.client.idx} total_loss at step {i}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
+        progress_bar.set_description(f'client {self.client.id} total_loss at step {i}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
         
         if loss.item() != 0:
             total_loss += loss.item()
-            num_trained += len(batch['input_ids'])
+            num_trained += len(batch[self.data_key])
             lst_metrics.append(metrics)
 
     # average the metrics of the epoch (across batches)
@@ -120,8 +122,8 @@ def _run_epoch(self: Trainer):
 def test(self: Trainer) -> dict:
     total_loss = 0
     lst_metrics = []
-    print("****************************************")
-    print(f'Inside the test () function of client {self.client.idx}')
+    # print("****************************************")
+    # print(f'Inside the test () function of client {self.client.id}')
     
     self.client.model = self.client.model.to(self.device)
     self.client.model.eval()
@@ -137,15 +139,15 @@ def test(self: Trainer) -> dict:
 
             loss, metrics = self._closure(batch)                 
 
-            print(f"Client {self.client.idx}'s Batch loss inside eval() : {loss}")
+            # print(f"Client {self.client.id}'s Batch loss inside eval() : {loss}")
 
             if (not torch.isnan(loss)) and (self.cfg.grad_norm_clip <= 0 or loss != 0.0):
                 total_loss += loss.item()  
-                num_eval += len(batch['input_ids'])
+                num_eval += len(batch[self.data_key])
                 lst_metrics.append(metrics)           
             
-        print(f'Client {self.client.idx} Eval loss is : {total_loss / num_eval}')
-        print("****************************************")
+        # print(f'Client {self.client.id} Eval loss is : {total_loss / num_eval}')
+        # print("****************************************")
     epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in lst_metrics[0].keys()}
 
     return total_loss / num_eval, epoch_metrics
@@ -185,13 +187,14 @@ def train(self: Trainer) -> dict:
     }
 
     # add the train and test metrics to the losses
-    all_metrics.update(train_metrics).update(test_metrics)
+    all_metrics.update(train_metrics)
+    all_metrics.update(test_metrics)
     
     return all_metrics
     
 
 
-# %% ../nbs/03_trainers.ipynb.ipynb 22
+# %% ../nbs/03_trainers.ipynb.ipynb 23
 class LLMTrainer(Trainer):
     def __init__(
         self,
@@ -201,8 +204,9 @@ class LLMTrainer(Trainer):
         
         self.client.train_iterator = iter(self.client.train_loader)
         self.client.model.generation_config.pad_token_id = self.client.tokenizer.pad_token_id
+        self.data_key, self.label_key = 'input_ids', 'labels'
 
-# %% ../nbs/03_trainers.ipynb.ipynb 23
+# %% ../nbs/03_trainers.ipynb.ipynb 24
 @patch
 def get_batch(self: LLMTrainer, batch):  # noqa: F811
     return {
@@ -212,18 +216,18 @@ def get_batch(self: LLMTrainer, batch):  # noqa: F811
             }
     
 
-# %% ../nbs/03_trainers.ipynb.ipynb 24
+# %% ../nbs/03_trainers.ipynb.ipynb 25
 @patch
 def _forward(self: LLMTrainer, batch):
     outputs = self.client.model(**batch)
     loss = self.client.criterion(outputs)
     return loss, outputs.logits
 
-# %% ../nbs/03_trainers.ipynb.ipynb 27
+# %% ../nbs/03_trainers.ipynb.ipynb 28
 @patch
 def test_generate(self: LLMTrainer) -> float:
-    print("****************************************")
-    print(f'Inside the test_generate () function of client {self.client.idx}')
+    # print("****************************************")
+    # print(f'Inside the test_generate () function of client {self.client.id}')
 
     lst_metrics = []
     self.client.model = self.client.model.to(self.device)
@@ -250,10 +254,10 @@ def test_generate(self: LLMTrainer) -> float:
     
             lst_metrics.append(metrics)
 
-            print(f"Client {self.client.idx}'s Batch test metrics are : {metrics}")
+            # print(f"Client {self.client.id}'s Batch test metrics are : {metrics}")
             progress_bar_eval.update(1)
 
-    print("****************************************")
+    # print("****************************************")
     epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in lst_metrics[0].keys()}
 
     return epoch_metrics
