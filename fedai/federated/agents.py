@@ -142,7 +142,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
                                    "pytorch_model.pth")
         
         client_state_dict = torch.load(model_path, map_location='cpu')
-        weight = len_clients_ds[id] / sum(len_clients_ds)
+        weight = len_clients_ds[i] / sum(len_clients_ds)
 
         for key in client_state_dict.keys():
             client_avg[key].data += weight * client_state_dict[key].data
