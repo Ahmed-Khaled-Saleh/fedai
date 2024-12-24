@@ -10,9 +10,6 @@ federated learning more accessible and accelerate your research. It’s
 also easily extendible so that you can bring your
 algorithm/data/scneario in a few lines of code.
 
-If you are new to using `nbdev` here are some useful pointers to get you
-started.
-
 ## Usage
 
 ### Installation

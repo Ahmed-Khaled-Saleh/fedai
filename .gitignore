@@ -162,6 +162,7 @@ checklink/cookies.txt
 *.csv
 *.tsv
 *.json
+*.jsonl
 *.pkl
 *.h5
 *.npy
