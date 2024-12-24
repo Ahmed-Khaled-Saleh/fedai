@@ -134,14 +134,19 @@ def communicate(self: Agent, another_agent: Agent, comm_round):  # noqa: F811
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
     # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
     client_avg = defaultdict(lambda: torch.tensor(0.0).to('cpu'))
-
+    
     for i, id in enumerate(lst_active_ids):
         model_path = os.path.join(self.cfg.save_dir, 
                                    str(comm_round),
                                    f"local_output_{id}",
                                    "pytorch_model.pth")
-        
         client_state_dict = torch.load(model_path, map_location='cpu')
+
+        if i == 0:
+            for key in client_state_dict.keys():
+                client_avg[key] = torch.zeros_like(client_state_dict[key]).to("cpu")
+
+        
         print("LENGTH : ****", len_clients_ds)
         weight = len_clients_ds[i] / sum(len_clients_ds)
 
@@ -159,7 +164,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         self.save_state(client_avg, comm_round)
     
 
-# %% ../../nbs/02_federated.agents.ipynb 36
+# %% ../../nbs/02_federated.agents.ipynb 37
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -171,7 +176,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 37
+# %% ../../nbs/02_federated.agents.ipynb 38
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -187,14 +192,14 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 38
+# %% ../../nbs/02_federated.agents.ipynb 39
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     self.peftify()
     self.state['optimizer'] = get_class('torch.optim', self.cfg.optimizer.name)(self.model.parameters(),
                                                                                 lr= self.cfg.lr)
 
-# %% ../../nbs/02_federated.agents.ipynb 39
+# %% ../../nbs/02_federated.agents.ipynb 40
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -208,13 +213,13 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 40
+# %% ../../nbs/02_federated.agents.ipynb 41
 @patch
 def strategy(self: PeftAgent):
     # implement the strategy for the agent if it's a server. This is the aggregation strategy.
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 47
+# %% ../../nbs/02_federated.agents.ipynb 48
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
