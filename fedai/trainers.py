@@ -118,7 +118,7 @@ def _run_epoch(self: Trainer):
 
     return total_loss / num_trained, epoch_metrics
 
-# %% ../nbs/03_trainers.ipynb.ipynb 17
+# %% ../nbs/03_trainers.ipynb.ipynb 16
 @patch
 def test(self: Trainer) -> dict:
     total_loss = 0
@@ -153,7 +153,7 @@ def test(self: Trainer) -> dict:
 
     return total_loss / num_eval, epoch_metrics
 
-# %% ../nbs/03_trainers.ipynb.ipynb 19
+# %% ../nbs/03_trainers.ipynb.ipynb 18
 @patch
 def train(self: Trainer) -> dict:
     init_test_loss, metrics_test = self.test()
@@ -195,7 +195,7 @@ def train(self: Trainer) -> dict:
     
 
 
-# %% ../nbs/03_trainers.ipynb.ipynb 23
+# %% ../nbs/03_trainers.ipynb.ipynb 22
 class LLMTrainer(Trainer):
     def __init__(
         self,
@@ -207,7 +207,7 @@ class LLMTrainer(Trainer):
         self.client.model.generation_config.pad_token_id = self.client.tokenizer.pad_token_id
         self.data_key, self.label_key = 'input_ids', 'labels'
 
-# %% ../nbs/03_trainers.ipynb.ipynb 24
+# %% ../nbs/03_trainers.ipynb.ipynb 23
 @patch
 def get_batch(self: LLMTrainer, batch):  # noqa: F811
     return {
@@ -217,14 +217,14 @@ def get_batch(self: LLMTrainer, batch):  # noqa: F811
             }
     
 
-# %% ../nbs/03_trainers.ipynb.ipynb 25
+# %% ../nbs/03_trainers.ipynb.ipynb 24
 @patch
 def _forward(self: LLMTrainer, batch):
     outputs = self.client.model(**batch)
     loss = self.client.criterion(outputs)
     return loss, outputs.logits
 
-# %% ../nbs/03_trainers.ipynb.ipynb 28
+# %% ../nbs/03_trainers.ipynb.ipynb 27
 @patch
 def test_generate(self: LLMTrainer) -> float:
     # print("****************************************")

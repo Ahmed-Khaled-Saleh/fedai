@@ -67,7 +67,7 @@ def save_state(self: Agent):
 def clear_model(self: Agent):
     self.model = None
 
-# %% ../../nbs/02_federated.agents.ipynb 20
+# %% ../../nbs/02_federated.agents.ipynb 19
 class FLAgent(Agent):
     # A Federated Learning Agent that can be used to train a model in a federated learning setting
     def __init__(self,
@@ -86,7 +86,7 @@ class FLAgent(Agent):
                 setattr(self, key, value)
             self.init_agent()
 
-# %% ../../nbs/02_federated.agents.ipynb 24
+# %% ../../nbs/02_federated.agents.ipynb 23
 @patch
 def __str__(self: FLAgent) -> str:
     return f'''FLAgent: {self.__class__.__name__}
@@ -96,18 +96,18 @@ def __str__(self: FLAgent) -> str:
     Optimizer: {self.optimizer.__class__.__name__}'''
 
 
-# %% ../../nbs/02_federated.agents.ipynb 25
+# %% ../../nbs/02_federated.agents.ipynb 24
 @patch
 def init_agent(self: FLAgent):  # noqa: F811
     self.optimizer = get_class('torch.optim', self.cfg.optimizer.name)(self.model.parameters(),  # noqa: F405
                                                                                 lr= self.cfg.lr)
 
-# %% ../../nbs/02_federated.agents.ipynb 26
+# %% ../../nbs/02_federated.agents.ipynb 25
 @patch
 def clear_model(self: FLAgent):
     self.model = None if hasattr(self, 'model') else None
 
-# %% ../../nbs/02_federated.agents.ipynb 27
+# %% ../../nbs/02_federated.agents.ipynb 26
 @patch
 def save_state(self: FLAgent, state_dict, comm_round):  # noqa: F811
     # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/pytorch_model.bin
@@ -126,13 +126,13 @@ def save_state(self: FLAgent, state_dict, comm_round):  # noqa: F811
         save_space(self)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 30
+# %% ../../nbs/02_federated.agents.ipynb 29
 @patch
 def communicate(self: Agent, another_agent: Agent, comm_round):  # noqa: F811
     if self.role == AgentRole.CLIENT:
         self.save_state(self.model.state_dict(), comm_round)
 
-# %% ../../nbs/02_federated.agents.ipynb 31
+# %% ../../nbs/02_federated.agents.ipynb 30
 @patch
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
     # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
@@ -166,7 +166,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         self.save_state(client_avg, comm_round)
     
 
-# %% ../../nbs/02_federated.agents.ipynb 36
+# %% ../../nbs/02_federated.agents.ipynb 35
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -178,7 +178,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 37
+# %% ../../nbs/02_federated.agents.ipynb 36
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -194,14 +194,14 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 38
+# %% ../../nbs/02_federated.agents.ipynb 37
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     super().init_agent()
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 39
+# %% ../../nbs/02_federated.agents.ipynb 38
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -215,13 +215,13 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 40
+# %% ../../nbs/02_federated.agents.ipynb 39
 @patch
 def strategy(self: PeftAgent):
     # implement the strategy for the agent if it's a server. This is the aggregation strategy.
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 47
+# %% ../../nbs/02_federated.agents.ipynb 46
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
