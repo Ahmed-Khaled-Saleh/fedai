@@ -105,8 +105,8 @@ def _run_epoch(self: Trainer):
             num_trained = 1e-10
 
         # print(f'Batch loss is {loss}')
-        progress_bar.update(1)
-        progress_bar.set_description(f'client {self.client.id} total_loss at step {i}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
+        # progress_bar.update(1)
+        # progress_bar.set_description(f'client {self.client.id} total_loss at step {i}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
         
         if loss.item() != 0:
             total_loss += loss.item()
