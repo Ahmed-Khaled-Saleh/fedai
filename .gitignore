@@ -166,6 +166,6 @@ checklink/cookies.txt
 *.h5
 *.npy
 *.npz
+*.gz
 
-# anyhting in the data folder
-data/
+rawdata/
