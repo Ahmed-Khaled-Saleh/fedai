@@ -9,6 +9,8 @@ local_epochs: 2
 lr: 0.01
 save_dir : models
 log_dir: logs
+agg: one_model
+
 
 training_metrics: [accuracy]
 test_metrics: [accuracy]
