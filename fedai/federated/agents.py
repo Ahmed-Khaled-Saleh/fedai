@@ -120,7 +120,9 @@ def save_state(self: FLAgent, state_dict, comm_round):  # noqa: F811
     torch.save(state_dict, 
                os.path.join(model_path, 
                             "pytorch_model.pth"))
+    print(f"role is {self.role}")
     if self.role == AgentRole.CLIENT:
+        print(f"role is {self.role}")
         save_space(self)
 
 
