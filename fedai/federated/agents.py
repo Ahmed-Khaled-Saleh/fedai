@@ -133,8 +133,7 @@ def communicate(self: Agent, another_agent: Agent, comm_round):  # noqa: F811
 @patch
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
     # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
-    client_avg = defaultdict(lambda: torch.tensor(0.0).to('cpu'))
-    
+        
     for i, id in enumerate(lst_active_ids):
         model_path = os.path.join(self.cfg.save_dir, 
                                    str(comm_round),
@@ -143,8 +142,10 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         client_state_dict = torch.load(model_path, map_location='cpu')
 
         if i == 0:
-            for key in client_state_dict.keys():
-                client_avg[key] = torch.zeros_like(client_state_dict[key]).to("cpu")
+            client_avg = {
+                key: torch.zeros_like(value) 
+                for key, value in client_state_dict.items()
+            }
         
         weight = len_clients_ds[i] / sum(len_clients_ds)
 
