@@ -145,9 +145,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         if i == 0:
             for key in client_state_dict.keys():
                 client_avg[key] = torch.zeros_like(client_state_dict[key]).to("cpu")
-
         
-        print("LENGTH : ****", len_clients_ds)
         weight = len_clients_ds[i] / sum(len_clients_ds)
 
         for key in client_state_dict.keys():
