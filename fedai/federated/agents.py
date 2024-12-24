@@ -120,7 +120,8 @@ def save_state(self: FLAgent, state_dict, comm_round):  # noqa: F811
     torch.save(state_dict, 
                os.path.join(model_path, 
                             "pytorch_model.pth"))
-    save_space(self)  # noqa: F405
+    if self.role == AgentRole.CLIENT:
+        save_space(self)
 
 
 # %% ../../nbs/02_federated.agents.ipynb 30
