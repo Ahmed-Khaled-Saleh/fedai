@@ -64,7 +64,7 @@ def _closure(self: Trainer, batch: dict) -> tuple:
             metrcis = {k: 0 for k in self.training_metrics}
             
     except Exception as e:
-        print(f"Error in loss calculation: {e}")
+        # print(f"Error in loss calculation: {e}")
         metrcis = {k: 0 for k in self.training_metrics}
         return torch.tensor(float(0), device=self.device), metrcis
         
@@ -77,7 +77,7 @@ def _run_batch(self: Trainer, batch: dict) -> tuple:
     self.client.model.zero_grad(set_to_none=True)
 
     if loss.item() == 0:
-        return loss
+        return loss, metrics
     
     loss.backward()
     if self.cfg.grad_norm_clip:
