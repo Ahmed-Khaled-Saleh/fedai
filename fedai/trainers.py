@@ -61,11 +61,10 @@ def _closure(self: Trainer, batch: dict) -> tuple:
                 metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true)
                 
         else:
-            metrcis = {}
+            metrcis = {k: 0 for k in self.training_metrics}
             
     except Exception as e:
-        # print(f"Error in loss calculation: {e}")
-        # make a dictionary of all list items in self.traning_metrics(make them keys) and their values as 0
+        print(f"Error in loss calculation: {e}")
         metrcis = {k: 0 for k in self.training_metrics}
         return torch.tensor(float(0), device=self.device), metrcis
         
