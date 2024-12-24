@@ -7,6 +7,8 @@ n_rounds: 10
 m: 0.1
 local_epochs: 2
 lr: 0.01
+save_dir : models
+log_dir: logs
 
 training_metrics: [accuracy]
 test_metrics: [accuracy]
@@ -33,7 +35,6 @@ model:
   dim_hidden: 128
   dim_out: 10
   name: MLP
-  save_dir: models
 
 optimizer:
   name: Adam
