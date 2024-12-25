@@ -22,7 +22,7 @@ data:
   dir_path: data
   modality: [Vision]
   batch_size: 10
-  name: CIFAR10
+  name: MNIST
   niid: false
   balance: false
   partitioner: DirPartitioner
@@ -37,6 +37,10 @@ model:
   dim_hidden: 128
   dim_out: 10
   name: MLP
+  vocab_size: 1000
+  embed_size: 128
+  hidden_size: 128
+  num_layers: 1
 
 optimizer:
   name: Adam
