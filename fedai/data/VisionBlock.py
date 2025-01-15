@@ -29,9 +29,9 @@ torch.manual_seed(42)
 class VisionBlock(torch.utils.data.Dataset):
     def __init__(self, cfg, train= True, download= True):
         self.cfg = cfg
-        self.config_path = os.path.join(self.cfg.data.dir_path , "config.json")
-        self.train_path = os.path.join(self.cfg.data.dir_path , "train")
-        self.test_path = os.path.join(self.cfg.data.dir_path , "test")
+        self.config_path = os.path.join(self.cfg.data.data_dir , "config.json")
+        self.train_path = os.path.join(self.cfg.data.data_dir , "train")
+        self.test_path = os.path.join(self.cfg.data.data_dir , "test")
         self.train = train
         self.downloader = FVDownloader(self.cfg)
         if download:

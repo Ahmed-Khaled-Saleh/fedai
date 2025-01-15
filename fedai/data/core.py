@@ -25,9 +25,9 @@ torch.manual_seed(42)
 class BaseDownloader:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.config_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "config.json")
-        self.train_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "train")
-        self.test_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "test")
+        self.config_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name , "config.json")
+        self.train_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name , "train")
+        self.test_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "test")
         print(self.train_path, self.test_path)
         self.partitioner_obj = get_class('fedai.data.partitioners', self.cfg.data.partitioner)(self.cfg) # noqa: F405
         self.dataidx_map = {}

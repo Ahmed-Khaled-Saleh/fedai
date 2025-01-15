@@ -45,8 +45,8 @@ class VisionDownloader(BaseDownloader):  # noqa: F405
 # %% ../../nbs/04_vision.downloader.ipynb 6
 @patch
 def load_data(self: VisionDownloader):
-    if not os.path.exists(self.cfg.data.dir_path):
-        os.makedirs(self.cfg.data.dir_path)
+    if not os.path.exists(self.cfg.data.data_dir):
+        os.makedirs(self.cfg.data.data_dir)
     
     ds_class = get_class("torchvision.datasets", self.cfg.data.name)  # noqa: F405
     # Setup directory for train/test data
@@ -54,9 +54,9 @@ def load_data(self: VisionDownloader):
         return
     
     trainset = ds_class(
-        root=os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "rawdata"), train=True, download=True, transform=self.transform)
+        root=os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "rawdata"), train=True, download=True, transform=self.transform)
     testset = ds_class(
-        root=os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "rawdata"), train=False, download=True, transform=self.transform)
+        root=os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "rawdata"), train=False, download=True, transform=self.transform)
     
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=len(trainset.data), shuffle=False)

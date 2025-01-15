@@ -1,25 +1,26 @@
-version: 1.0
 project_name: example_project
-logging_level: INFO
 random_seed: 42
+
+# Federated learning configuration
 num_clients: 20
-n_rounds: 10
-m: 0.1
-local_epochs: 2
-lr: 0.01
+n_rounds: 10 
+m: 0.1 
+local_epochs: 2 # number of local epochs
+lr: 0.01 
+agg: one_model # aggregation method, either 'one_model' or 'diff'
+
+# save and log directories
 save_dir : models
+res_dir: results
 log_dir: logs
-agg: one_model
 
-
+# metrics
 training_metrics: [accuracy]
 test_metrics: [accuracy]
-grad_norm_clip: 1.0
 
-  
 # Data configuration
 data:
-  dir_path: data
+  data_dir: data
   modality: [Vision]
   batch_size: 10
   name: MNIST
@@ -30,17 +31,24 @@ data:
   train_ratio: 0.75
   num_classes: 2
 
-
 # Model configuration
 model:
+  name: MLP
   dim_in: 784
   dim_hidden: 128
   dim_out: 10
-  name: MLP
   vocab_size: 1000
   embed_size: 128
   hidden_size: 128
   num_layers: 1
+  grad_norm_clip: 1.0
+
+  peft:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules: ['c_attn','c_proj']
+
 
 optimizer:
   name: Adam

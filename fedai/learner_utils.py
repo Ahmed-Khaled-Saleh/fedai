@@ -84,8 +84,7 @@ def client_fn(client_cls, cfg, id, latest_round, loss_fn):
     model = get_model(cfg)
     criterion = get_criterion(loss_fn)
     # get train and test ds
-    train_block = get_block(cfg, id)
-    test_block = get_block(cfg, id, train=False)
+    train_block, test_block = get_block(cfg, id), get_block(cfg, id, train=False)
 
     state = {'model': model, 'optimizer': None, 'criterion': criterion}
 

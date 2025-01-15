@@ -9,13 +9,13 @@ __all__ = ['FLearner']
 import torch
 import os
 from datetime import datetime
-import argparse
+from fastcore.utils import * # type: ignore # noqa: F403
 from .federated.agents import * # noqa: F403
 from .learner_utils import * # type: ignore # noqa: F403
 from .client_selector import *  # noqa: F403
 from .trainers import *  # noqa: F403
 from .core import get_cfg  # noqa: F401, F403
-from .wnadb_writer import *  # noqa: F403
+from .wandb_writer import *  # noqa: F403
 
 # %% ../nbs/10_FLearner.ipynb 5
 class FLearner:
@@ -43,36 +43,43 @@ class FLearner:
 
         self.latest_round = {}
 
-    def run_simulation(self):
+    
+
+# %% ../nbs/10_FLearner.ipynb 6
+@patch
+def run_simulation(self: FLearner):
         res =  []
         all_ids = self.client_selector.select()
         
         for t in range(1, self.cfg.n_rounds):
             lst_active_ids = all_ids[t]
             len_clients_ds = []
+            round_res = []
 
             for id in lst_active_ids:
                 client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, self.loss_fn)
                 len_clients_ds.append(200) # FIX ME: this should be the length of the dataset of the client
-                self.server.communicate(client, t) # read from the disk
-                
-                trainer = self.trainer(client) # the trainer object takes a client and make local training on its dataset.
-                client_history = trainer.train() # actual training loop
-                res.append(client_history)
+                self.server.communicate(client, t) 
 
-                client.communicate(self.server, t) # save the state of the client to the disk
-                self.latest_round[id] = t # make sure you tell the client_fn where to look
+                trainer = self.trainer(client) 
+                client_history = trainer.train() 
+                round_res.append(client_history)
+                res.append(round_res)
+
+                client.communicate(self.server, t) 
+                self.latest_round[id] = t 
 
             one_model = True if self.server.cfg.agg == 'one_model' else False
-            self.server.aggregate(lst_active_ids, t, len_clients_ds, one_model= one_model) # aggregate the models of the clients
+            self.server.aggregate(lst_active_ids, t, len_clients_ds, one_model= one_model) 
             
             if one_model:
                 all_clients_ids = list(range(self.server.cfg.num_clients))
                 for id in all_clients_ids:
                     self.latest_round[id] = t
 
-            self.writer.write(res, t) # write the results to the disk
-        
-        # flush the writer and finish the experiment
+            self.writer.write(round_res, t) 
+            
+        self.writer.save(res)
         self.writer.finish()
+
         return res

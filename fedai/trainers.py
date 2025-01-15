@@ -80,8 +80,8 @@ def _run_batch(self: Trainer, batch: dict) -> tuple:
         return loss, metrics
     
     loss.backward()
-    if self.cfg.grad_norm_clip:
-        torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), self.cfg.grad_norm_clip)
+    if self.cfg.model.grad_norm_clip:
+        torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), self.cfg.model.grad_norm_clip)
 
     self.client.optimizer.step()
 
@@ -142,7 +142,7 @@ def test(self: Trainer) -> dict:
 
             # print(f"Client {self.client.id}'s Batch loss inside eval() : {loss}")
 
-            if (not torch.isnan(loss)) and (self.cfg.grad_norm_clip <= 0 or loss != 0.0):
+            if (not torch.isnan(loss)) and (self.cfg.model.grad_norm_clip <= 0 or loss != 0.0):
                 total_loss += loss.item()  
                 num_eval += len(batch[self.data_key])
                 lst_metrics.append(metrics)           

@@ -170,3 +170,5 @@ checklink/cookies.txt
 *.gz
 
 rawdata/
+
+wandb/

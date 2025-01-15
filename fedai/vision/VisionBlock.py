@@ -29,9 +29,9 @@ torch.manual_seed(42)
 class VisionBlock(torch.utils.data.Dataset):
     def __init__(self, cfg, id, train= True, download= True, transform=None):
         self.cfg = cfg
-        self.config_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "config.json")
-        self.train_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name , "train")
-        self.test_path = os.path.join(self.cfg.data.dir_path, self.cfg.data.name, "test")
+        self.config_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name , "config.json")
+        self.train_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name , "train")
+        self.test_path = os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "test")
         self.train = train
         self.transform = transform
         self.id = id
