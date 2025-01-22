@@ -289,8 +289,8 @@ def compute_probs(self: PadgAgent,
     all_probs = []  # To store probabilities or log-probabilities for all batches
     
     with torch.no_grad():  # Disable gradient computation
-        for inputs, _ in dataloader:  # Assuming dataset returns (inputs, labels)
-            inputs = inputs.to(device)  # Move to model's device
+        for batch in dataloader:  # Assuming dataset returns (inputs, labels)
+            inputs = batch['x'].to(device)  # Move to model's device
             
             # Get logits from the model
             logits = self.model(inputs)
@@ -355,7 +355,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
 
             visited.append((id, other_id))
             visited.append((other_id, id))
-
+            
         for other_id in neighbour_ids:
             other_model_path = os.path.join(self.cfg.save_dir, 
                                     str(comm_round),

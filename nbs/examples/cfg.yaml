@@ -8,6 +8,11 @@ m: 0.1
 local_epochs: 2 # number of local epochs
 lr: 0.01 
 agg: one_model # aggregation method, either 'one_model' or 'diff'
+beta: 0.9 # beta value for FedAvg
+lambda_: 0.01 # lambda value for FedAvg
+server_lr: 0.01 # server learning rate
+
+
 
 # save and log directories
 save_dir : models
