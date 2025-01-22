@@ -290,6 +290,7 @@ def compute_probs(self: PadgAgent,
     
     with torch.no_grad():  # Disable gradient computation
         for batch in dataloader:  # Assuming dataset returns (inputs, labels)
+            print(batch['x'])
             inputs = batch['x'].to(device)  # Move to model's device
             
             # Get logits from the model
