@@ -237,19 +237,19 @@ class FedSophiaAgent(FLAgent):
                  block= None):
         super().__init__(id, cfg, state, role, block)
         self.loss = torch.nn.CrossEntropyLoss()
-        self.ema_grads = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
-        self.ema_hess = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]        
-        self.clippings = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
+        # self.ema_grads = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
+        # self.ema_hess = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]        
+        # self.clippings = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
 
 
 # %% ../../nbs/02_federated.agents.ipynb 42
 @patch
 def init_agent(self: FLAgent):  # noqa: F811
-    self.optimizer = SophiaG(self.model.parameters(), 
-                    lr=2e-4, 
-                    betas=(0.965, 0.99), 
-                    rho=0.01, 
-                    weight_decay=1e-1)
+    self.optimizer = SophiaG(self.model.parameters(),
+                             lr=2e-4,
+                             betas=(0.965, 0.99),
+                             rho=0.01,
+                             weight_decay=1e-1)
 
 # %% ../../nbs/02_federated.agents.ipynb 43
 @patch
