@@ -274,8 +274,7 @@ class FedSophiaTrainer(Trainer):
         super().__init__(client)
         self.t = self.client.t
         self.client.train_iterator = iter(self.client.train_loader)
-        self.client.model.generation_config.pad_token_id = self.client.tokenizer.pad_token_id
-        self.data_key, self.label_key = 'x', 'y'
+
 
 # %% ../nbs/03_trainers.ipynb.ipynb 30
 @patch
@@ -321,7 +320,7 @@ def _run_batch(self: FedSophiaTrainer, batch: dict) -> tuple:
     if self.cfg.model.grad_norm_clip:
         torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), self.cfg.model.grad_norm_clip)
 
-    _, self.ema_grads, self.clippings = self.client.optimizer.step()
+    self.client.optimizer.step()
 
     return loss, metrics
 
