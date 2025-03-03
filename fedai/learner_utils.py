@@ -31,6 +31,10 @@ def get_model(cfg):
 
     # Define the rest of the model mapping
     mapping = {
+        "LogisticRegression": LogisticRegression(  # noqa: F405
+            input_dim=cfg.model.dim_in,
+            output_dim=cfg.model.dim_out
+            ),
         "MNISTCNN": MNISTCNN(num_classes=10),  # noqa: F405 # type: ignore
         "CIFAR10CNN": CIFAR10CNN(num_classes=10),  # noqa: F405 # type: ignore
         

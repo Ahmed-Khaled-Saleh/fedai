@@ -168,7 +168,7 @@ checklink/cookies.txt
 *.npy
 *.npz
 *.gz
-
+*.pdf
 rawdata/
-
+data/
 wandb/
