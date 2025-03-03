@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from peft import *
 from ..trainers import *
 from ..utils import *
+from ..optimizers import *
 from ..data.core import LLMDataCollator
 from transformers import AutoTokenizer
 from omegaconf.dictconfig import DictConfig
@@ -243,6 +244,15 @@ class FedSophiaAgent(FLAgent):
 
 # %% ../../nbs/02_federated.agents.ipynb 42
 @patch
+def init_agent(self: FLAgent):  # noqa: F811
+    self.optimizer = SophiaG(self.model.parameters(), 
+                    lr=2e-4, 
+                    betas=(0.965, 0.99), 
+                    rho=0.01, 
+                    weight_decay=1e-1)
+
+# %% ../../nbs/02_federated.agents.ipynb 43
+@patch
 def train(self: FedSophiaAgent):
     self.model.train()
     grad_clip = 1
@@ -274,7 +284,7 @@ def train(self: FedSophiaAgent):
             self.model.zero_grad()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 46
+# %% ../../nbs/02_federated.agents.ipynb 47
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -288,7 +298,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 47
+# %% ../../nbs/02_federated.agents.ipynb 48
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -320,7 +330,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 51
+# %% ../../nbs/02_federated.agents.ipynb 52
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -357,7 +367,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 53
+# %% ../../nbs/02_federated.agents.ipynb 54
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -426,7 +436,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 58
+# %% ../../nbs/02_federated.agents.ipynb 59
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,

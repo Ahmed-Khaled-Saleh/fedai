@@ -17,6 +17,12 @@ random.seed(42)
 np.random.seed(42)
 torch.manual_seed(42)
 
+# %% ../nbs/04_optimizers.ipynb 5
+import math
+from torch import Tensor
+from torch.optim.optimizer import Optimizer
+from typing import List, Optional
+
 # %% ../nbs/04_optimizers.ipynb 6
 def _single_tensor_sophiag(params: List[Tensor],
                          grads: List[Tensor],
