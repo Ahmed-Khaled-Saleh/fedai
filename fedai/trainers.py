@@ -121,7 +121,7 @@ def _run_epoch(self: Trainer):
 
 # %% ../nbs/03_trainers.ipynb.ipynb 16
 @patch
-def train(self: Trainer) -> dict:
+def fit(self: Trainer) -> dict:
     init_test_loss, metrics_test = self.test()
     test_loss = [init_test_loss]
     test_metrics = [metrics_test]

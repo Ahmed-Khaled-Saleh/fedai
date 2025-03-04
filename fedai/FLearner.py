@@ -62,7 +62,7 @@ def run_simulation(self: FLearner):
             self.server.communicate(client) 
 
             trainer = self.trainer(client) 
-            client_history = trainer.train() 
+            client_history = trainer.fit() 
             round_res.append(client_history)
             res.append(round_res)
 

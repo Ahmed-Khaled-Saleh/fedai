@@ -87,10 +87,9 @@ class FLAgent(Agent):
         if block:
             self.train_ds, self.test_ds = block[0], block[1]
         
-        if self.state :
+        if self.state:
             for key, value in self.state.items():
                 setattr(self, key, value)
-            self.init_agent()
 
         # self.__repre__ = self.__str__()
 
@@ -106,16 +105,10 @@ def __str__(self: FLAgent) -> str:
 
 # %% ../../nbs/02_federated.agents.ipynb 24
 @patch
-def init_agent(self: FLAgent):  # noqa: F811
-    self.optimizer = get_class('torch.optim', self.cfg.optimizer.name)(self.model.parameters(),  # noqa: F405
-                                                                                lr= self.cfg.lr)
-
-# %% ../../nbs/02_federated.agents.ipynb 25
-@patch
 def clear_model(self: FLAgent):
     self.model = None if hasattr(self, 'model') else None
 
-# %% ../../nbs/02_federated.agents.ipynb 26
+# %% ../../nbs/02_federated.agents.ipynb 25
 @patch
 def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
     # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/pytorch_model.bin
@@ -133,13 +126,14 @@ def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
         save_space(self)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 29
+# %% ../../nbs/02_federated.agents.ipynb 28
 @patch
 def communicate(self: Agent, another_agent: Agent):  # noqa: F811
     if self.role == AgentRole.CLIENT:
+        print(self.t)
         self.save_state(self.model.state_dict(), self.t, self.id)
 
-# %% ../../nbs/02_federated.agents.ipynb 30
+# %% ../../nbs/02_federated.agents.ipynb 29
 @patch
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
@@ -177,7 +171,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds, one_mod
         self.save_state(client_avg, comm_round, id)
     
 
-# %% ../../nbs/02_federated.agents.ipynb 36
+# %% ../../nbs/02_federated.agents.ipynb 35
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -189,7 +183,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 37
+# %% ../../nbs/02_federated.agents.ipynb 36
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -205,14 +199,13 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 38
+# %% ../../nbs/02_federated.agents.ipynb 37
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
-    super().init_agent()
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 39
+# %% ../../nbs/02_federated.agents.ipynb 38
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -226,7 +219,7 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 41
+# %% ../../nbs/02_federated.agents.ipynb 40
 class FedSophiaAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -235,19 +228,9 @@ class FedSophiaAgent(FLAgent):
                  role= AgentRole.CLIENT, # the role of the agent (client or server)
                  block= None):
         super().__init__(id, cfg, state, role, block)
-        self.loss = torch.nn.CrossEntropyLoss()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 42
-@patch
-def init_agent(self: FLAgent):  # noqa: F811
-    self.optimizer = SophiaG(self.model.parameters(),
-                             lr=2e-4,
-                             betas=(0.965, 0.99),
-                             rho=0.01,
-                             weight_decay=1e-1)
-
-# %% ../../nbs/02_federated.agents.ipynb 45
+# %% ../../nbs/02_federated.agents.ipynb 43
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -261,7 +244,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 46
+# %% ../../nbs/02_federated.agents.ipynb 44
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -293,7 +276,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 50
+# %% ../../nbs/02_federated.agents.ipynb 48
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -330,7 +313,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 52
+# %% ../../nbs/02_federated.agents.ipynb 50
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -399,7 +382,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 57
+# %% ../../nbs/02_federated.agents.ipynb 55
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
