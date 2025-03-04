@@ -90,7 +90,7 @@ class FLAgent(Agent):
         if self.state:
             for key, value in self.state.items():
                 setattr(self, key, value)
-
+        print("State: ", self.state)
         # self.__repre__ = self.__str__()
 
 # %% ../../nbs/02_federated.agents.ipynb 23
@@ -130,7 +130,6 @@ def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
 @patch
 def communicate(self: Agent, another_agent: Agent):  # noqa: F811
     if self.role == AgentRole.CLIENT:
-        print(self.t)
         self.save_state(self.model.state_dict(), self.t, self.id)
 
 # %% ../../nbs/02_federated.agents.ipynb 29
