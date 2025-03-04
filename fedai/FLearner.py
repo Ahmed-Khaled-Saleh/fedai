@@ -57,9 +57,9 @@ def run_simulation(self: FLearner):
         round_res = []
 
         for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, self.loss_fn)
+            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, self.loss_fn, t)
             len_clients_ds.append(200) # FIX ME: this should be the length of the dataset of the client
-            self.server.communicate(client, t) 
+            self.server.communicate(client) 
 
             trainer = self.trainer(client) 
             client_history = trainer.train() 

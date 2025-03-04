@@ -135,10 +135,9 @@ def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
 
 # %% ../../nbs/02_federated.agents.ipynb 29
 @patch
-def communicate(self: Agent, another_agent: Agent, comm_round):  # noqa: F811
-    self.t = comm_round
+def communicate(self: Agent, another_agent: Agent):  # noqa: F811
     if self.role == AgentRole.CLIENT:
-        self.save_state(self.model.state_dict(), comm_round, self.id)
+        self.save_state(self.model.state_dict(), self.t, self.id)
 
 # %% ../../nbs/02_federated.agents.ipynb 30
 @patch
@@ -237,9 +236,6 @@ class FedSophiaAgent(FLAgent):
                  block= None):
         super().__init__(id, cfg, state, role, block)
         self.loss = torch.nn.CrossEntropyLoss()
-        # self.ema_grads = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
-        # self.ema_hess = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]        
-        # self.clippings = [torch.zeros_like(item, memory_format=torch.preserve_format) for _, item in enumerate(self.model.parameters())]
 
 
 # %% ../../nbs/02_federated.agents.ipynb 42
@@ -251,40 +247,7 @@ def init_agent(self: FLAgent):  # noqa: F811
                              rho=0.01,
                              weight_decay=1e-1)
 
-# %% ../../nbs/02_federated.agents.ipynb 43
-@patch
-def train(self: FedSophiaAgent):
-    self.model.train()
-    grad_clip = 1
-    
-    
-    for i in range(1, self.local_epochs + 1):
-        for X, Y in self.trainloader:
-            logits = self.model(X)
-            loss = self.loss(logits, Y)
-            loss.backward()
-            _, self.ema_grads, self.clippings = self.optimizer.step()
-            self.optimizer.zero_grad()
-    
-
-        if grad_clip != 0.0:
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
-        
-        if self.t % self.tau != 0:
-            continue
-        else:
-            
-            logits = self.model(X) 
-            samp_dist = torch.distributions.Categorical(logits=logits)
-            y_sample = samp_dist.sample()
-            loss_sampled = F.cross_entropy(logits.view(-1, logits.size(-1)), y_sample.view(-1), ignore_index=-1)
-            loss_sampled.backward()
-            self.ema_hess = self.optimizer.update_hessian()
-            self.optimizer.zero_grad(set_to_none=True)
-            self.model.zero_grad()
-
-
-# %% ../../nbs/02_federated.agents.ipynb 47
+# %% ../../nbs/02_federated.agents.ipynb 45
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -298,7 +261,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 48
+# %% ../../nbs/02_federated.agents.ipynb 46
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -330,7 +293,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 52
+# %% ../../nbs/02_federated.agents.ipynb 50
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -367,7 +330,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 54
+# %% ../../nbs/02_federated.agents.ipynb 52
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -436,7 +399,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 59
+# %% ../../nbs/02_federated.agents.ipynb 57
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
