@@ -66,7 +66,7 @@ def run_simulation(self: FLearner):
             round_res.append(client_history)
             res.append(round_res)
 
-            client.communicate(self.server, t) 
+            client.communicate(self.server) 
             self.latest_round[id] = t 
 
         one_model = True if self.server.cfg.agg == 'one_model' else False
