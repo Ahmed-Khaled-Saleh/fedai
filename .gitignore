@@ -30,6 +30,8 @@ conda/
 develop-eggs/
 dist/
 examples/
+# igonre any file or subfolder inside examples
+
 downloads/
 eggs/
 .eggs/
