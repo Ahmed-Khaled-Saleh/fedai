@@ -280,11 +280,11 @@ class FedSophiaTrainer(Trainer):
 @patch
 def get_next_train_batch(self: FedSophiaTrainer):
     try:
-        batch = next(self.train_iterator)
+        batch = next(self.client.train_iterator)
         batch = self.get_batch(batch)
     except StopIteration:
         self.train_iterator = iter(self.trainloader)
-        batch = next(self.train_iterator)
+        batch = next(self.client.train_iterator)
         batch = self.get_batch(batch)
     return batch
 
