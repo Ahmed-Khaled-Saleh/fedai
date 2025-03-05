@@ -31,26 +31,27 @@ def get_model(cfg):
 
     # Define the rest of the model mapping
     mapping = {
-        "LogisticRegression": LogisticRegression(  # noqa: F405
-            input_dim=cfg.model.dim_in,
-            output_dim=cfg.model.dim_out
-            ),
-        "MNISTCNN": MNISTCNN(num_classes=10),  # noqa: F405 # type: ignore
-        "CIFAR10CNN": CIFAR10CNN(num_classes=10),  # noqa: F405 # type: ignore
-        
-        "MLP": MLP(  # noqa: F405
-            dim_in=cfg.model.dim_in, 
-            dim_hidden=cfg.model.dim_hidden, 
-            dim_out=cfg.model.dim_out
-            ),
+    "LogisticRegression": LogisticRegression(  
+        input_dim=getattr(cfg.model, "dim_in", 784),  
+        output_dim=getattr(cfg.model, "dim_out", 10)
+    ),
+    "MNISTCNN": MNISTCNN(num_classes=10),  
+    "CIFAR10CNN": CIFAR10CNN(num_classes=10),  
+    
+    "MLP": MLP(  
+        dim_in=getattr(cfg.model, "dim_in", 784),  
+        dim_hidden=getattr(cfg.model, "dim_hidden", 128),  
+        dim_out=getattr(cfg.model, "dim_out", 10)
+    ),
 
-        "CharacterLSTM": CharacterLSTM(  # noqa: F405 # type: ignore
-            vocab_size=cfg.model.vocab_size,
-            embed_size=cfg.model.embed_size,
-            hidden_size=cfg.model.hidden_size,
-            num_layers=cfg.model.num_layers
-        )
-    }
+    "CharacterLSTM": CharacterLSTM(  
+        vocab_size=getattr(cfg.model, "vocab_size", 50000),  
+        embed_size=getattr(cfg.model, "embed_size", 512),  
+        hidden_size=getattr(cfg.model, "hidden_size", 512),  
+        num_layers=getattr(cfg.model, "num_layers", 8)
+    )
+}
+
 
     # Look up the model in the mapping
     if model_name in mapping:
@@ -64,26 +65,44 @@ def get_criterion(customm_fn):
     if customm_fn:
         return customm_fn
     else:
-        raise ValueError("No criterion function provided")
-
-# %% ../nbs/10_learner_utils.ipynb 7
-def load_state_from_disk(cfg, model, id, comm_round):
-    
-    model_path = os.path.join(cfg.save_dir,
-                              str(comm_round),
-                              f"local_output_{id}",
-                              "pytorch_model.bin")
-
-    if os.path.exists(model_path):
-        if isinstance(model, torch.nn.Module):
-            model.load_state_dict(torch.load(model_path, map_location= model))
-        else:
-            set_peft_model_state_dict(model,  # noqa: F405 # type: ignore
-                                  torch.load(model_path, map_location= model.device), 
-                                  "default")
-    return model
+        raise nn.CrossEntropyLoss()
 
 # %% ../nbs/10_learner_utils.ipynb 8
+def load_state_from_disk(cfg, state, latest_round, id, t):
+    
+    if cfg.agg == "one_model":
+        global_model_path = os.path.join(cfg.save_dir,
+                                        str(t-1),
+                                        "global_model",
+                                        "state.pth")
+        gloabal_model_state = torch.load(global_model_path)
+        
+        if isinstance(state["model"], torch.nn.Module):
+            state["model"].load_state_dict(gloabal_model_state["model"])
+        else:
+            set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
+                                      gloabal_model_state["model"],
+                                      "default")
+        
+    else:
+        latest_comm_round = latest_round[id]
+        old_state_path = os.path.join(cfg.save_dir,
+                                       str(latest_comm_round),
+                                       f"local_output_{id}",
+                                       "state.pth")
+        
+        old_saved_state = torch.load(old_state_path)
+
+        if isinstance(state["model"], torch.nn.Module):
+            state["model"].load_state_dict(old_saved_state["model"])
+        else:
+            set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
+                                      old_saved_state["model"],
+                                      "default")    
+
+    return state
+
+# %% ../nbs/10_learner_utils.ipynb 10
 def client_fn(client_cls, cfg, id, latest_round, loss_fn):
     model = get_model(cfg)
     criterion = get_criterion(loss_fn)

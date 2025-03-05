@@ -84,14 +84,12 @@ class FLAgent(Agent):
                  block= None): # The data block (local data of the FL Agent).
                  
         super().__init__(id, cfg, state, role)
-        if block:
+
+        if self.role == AgentRole.CLIENT:
             self.train_ds, self.test_ds = block[0], block[1]
-        
-        if self.state:
             for key, value in self.state.items():
                 setattr(self, key, value)
-        print("State: ", self.state)
-        # self.__repre__ = self.__str__()
+
 
 # %% ../../nbs/02_federated.agents.ipynb 23
 @patch
@@ -110,17 +108,20 @@ def clear_model(self: FLAgent):
 
 # %% ../../nbs/02_federated.agents.ipynb 25
 @patch
-def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
-    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/pytorch_model.bin
+def save_state(self: FLAgent, state_dict):  # noqa: F811
+    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
     
-    model_path = os.path.join(self.cfg.save_dir, 
-                              str(comm_round),
-                              f"local_output_{id}")
+    state_path = os.path.join(self.cfg.save_dir, 
+                              str(self.t),
+                              f"local_output_{self.id}",
+                              "state.pth")
+    if not os.path.exists(os.path.dirname(state_path)):
+        os.makedirs(os.path.dirname(state_path))
 
-    os.makedirs(model_path, exist_ok=True)
-    torch.save(state_dict, 
-               os.path.join(model_path, 
-                            "pytorch_model.pth"))
+    state_dict['model'] = self.model.state_dict()
+    state_dict['optimizer'] = self.optimizer.state_dict()
+
+    torch.save(state_dict, state_path)
 
     if self.role == AgentRole.CLIENT:
         save_space(self)
@@ -130,19 +131,20 @@ def save_state(self: FLAgent, state_dict, comm_round, id):  # noqa: F811
 @patch
 def communicate(self: Agent, another_agent: Agent):  # noqa: F811
     if self.role == AgentRole.CLIENT:
-        self.save_state(self.model.state_dict(), self.t, self.id)
+        self.save_state(self.state)
 
 # %% ../../nbs/02_federated.agents.ipynb 29
 @patch
-def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
+def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds, one_model= True):
     # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
         
     for i, id in enumerate(lst_active_ids):
-        model_path = os.path.join(self.cfg.save_dir, 
+        state_path = os.path.join(self.cfg.save_dir, 
                                    str(comm_round),
                                    f"local_output_{id}",
-                                   "pytorch_model.pth")
-        client_state_dict = torch.load(model_path, map_location='cpu')
+                                   "state.pth")
+        state = torch.load(state_path)
+        client_state_dict = state['model']
 
         if i == 0:
             client_avg = {
@@ -157,17 +159,19 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds, one_mod
 
     for key in client_avg.keys():
         client_avg[key].data /= len(lst_active_ids)
-
-    # Either we are aggregating and distributing to all clients or just for active clients (personalization/MTL)
-    all_ids = list(range(self.cfg.num_clients))
-    looped_ids = lst_active_ids if not one_model else all_ids
     
-    for id in looped_ids:
-        model_path = os.path.join(self.cfg.save_dir, 
+    server_state = {
+        'model': client_avg,
+    }
+
+    server_state_path = os.path.join(self.cfg.save_dir, 
                                   str(comm_round),
-                                  f"local_output_{id}",
-                                  "pytorch_model.pth")
-        self.save_state(client_avg, comm_round, id)
+                                  "global_model",
+                                  "state.pth")
+    if not os.path.exists(os.path.dirname(server_state_path)):
+        os.makedirs(os.path.dirname(server_state_path))
+
+    torch.save(server_state, server_state_path)
     
 
 # %% ../../nbs/02_federated.agents.ipynb 35

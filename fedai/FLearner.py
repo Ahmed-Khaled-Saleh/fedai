@@ -17,7 +17,7 @@ from .trainers import *  # noqa: F403
 from .core import get_cfg  # noqa: F401, F403
 from .wandb_writer import *  # noqa: F403
 
-# %% ../nbs/10_FLearner.ipynb 5
+# %% ../nbs/10_FLearner.ipynb 6
 class FLearner:
     def __init__(self,
                  cfg, # OmegaConf object
@@ -30,8 +30,9 @@ class FLearner:
         
         self.cfg = cfg
         self.cfg.now = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.cfg.save_dir = os.path.join(self.cfg.save_dir, self.cfg.now)
-        self.log_dir = os.path.join(self.cfg.log_dir, self.cfg.now)
+        self.cfg.save_dir = os.path.join(self.cfg.project_name, self.cfg.now, self.cfg.save_dir)
+        self.cfg.log_dir = os.path.join(self.cfg.project_name, self.cfg.now, self.cfg.log_dir)
+        self.cfg.res_dir = os.path.join(self.cfg.project_name, self.cfg.now, self.cfg.res_dir)
 
         self.client_fn = client_fn
         self.client_selector = client_selector(self.cfg)
@@ -45,7 +46,7 @@ class FLearner:
 
     
 
-# %% ../nbs/10_FLearner.ipynb 6
+# %% ../nbs/10_FLearner.ipynb 7
 @patch
 def run_simulation(self: FLearner):
     res =  []
@@ -57,8 +58,9 @@ def run_simulation(self: FLearner):
         round_res = []
 
         for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, self.loss_fn, t)
-            len_clients_ds.append(200) # FIX ME: this should be the length of the dataset of the client
+            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
+            len_clients_ds.append(len(client.train_ds))
+            
             self.server.communicate(client) 
 
             trainer = self.trainer(client) 
@@ -71,12 +73,6 @@ def run_simulation(self: FLearner):
 
         one_model = True if self.server.cfg.agg == 'one_model' else False
         self.server.aggregate(lst_active_ids, t, len_clients_ds, one_model= one_model) 
-        
-        if one_model:
-            all_clients_ids = list(range(self.server.cfg.num_clients))
-            for id in all_clients_ids:
-                self.latest_round[id] = t
-
         self.writer.write(round_res, t) 
         
     self.writer.save(res)

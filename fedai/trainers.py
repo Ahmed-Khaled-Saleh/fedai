@@ -320,7 +320,7 @@ def _run_batch(self: FedSophiaTrainer, batch: dict) -> tuple:
     if self.cfg.model.grad_norm_clip:
         torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), self.cfg.model.grad_norm_clip)
 
-    self.client.optimizer.step()
+    self.client.optimizer.step(bs= self.cfg.data.batch_size)
 
     return loss, metrics
 

@@ -35,6 +35,7 @@ def write(self: WandbWriter, lst_metrics, round):
 @patch
 def save(self: WandbWriter, res):
     df = pd.concat([pd.DataFrame(d1) for d1 in res])
+    os.makedirs(self.cfg.res_dir, exist_ok=True)
     df.to_csv(f"{self.cfg.res_dir}/results.csv", index=False)
 
 # %% ../nbs/10_wandb_writer.ipynb 7

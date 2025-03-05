@@ -42,17 +42,17 @@ model:
   dim_in: 784
   dim_hidden: 128
   dim_out: 10
-  vocab_size: 1000
-  embed_size: 128
+  # vocab_size: 1000
+  # embed_size: 128
   hidden_size: 128
   num_layers: 1
   grad_norm_clip: 1.0
 
-  peft:
-    r: 16
-    lora_alpha: 32
-    lora_dropout: 0.05
-    target_modules: ['c_attn','c_proj']
+  # peft:
+  #   r: 16
+  #   lora_alpha: 32
+  #   lora_dropout: 0.05
+  #   target_modules: ['c_attn','c_proj']
 
 
 optimizer:
