@@ -8,10 +8,12 @@ m: 0.1
 local_epochs: 2 # number of local epochs
 lr: 0.01 
 agg: one_model # aggregation method, either 'one_model' or 'diff'
-beta: 0.9 # beta value for FedAvg
-lambda_: 0.01 # lambda value for FedAvg
-server_lr: 0.01 # server learning rate
 
+# FLearner arguments
+client_selector: BaseClientSelector
+client_class: FLAgent
+loss_fn: CrossEntropyLoss
+writer: WandbWriter
 
 
 # save and log directories
@@ -42,20 +44,12 @@ model:
   dim_in: 784
   dim_hidden: 128
   dim_out: 10
-  # vocab_size: 1000
-  # embed_size: 128
   hidden_size: 128
-  num_layers: 1
   grad_norm_clip: 1.0
 
-  # peft:
-  #   r: 16
-  #   lora_alpha: 32
-  #   lora_dropout: 0.05
-  #   target_modules: ['c_attn','c_proj']
 
 
+# optimzer configuration
 optimizer:
   name: Adam
-  lr: 0.001
   weight_decay: 0.0

@@ -7,8 +7,8 @@ __all__ = ['get_class', 'get_server', 'load_config', 'save_space', 'prepare_dl',
 
 # %% ../nbs/05_utils.ipynb.ipynb 3
 import os
-from fastcore.utils import *  # noqa: F403
-from torch.utils.data import DataLoader
+from fastcore.utils import *  # type: ignore # noqa: F403
+from torch.utils.data import DataLoader # type: ignore # noqa: F403
 import yaml
 import numpy as np
 import networkx as nx

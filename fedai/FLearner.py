@@ -13,18 +13,20 @@ from fastcore.utils import * # type: ignore # noqa: F403
 from .federated.agents import * # noqa: F403
 from .learner_utils import * # type: ignore # noqa: F403
 from .client_selector import *  # noqa: F403
-from .trainers import *  # noqa: F403
 from .core import get_cfg  # noqa: F401, F403
 from .wandb_writer import *  # noqa: F403
+from torch import nn
+from omegaconf import OmegaConf
+import argparse
+import yaml
 
-# %% ../nbs/10_FLearner.ipynb 6
+# %% ../nbs/10_FLearner.ipynb 5
 class FLearner:
     def __init__(self,
                  cfg, # OmegaConf object
                  client_fn, # a function that returns a client object
                  client_selector= BaseClientSelector, # a client selection class represnting a client seleection algorithm # noqa: F405
                  client_cls= FLAgent,  # noqa: F405
-                 trainer = Trainer,  # noqa: F405
                  loss_fn= torch.nn.CrossEntropyLoss,  # noqa: F405
                  writer= WandbWriter): # a writer to write results to an expirement tracking tool # noqa: F405
         
@@ -35,47 +37,16 @@ class FLearner:
         self.cfg.res_dir = os.path.join(self.cfg.project_name, self.cfg.now, self.cfg.res_dir)
 
         self.client_fn = client_fn
+        self.server  = self.client_cls(cfg= self.cfg, block= None, id= -1, state= None, role= AgentRole.SERVER)  # noqa: F405
+
         self.client_selector = client_selector(self.cfg)
         self.client_cls = client_cls
-        self.server  = self.client_cls(cfg= self.cfg, block= None, id= 0, state= None, role= AgentRole.SERVER)  # noqa: F405
-        self.trainer = trainer
         self.loss_fn = loss_fn()
         self.writer = writer(cfg)
-
-        self.latest_round = {}
-
+        self.server.server_init(self.cfg, self.client_fn, self.client_cls, self.loss_fn, self.writer)
     
 
 # %% ../nbs/10_FLearner.ipynb 7
 @patch
 def run_simulation(self: FLearner):
-    res =  []
-    all_ids = self.client_selector.select()
-    
-    for t in range(1, self.cfg.n_rounds):
-        lst_active_ids = all_ids[t]
-        len_clients_ds = []
-        round_res = []
-
-        for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
-            len_clients_ds.append(len(client.train_ds))
-            
-            self.server.communicate(client) 
-
-            trainer = self.trainer(client) 
-            client_history = trainer.fit() 
-            round_res.append(client_history)
-            res.append(round_res)
-
-            client.communicate(self.server) 
-            self.latest_round[id] = t 
-
-        one_model = True if self.server.cfg.agg == 'one_model' else False
-        self.server.aggregate(lst_active_ids, t, len_clients_ds, one_model= one_model) 
-        self.writer.write(round_res, t) 
-        
-    self.writer.save(res)
-    self.writer.finish()
-
-    return res
+    self.server.runFL()
