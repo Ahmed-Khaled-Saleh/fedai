@@ -71,7 +71,7 @@ def get_criterion(customm_fn):
     if customm_fn:
         return customm_fn
     else:
-        raise nn.CrossEntropyLoss()
+        return nn.CrossEntropyLoss()
 
 # %% ../nbs/10_learner_utils.ipynb 9
 def load_state_from_disk(cfg, state, latest_round, id, t):

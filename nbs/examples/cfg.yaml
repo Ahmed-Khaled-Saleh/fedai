@@ -11,7 +11,7 @@ agg: one_model # aggregation method, either 'one_model' or 'diff'
 
 # FLearner arguments
 client_selector: BaseClientSelector
-client_class: FLAgent
+client_cls: FLAgent
 loss_fn: CrossEntropyLoss
 writer: WandbWriter
 

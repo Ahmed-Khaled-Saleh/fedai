@@ -34,7 +34,7 @@ def client_fn(client_cls, cfg, id, latest_round, t, loss_fn = None, optimizer = 
     if t > 1:
         state = load_state_from_disk(cfg, state, latest_round, id, t)  # noqa: F405
     
-    state['optimizer'] = get_cls("torch.optim", cfg.optimizer)(state['model'].parameters(), lr=cfg.lr)
+    state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.lr)
         
     return client_cls(id, cfg, state, block= [train_block, test_block])
 
@@ -56,13 +56,14 @@ class FLearner:
         self.cfg.res_dir = os.path.join(self.cfg.project_name, self.cfg.now, self.cfg.res_dir)
 
         self.client_fn = client_fn
-        self.server  = self.client_cls(cfg= self.cfg, block= None, id= -1, state= None, role= AgentRole.SERVER)  # noqa: F405
+        
 
         self.client_selector = client_selector(self.cfg)
         self.client_cls = client_cls
         self.loss_fn = loss_fn()
         self.writer = writer(cfg)
-        self.server.server_init(self.cfg, self.client_fn, self.client_cls, self.loss_fn, self.writer)
+        self.server  = self.client_cls(cfg= self.cfg, block= None, id= -1, state= None, role= AgentRole.SERVER)  # noqa: F405
+        self.server.server_init(self.client_fn, self.client_selector, self.client_cls, self.loss_fn, self.writer)
     
 
 # %% ../nbs/10_FLearner.ipynb 7

@@ -111,8 +111,9 @@ class FLAgent(Agent):
 
 # %% ../../nbs/02_federated.agents.ipynb 20
 @patch
-def server_init(self: FLAgent, client_fn, client_cls, loss_fn, writer):
+def server_init(self: FLAgent, client_fn, client_selector, client_cls, loss_fn, writer):
     self.client_fn = client_fn
+    self.client_selector = client_selector
     self.client_cls = client_cls
     self.loss_fn = loss_fn
     self.writer = writer
