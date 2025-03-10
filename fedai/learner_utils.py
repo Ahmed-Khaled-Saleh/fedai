@@ -7,6 +7,8 @@ __all__ = ['get_cls', 'get_block', 'get_model', 'get_criterion', 'load_state_fro
 
 # %% ../nbs/10_learner_utils.ipynb 3
 import os
+import random
+import numpy as np
 import torch.nn as nn
 import torch
 from .vision.VisionBlock import VisionBlock
@@ -30,6 +32,11 @@ def get_block(cfg, id, train=True):
 # %% ../nbs/10_learner_utils.ipynb 6
 def get_model(cfg):
     model_name = cfg.model.name
+
+    # Set seed before model creation to ensure the same initialization
+    torch.manual_seed(cfg.random_seed)  
+    np.random.seed(cfg.random_seed)
+    random.seed(cfg.random_seed)
 
     # Check if the model name contains "hf://"
     if model_name.startswith("hf://"):
@@ -81,26 +88,32 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
                                         str(t-1),
                                         "global_model",
                                         "state.pth")
+        
         gloabal_model_state = torch.load(global_model_path)
         
-        if isinstance(state["model"], torch.nn.Module):
+        if isinstance(state["model"], dict):
             state["model"].load_state_dict(gloabal_model_state["model"])
+            print(f"Loaded client model state from {global_model_path}")
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       gloabal_model_state["model"],
                                       "default")
         
     else:
+        if id not in latest_round:
+            return state
+        
         latest_comm_round = latest_round[id]
         old_state_path = os.path.join(cfg.save_dir,
                                        str(latest_comm_round),
-                                       f"local_output_{id}",
+                                       f"aggregated_model_{id}",
                                        "state.pth")
         
         old_saved_state = torch.load(old_state_path)
 
-        if isinstance(state["model"], torch.nn.Module):
+        if isinstance(state["model"], dict):
             state["model"].load_state_dict(old_saved_state["model"])
+            print(f"Loaded client model state from {old_state_path}")
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       old_saved_state["model"],

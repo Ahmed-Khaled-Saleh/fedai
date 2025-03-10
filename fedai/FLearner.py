@@ -35,7 +35,7 @@ def client_fn(client_cls, cfg, id, latest_round, t, loss_fn = None, optimizer = 
         state = load_state_from_disk(cfg, state, latest_round, id, t)  # noqa: F405
     
     state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.lr)
-        
+    
     return client_cls(id, cfg, state, block= [train_block, test_block])
 
 
