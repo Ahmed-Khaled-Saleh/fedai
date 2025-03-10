@@ -89,7 +89,7 @@ class FLAgent(Agent):
                  state= None, # the state of the agent (model, optimizer, loss_fn), etc.
                  role= AgentRole.CLIENT, # the role of the agent (client or server)
                  block= None # The data block (local data of the FL Agent).
-                ):  
+                 ):  
                  
         super().__init__(id, cfg, state, role)
 
@@ -109,13 +109,9 @@ class FLAgent(Agent):
 
             self.data_key, self.label_key = 'x', 'y'
 
-        elif self.role == AgentRole.SERVER:
-            self.server_init()
-
 # %% ../../nbs/02_federated.agents.ipynb 20
 @patch
-def server_init(self: FLAgent, cfg, client_fn, client_cls, loss_fn, writer):
-    self.cfg = cfg
+def server_init(self: FLAgent, client_fn, client_cls, loss_fn, writer):
     self.client_fn = client_fn
     self.client_cls = client_cls
     self.loss_fn = loss_fn
@@ -266,7 +262,7 @@ def fit(self: FLAgent) -> dict:
         train_loss.append(avg_train_loss)
         train_metrics.append(metrics_train)
 
-    # average the metrics across all local rounds to get local train metrics
+    # average the metrics across all local rounds to get local train metrics (e.g, train accuracy)
     train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in train_metrics[0].keys()}
 
     train_metrics = {f'train_{k}': v for k, v in train_metrics.items()}
