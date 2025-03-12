@@ -40,7 +40,7 @@ data:
 
 # Model configuration
 model:
-  name: MLP
+  name: CIFAR10CNN
   dim_in: 784
   dim_hidden: 128
   dim_out: 10
