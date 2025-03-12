@@ -29,7 +29,7 @@ build/
 conda/
 develop-eggs/
 dist/
-examples/
+nbs/examples/*
 # igonre any file or subfolder inside examples
 
 downloads/
