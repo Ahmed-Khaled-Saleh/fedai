@@ -245,7 +245,7 @@ def _run_epoch(self: FLAgent):
             num_trained += len(batch[self.data_key])
             lst_metrics.append(train_metrics)
     print(lst_metrics)
-    epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in lst_metrics[0].keys()}
+    epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in self.cfg.training_metrics}
 
     return total_loss / num_trained, epoch_metrics
 
