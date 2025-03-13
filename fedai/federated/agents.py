@@ -198,10 +198,10 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
                 
         else:
             print("there")
-            metrcis = {k: 0 for k in self.training_metrics}
+            metrcis = {k: 0 for k in self.cfg.training_metrics}
             
     except Exception as e:
-        metrcis = {k: 0 for k in self.training_metrics}
+        metrcis = {k: 0 for k in self.cfg.training_metrics}
         return torch.tensor(float(0), device=self.device), metrcis
         
     return loss, metrcis
