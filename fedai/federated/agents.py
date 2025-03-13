@@ -190,13 +190,14 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
         y_true = batch[self.label_key]
 
         if self.cfg.training_metrics:
-
+            print("here")
             if hasattr(self, "tokenizer"):
                 metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true, tokenizer= self.tokenizer)
             else:
                 metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true)
                 
         else:
+            print("there")
             metrcis = {k: 0 for k in self.training_metrics}
             
     except Exception as e:

@@ -57,7 +57,6 @@ class FLearner:
 
         self.client_fn = client_fn
         
-
         self.client_selector = client_selector(self.cfg)
         self.client_cls = client_cls
         self.loss_fn = loss_fn()
