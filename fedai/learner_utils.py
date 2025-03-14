@@ -89,7 +89,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
                                         "global_model",
                                         "state.pth")
         
-        gloabal_model_state = torch.load(global_model_path)
+        gloabal_model_state = torch.load(global_model_path, weights_only= False)
         
         if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
             state["model"].load_state_dict(gloabal_model_state["model"])
@@ -109,7 +109,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
                                        f"aggregated_model_{id}",
                                        "state.pth")
         
-        old_saved_state = torch.load(old_state_path)
+        old_saved_state = torch.load(old_state_path, weights_only= False)
 
         if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
             state["model"].load_state_dict(old_saved_state["model"])

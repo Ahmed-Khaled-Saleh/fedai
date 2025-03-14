@@ -236,14 +236,15 @@ def _run_epoch(self: FLAgent):
         
         batch = self.get_batch(batch)
         loss, train_metrics = self._run_batch(batch)
-
+        lst_metrics.append(train_metrics)
+        
         if num_trained == 0:
             num_trained = 1e-10
 
         if loss.item() != 0:
             total_loss += loss.item()
             num_trained += len(batch[self.data_key])
-            lst_metrics.append(train_metrics)
+            
     print(lst_metrics)
     epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in self.cfg.training_metrics}
 
@@ -347,7 +348,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
                                    str(comm_round),
                                    f"local_output_{id}",
                                    "state.pth")
-        state = torch.load(state_path)
+        state = torch.load(state_path, weights_only= False)
         client_state_dict = state['model']
 
         if i == 0:
@@ -405,7 +406,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
                                    f"local_output_{id}",
                                    "state.pth")
         
-        state = torch.load(state_path)
+        state = torch.load(state_path, weights_only= False)
         client_state_dict = state['model']
 
         client_diff = {
@@ -421,7 +422,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
                                             f"local_output_{other_id}",
                                             "state.pth")
             
-            other_state = torch.load(other_state_path)
+            other_state = torch.load(other_state_path, weights_only= False)
             other_state_dict = other_state['model']
 
             weight = self.alk_connection[int(id)][int(other_id)]
@@ -490,7 +491,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
                                     str(comm_round),
                                     f"local_output_{id}",
                                     "state.pth")
-            state = torch.load(state_path)
+            state = torch.load(state_path, weights_only= False)
             client_head = state['model']['head']
             client_repr = state['model']['repr']
 
@@ -507,7 +508,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
                                                 str(comm_round),
                                                 f"local_output_{other_id}",
                                                 "state.pth")
-                other_state = torch.load(other_state_path)
+                other_state = torch.load(other_state_path, weights_only= False)
                 other_head = other_state['model']['head']
                 other_repr = other_state['model']['repr']
 
@@ -526,7 +527,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
                                             f"local_output_{other_id}",
                                             "state.pth")
             
-            other_state = torch.load(other_state_path)
+            other_state = torch.load(other_state_path, weights_only= False)
             other_state_dict = other_state['model']
 
             weight = self.alk_connection[int(id)][int(other_id)] #FIXME
@@ -715,7 +716,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
                                    str(comm_round),
                                    f"local_output_{id}",
                                    "pytorch_model.pth")
-        client_state_dict = torch.load(model_path, map_location='cpu')
+        client_state_dict = torch.load(model_path, map_location='cpu', weights_only= False)
         self.model.load_state_dict(client_state_dict)
         
         neighbours_sum = {
@@ -734,7 +735,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
                                     f"local_output_{other_id}",
                                     "pytorch_model.pth")
             
-            other_client_state_dict = torch.load(other_model_path, map_location='cpu')
+            other_client_state_dict = torch.load(other_model_path, map_location='cpu', weights_only= False)
             self.model.load_state_dict(other_client_state_dict)
             
             probs_2 = self.compute_probs(batch_size=32, return_log_probs=False)
@@ -754,7 +755,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
                                     str(comm_round),
                                     f"local_output_{other_id}",
                                     "pytorch_model.pth")
-            other_client_state_dict = torch.load(other_model_path, map_location='cpu')
+            other_client_state_dict = torch.load(other_model_path, map_location='cpu', weights_only= False)
 
             weight = self.connections[id][other_id]
             for key in other_client_state_dict.keys():
