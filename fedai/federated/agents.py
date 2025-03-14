@@ -190,14 +190,12 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
         y_true = batch[self.label_key]
 
         if self.cfg.training_metrics:
-            print("here")
             if hasattr(self, "tokenizer"):
                 metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true, tokenizer= self.tokenizer)
             else:
                 metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true)
                 
         else:
-            print("there")
             metrcis = {k: 0 for k in self.cfg.training_metrics}
             
     except Exception as e:
@@ -245,7 +243,6 @@ def _run_epoch(self: FLAgent):
             total_loss += loss.item()
             num_trained += len(batch[self.data_key])
             
-    print(lst_metrics)
     epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in self.cfg.training_metrics}
 
     return total_loss / num_trained, epoch_metrics
@@ -341,42 +338,44 @@ def communicate(self: Agent, another_agent: Agent):  # noqa: F811
 # %% ../../nbs/02_federated.agents.ipynb 39
 @patch
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
-    # load the models of the agents in lst_active_ids and `FedAvg` them. At the end, save the aggregated model to the disk.
         
+    m_t = sum(len_clients_ds[id] for id in lst_active_ids)
+
     for i, id in enumerate(lst_active_ids):
         state_path = os.path.join(self.cfg.save_dir, 
                                    str(comm_round),
                                    f"local_output_{id}",
                                    "state.pth")
-        state = torch.load(state_path, weights_only= False)
+        
+        state = torch.load(state_path, weights_only=False)
         client_state_dict = state['model']
 
         if i == 0:
-            client_avg = {
+            global_model = {
                 key: torch.zeros_like(value) 
                 for key, value in client_state_dict.items()
             }
-        
-        weight = len_clients_ds[i] / sum(len_clients_ds)
 
-        for key in client_state_dict.keys():
-            client_avg[key].data += weight * client_state_dict[key].data
+        n_k = len_clients_ds[id]
+        weight =  n_k / m_t 
 
-    for key in client_avg.keys():
-        client_avg[key].data /= len(lst_active_ids)
-    
+        with torch.no_grad():
+            for key in client_state_dict.keys():
+                global_model[key].add_(weight * client_state_dict[key])
+
+
     server_state = {
-        'model': client_avg,
+        'model': global_model,
     }
 
     server_state_path = os.path.join(self.cfg.save_dir, 
                                   str(comm_round),
                                   "global_model",
                                   "state.pth")
-    if not os.path.exists(os.path.dirname(server_state_path)):
-        os.makedirs(os.path.dirname(server_state_path))
+    os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
 
     torch.save(server_state, server_state_path)
+
     
 
 # %% ../../nbs/02_federated.agents.ipynb 42

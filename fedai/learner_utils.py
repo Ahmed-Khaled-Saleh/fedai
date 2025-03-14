@@ -93,12 +93,13 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
         
         if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
             state["model"].load_state_dict(gloabal_model_state["model"])
-            print(f"Loaded client model state from {global_model_path}")
+            
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       gloabal_model_state["model"],
                                       "default")
-        
+        print(f"Loaded client model state from {global_model_path}")
+
     else:
         if id not in latest_round:
             return state
@@ -113,10 +114,11 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
 
         if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
             state["model"].load_state_dict(old_saved_state["model"])
-            print(f"Loaded client model state from {old_state_path}")
+            
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       old_saved_state["model"],
                                       "default")    
-
+        print(f"Loaded client model state from {old_state_path}")
+        
     return state
