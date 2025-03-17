@@ -131,7 +131,9 @@ def runFL(self: FLAgent):
         len_clients_ds = []
         round_res = []
 
-        # self.server_test(all_ids, t)
+        test_history = self.server_test(all_ids, t)
+        round_res.append(test_history)
+        
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
             len_clients_ds.append(len(client.train_ds))
@@ -156,10 +158,23 @@ def runFL(self: FLAgent):
 # %% ../../nbs/02_federated.agents.ipynb 24
 @patch
 def server_test(self: FLAgent, all_ids, t):
+    losses = []
+    metrics = []
     for id in all_ids:
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
-        client.test()
+        client_loss, client_metrics = client.test()
+        losses.append(client_loss)
+        metrics.append(client_metrics)
     
+    avg_loss = np.mean(losses)
+
+    avg_metrics = {k: np.mean([m[k] for m in metrics]) for k in list(self.cfg.test_metrics)}
+    avg_metrics = {f'test_{k}': v for k, v in avg_metrics.items()}
+
+    history = {"test_loss": avg_loss}
+    history.update(avg_metrics)
+    
+    return history
 
 # %% ../../nbs/02_federated.agents.ipynb 26
 @patch
@@ -252,7 +267,7 @@ def _run_epoch(self: FLAgent):
             total_loss += loss.item()
             num_trained += len(batch[self.data_key])
             
-    epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in self.cfg.training_metrics}
+    epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in list(self.cfg.training_metrics)}
 
     return total_loss / num_trained, epoch_metrics
 
@@ -261,7 +276,7 @@ def _run_epoch(self: FLAgent):
 def fit(self: FLAgent) -> dict:
     
     self.model = self.model.to(self.device)
-    test_loss, test_metrics = self.test()
+    # test_loss, test_metrics = self.test()
     train_loss = []
     train_metrics = []
     for _ in range(self.cfg.local_epochs):
@@ -271,18 +286,18 @@ def fit(self: FLAgent) -> dict:
         train_metrics.append(metrics_train)
 
     # average the metrics across all local rounds to get local train metrics (e.g, train accuracy)
-    train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in train_metrics[0].keys()}
+    train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in list(self.cfg.training_metrics)}
 
     train_metrics = {f'train_{k}': v for k, v in train_metrics.items()}
-    test_metrics = {f'test_{k}': v for k, v in test_metrics.items()}
+    # test_metrics = {f'test_{k}': v for k, v in test_metrics.items()}
 
     history =  {
-        'train_loss': np.mean(train_loss),
-        'test_loss': test_loss,
+        'train_loss': np.mean(train_loss)
+        # 'test_loss': test_loss,
     }
 
     history.update(train_metrics)
-    history.update(test_metrics)
+    # history.update(test_metrics)
     
     return history
     
@@ -313,7 +328,7 @@ def test(self: FLAgent) -> dict:
                 num_eval += len(batch[self.data_key])
                 lst_metrics.append(test_metrics)           
             
-    total_test_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in lst_metrics[0].keys()}
+    total_test_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in list(self.cfg.test_metrics)}
 
     return total_loss / num_eval, total_test_metrics
 
@@ -349,41 +364,41 @@ def communicate(self: Agent, another_agent: Agent):  # noqa: F811
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         
     m_t = sum(len_clients_ds[id] for id in lst_active_ids)
+    with torch.no_grad():
+        for i, id in enumerate(lst_active_ids):
+            state_path = os.path.join(self.cfg.save_dir, 
+                                    str(comm_round),
+                                    f"local_output_{id}",
+                                    "state.pth")
+            
+            state = torch.load(state_path, weights_only=False)
+            client_state_dict = state['model']
 
-    for i, id in enumerate(lst_active_ids):
-        state_path = os.path.join(self.cfg.save_dir, 
-                                   str(comm_round),
-                                   f"local_output_{id}",
-                                   "state.pth")
+            if i == 0:
+                global_model = {
+                    key: torch.zeros_like(value) 
+                    for key, value in client_state_dict.items()
+                }
+
+            n_k = len_clients_ds[id]
+            weight =  n_k / m_t 
+
         
-        state = torch.load(state_path, weights_only=False)
-        client_state_dict = state['model']
-
-        if i == 0:
-            global_model = {
-                key: torch.zeros_like(value) 
-                for key, value in client_state_dict.items()
-            }
-
-        n_k = len_clients_ds[id]
-        weight =  n_k / m_t 
-
-        with torch.no_grad():
             for key in client_state_dict.keys():
                 global_model[key].add_(weight * client_state_dict[key])
 
 
-    server_state = {
-        'model': global_model,
-    }
+        server_state = {
+            'model': global_model,
+        }
 
-    server_state_path = os.path.join(self.cfg.save_dir, 
-                                  str(comm_round),
-                                  "global_model",
-                                  "state.pth")
-    os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
+        server_state_path = os.path.join(self.cfg.save_dir, 
+                                    str(comm_round),
+                                    "global_model",
+                                    "state.pth")
+        os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
 
-    torch.save(server_state, server_state_path)
+        torch.save(server_state, server_state_path)
 
     
 
@@ -408,52 +423,54 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
 
     global_lr = float(self.cfg.lr) * float(self.cfg.local_epochs)
     reg_param = self.cfg.lambda_
-    for i, id in enumerate(lst_active_ids):
-        state_path = os.path.join(self.cfg.save_dir, 
-                                   str(comm_round),
-                                   f"local_output_{id}",
-                                   "state.pth")
-        
-        state = torch.load(state_path, weights_only= False)
-        client_state_dict = state['model']
-
-        client_diff = {
-            key: torch.zeros_like(value) 
-            for key, value in client_state_dict.items()
-        }
-        
-        for j, other_id in enumerate(lst_active_ids):
-            if i == j:
-                continue
-            other_state_path = os.path.join(self.cfg.save_dir,
-                                            str(comm_round),
-                                            f"local_output_{other_id}",
-                                            "state.pth")
-            
-            other_state = torch.load(other_state_path, weights_only= False)
-            other_state_dict = other_state['model']
-
-            weight = self.alk_connection[int(id)][int(other_id)]
-            for key in client_state_dict.keys():
-                # client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_state_dict[key].data.clone())
-                client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
-
-        for key in client_state_dict:
-            # client_state_dict[key].data -=  global_lr * reg_param * client_diff[key].data
-            client_state_dict[key].sub_(global_lr * reg_param * client_diff[key])
-
-        clinet_state = {
-            'model': client_state_dict,
-        }
-
-        agg_client_state_path = os.path.join(self.cfg.save_dir, 
+    
+    with torch.no_grad():
+        for i, id in enumerate(lst_active_ids):
+            state_path = os.path.join(self.cfg.save_dir, 
                                     str(comm_round),
-                                    f"aggregated_model_{id}",
+                                    f"local_output_{id}",
                                     "state.pth")
-        if not os.path.exists(os.path.dirname(agg_client_state_path)):
-            os.makedirs(os.path.dirname(agg_client_state_path))
+            
+            state = torch.load(state_path, weights_only= False)
+            client_state_dict = state['model']
 
-        torch.save(clinet_state, agg_client_state_path)
+            client_diff = {
+                key: torch.zeros_like(value) 
+                for key, value in client_state_dict.items()
+            }
+            
+            for j, other_id in enumerate(lst_active_ids):
+                if i == j:
+                    continue
+                other_state_path = os.path.join(self.cfg.save_dir,
+                                                str(comm_round),
+                                                f"local_output_{other_id}",
+                                                "state.pth")
+                
+                other_state = torch.load(other_state_path, weights_only= False)
+                other_state_dict = other_state['model']
+
+                weight = self.alk_connection[int(id)][int(other_id)]
+                for key in client_state_dict.keys():
+                    # client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_state_dict[key].data.clone())
+                    client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
+
+            for key in client_state_dict:
+                # client_state_dict[key].data -=  global_lr * reg_param * client_diff[key].data
+                client_state_dict[key].sub_(global_lr * reg_param * client_diff[key])
+
+            clinet_state = {
+                'model': client_state_dict,
+            }
+
+            agg_client_state_path = os.path.join(self.cfg.save_dir, 
+                                        str(comm_round),
+                                        f"aggregated_model_{id}",
+                                        "state.pth")
+            if not os.path.exists(os.path.dirname(agg_client_state_path)):
+                os.makedirs(os.path.dirname(agg_client_state_path))
+
+            torch.save(clinet_state, agg_client_state_path)
 
 # %% ../../nbs/02_federated.agents.ipynb 49
 class DMTL(FLAgent):
