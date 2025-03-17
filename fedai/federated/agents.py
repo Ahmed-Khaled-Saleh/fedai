@@ -132,7 +132,6 @@ def runFL(self: FLAgent):
         round_res = []
 
         test_history = self.server_test(t)
-        round_res.append(test_history)
         
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
@@ -141,6 +140,7 @@ def runFL(self: FLAgent):
             self.communicate(client) 
 
             client_history = client.fit() 
+            client_history.update(test_history)
             round_res.append(client_history)
             res.append(round_res)
 
