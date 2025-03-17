@@ -229,8 +229,8 @@ def _run_batch(self: FLAgent, batch: dict) -> tuple:
         return loss, metrics
     
     loss.backward()
-    if self.cfg.model.grad_norm_clip:
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
+    # if self.cfg.model.grad_norm_clip:
+    #     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
 
     self.optimizer.step()
 
@@ -276,15 +276,11 @@ def fit(self: FLAgent) -> dict:
         train_metrics.append(metrics_train)
 
     # average the metrics across all local rounds to get local train metrics (e.g, train accuracy)
-    train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in list(self.cfg.training_metrics)}
+    if len(train_metrics) == 0:
+        train_metrics = {k: 0 for k in self.cfg.training_metrics}
+    else:
+        train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in list(self.cfg.training_metrics)}
 
-    # train_metrics = {f'train_{k}': v for k, v in train_metrics.items()}
-
-    # history =  {
-    #     'train_loss': np.mean(train_loss)
-    # }
-
-    # history.update(train_metrics)
     return {'loss': np.mean(train_loss), 'metrics': train_metrics}
     
 
