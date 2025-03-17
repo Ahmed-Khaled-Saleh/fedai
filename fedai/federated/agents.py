@@ -436,7 +436,7 @@ def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
             weight = self.alk_connection[int(id)][int(other_id)]
             for key in client_state_dict.keys():
                 # client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_state_dict[key].data.clone())
-                client_diff.add_(weight * (client_state_dict[key] - other_state_dict[key]))
+                client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
 
         for key in client_state_dict:
             # client_state_dict[key].data -=  global_lr * reg_param * client_diff[key].data
