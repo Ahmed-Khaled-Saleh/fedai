@@ -130,26 +130,23 @@ def runFL(self: FLAgent):
     for t in range(1, self.cfg.n_rounds):
         lst_active_ids = all_ids[t]
         len_clients_ds = []
-        round_res = []
-
-        test_res = self.server_test(t)
         
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
             len_clients_ds.append(len(client.train_ds))
             
             self.communicate(client) 
-
-            train_history = client.fit() # train_history = {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}
-            round_res.append(train_history) 
-            res.append(round_res)
+            client.fit()
 
             client.communicate(self) 
             self.latest_round[id] = t 
 
-        self.aggregate(lst_active_ids, t, len_clients_ds) 
-        #round_res = [{'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}, {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}]
-        self.writer.write(lst_active_ids, round_res, test_res, t) 
+        self.aggregate(lst_active_ids, t, len_clients_ds)
+        
+        train_res, test_res = self.evaluate(t)
+        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
+        res.append((train_df, test_df))
+        
         
     self.writer.save(res)
     self.writer.finish()
@@ -158,14 +155,18 @@ def runFL(self: FLAgent):
 
 # %% ../../nbs/02_federated.agents.ipynb 24
 @patch
-def server_test(self: FLAgent, t):
-    lst_res = []
+def evaluate(self: FLAgent, t):
+    lst_train_res = []
+    lst_test_res = []
     for id in range(self.cfg.num_clients):
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
-        res = client.test()
-        lst_res.append(res)
-    return lst_res    
-    #[{'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}, {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}]
+        
+        res_train = client.evaluate_local(loader= 'train')
+        lst_train_res.append(res_train)
+
+        res_test = client.evaluate_local(loader= 'test')
+        lst_test_res.append(res_test)
+    return lst_train_res, lst_test_res    
     
 
 # %% ../../nbs/02_federated.agents.ipynb 26
@@ -222,15 +223,16 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
 # %% ../../nbs/02_federated.agents.ipynb 31
 @patch
 def _run_batch(self: FLAgent, batch: dict) -> tuple:
-    self.model.zero_grad(set_to_none=True)
+    self.model.zero_grad()
     loss, metrics = self._closure(batch)
 
     if loss.item() == 0:
         return loss, metrics
     
     loss.backward()
-    # if self.cfg.model.grad_norm_clip:
-    #     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
+    
+    if self.cfg.model.grad_norm_clip:
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
 
     self.optimizer.step()
 
@@ -239,81 +241,51 @@ def _run_batch(self: FLAgent, batch: dict) -> tuple:
 # %% ../../nbs/02_federated.agents.ipynb 32
 @patch
 def _run_epoch(self: FLAgent):
-    total_loss = 0
-    lst_metrics= [] 
-    num_trained = 0
-    progress_bar = tqdm(range(len(self.train_loader)))
 
-    self.model.train()
     for i, batch in enumerate(self.train_loader):
-        
         batch = self.get_batch(batch)
-        loss, train_metrics = self._run_batch(batch)
-        lst_metrics.append(train_metrics)
-        
-        if num_trained == 0:
-            num_trained = 1e-10
-
-        if loss.item() != 0:
-            total_loss += loss.item()
-            num_trained += len(batch[self.data_key])
-            
-    epoch_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in list(self.cfg.training_metrics)}
-
-    return total_loss / num_trained, epoch_metrics
+        self._run_batch(batch)
 
 # %% ../../nbs/02_federated.agents.ipynb 33
 @patch
 def fit(self: FLAgent) -> dict:
     
     self.model = self.model.to(self.device)
-    train_loss = []
-    train_metrics = []
+    self.model.train()
     for _ in range(self.cfg.local_epochs):
-        
-        avg_train_loss, metrics_train = self._run_epoch()
-        train_loss.append(avg_train_loss)
-        train_metrics.append(metrics_train)
-
-    # average the metrics across all local rounds to get local train metrics (e.g, train accuracy)
-    if len(train_metrics) == 0:
-        train_metrics = {k: 0 for k in self.cfg.training_metrics}
-    else:
-        train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in list(self.cfg.training_metrics)}
-
-    return {'loss': np.mean(train_loss), 'metrics': train_metrics}
-    
+        self._run_epoch()
 
 
 # %% ../../nbs/02_federated.agents.ipynb 34
 @patch
-def test(self: FLAgent) -> dict:
+def evaluate_local(self: FLAgent, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
     self.model = self.model.to(self.device)
     self.model.eval()
     num_eval = 0
+    data_loader = self.train_loader if loader == 'train' else self.test_loader
     
     with torch.no_grad():
-        for i, batch in enumerate(self.test_loader):
+        for i, batch in enumerate(data_loader):
             batch = self.get_batch(batch)
 
-            test_loss, test_metrics = self._closure(batch)                 
+            loss, metrics = self._closure(batch)                 
 
-            if not math.isnan(test_loss.item()) and (self.cfg.model.grad_norm_clip <= 0 or test_loss.item() != 0.0):
-                total_loss += test_loss.item()  
+            if not math.isnan(loss.item()):
+                total_loss += loss.item()  
                 num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
-                lst_metrics.append(test_metrics)           
+                lst_metrics.append(metrics)           
     
     avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
 
     if lst_metrics:
-        total_test_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
+        total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
     else:
-        total_test_metrics = {k: 0.0 for k in self.cfg.test_metrics}
+        total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
 
-    return {"loss": avg_loss, "metrics": total_test_metrics}
+    return {"loss": avg_loss, "metrics": total_metrics}
 
 
 # %% ../../nbs/02_federated.agents.ipynb 35

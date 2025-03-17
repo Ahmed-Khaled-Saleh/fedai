@@ -32,7 +32,7 @@ def write(self: WandbWriter, lst_active_ids, lst_train_res, lst_test_res, round)
     local_train_metrics = [r["metrics"] for r in lst_train_res] if lst_train_res else []
 
     lst_train_histories = [{"client_id": client_id, "loss": loss, **metrics} 
-                           for client_id, loss, metrics in zip(lst_active_ids, local_train_losses, local_train_metrics)]
+                           for client_id, loss, metrics in zip(range(len(lst_test_res)), local_train_losses, local_train_metrics)]
     train_table = wandb.Table(dataframe=pd.DataFrame(lst_train_histories))
 
     # Test results (for all clients)
@@ -62,6 +62,7 @@ def write(self: WandbWriter, lst_active_ids, lst_train_res, lst_test_res, round)
               f"Round {round} Test metrics": test_table}
 
     self.run.log(to_log)
+    return pd.DataFrame(lst_train_histories), pd.DataFrame(lst_test_histories)
 
 
 # %% ../nbs/10_wandb_writer.ipynb 8
@@ -72,9 +73,12 @@ def avg_lst_dicts(self: WandbWriter, lst_dict):
 # %% ../nbs/10_wandb_writer.ipynb 9
 @patch
 def save(self: WandbWriter, res):
-    df = pd.concat([pd.DataFrame(d1) for d1 in res])
-    os.makedirs(self.cfg.res_dir, exist_ok=True)
-    df.to_csv(f"{self.cfg.res_dir}/results.csv", index=False)
+    train_df = pd.concat([pd.DataFrame(d0) for d0 in res[0]])
+    test_df = pd.concat([pd.DataFrame(d1) for d1 in res[1]])
+
+    os.makedirs(self.cfg.save_dir, exist_ok=True)
+    test_df.to_csv(f"{self.cfg.save_dir}/test.csv", index=False)
+    train_df.to_csv(f"{self.cfg.save_dir}/train.csv", index=False)
 
 # %% ../nbs/10_wandb_writer.ipynb 10
 @patch
