@@ -32,6 +32,7 @@ from ..metrics import *
 from transformers import AutoTokenizer
 from omegaconf.dictconfig import DictConfig
 import numpy as np
+import math
 np.random.seed(42)
 torch.manual_seed(42)
 
@@ -198,26 +199,25 @@ def _forward(self: FLAgent, batch):
 # %% ../../nbs/02_federated.agents.ipynb 30
 @patch
 def _closure(self: FLAgent, batch: dict) -> tuple:
+    metrics = {k: 0 for k in self.cfg.training_metrics}  # Ensure metrics is always defined
+
     try:
         loss, logits = self._forward(batch)
-        probs =  torch.nn.functional.softmax(logits, dim= -1)
-        y_pred = probs.argmax(dim= -1)
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        y_pred = probs.argmax(dim=-1)
         y_true = batch[self.label_key]
 
-        if self.cfg.training_metrics:
+        if hasattr(self, "training_metrics") and self.cfg.training_metrics:
             if hasattr(self, "tokenizer"):
-                metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true, tokenizer= self.tokenizer)
+                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true, tokenizer=self.tokenizer)
             else:
-                metrcis = self.training_metrics.compute(y_pred= y_pred, y_true= y_true)
-                
-        else:
-            metrcis = {k: 0 for k in self.cfg.training_metrics}
-            
+                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true)
+
     except Exception as e:
-        metrcis = {k: 0 for k in self.cfg.training_metrics}
-        return torch.tensor(float(0), device=self.device), metrcis
-        
-    return loss, metrcis
+        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics  # Return safe values
+
+    return loss, metrics
+
 
 # %% ../../nbs/02_federated.agents.ipynb 31
 @patch
@@ -301,22 +301,24 @@ def test(self: FLAgent) -> dict:
     
     with torch.no_grad():
         for i, batch in enumerate(self.test_loader):
-            
             batch = self.get_batch(batch)
-
-            if num_eval == 0:
-                num_eval = 1e-10
 
             test_loss, test_metrics = self._closure(batch)                 
 
-            if (not torch.isnan(test_loss)) and (self.cfg.model.grad_norm_clip <= 0 or test_loss != 0.0):
+            if not math.isnan(test_loss.item()) and (self.cfg.model.grad_norm_clip <= 0 or test_loss.item() != 0.0):
                 total_loss += test_loss.item()  
-                num_eval += len(batch[self.data_key])
+                num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
                 lst_metrics.append(test_metrics)           
-            
-    total_test_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in list(self.cfg.test_metrics)}
+    
+    avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
 
-    return {"loss": total_loss / num_eval, "metrics": total_test_metrics}
+    if lst_metrics:
+        total_test_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
+    else:
+        total_test_metrics = {k: 0.0 for k in self.cfg.test_metrics}
+
+    return {"loss": avg_loss, "metrics": total_test_metrics}
+
 
 # %% ../../nbs/02_federated.agents.ipynb 35
 @patch
@@ -399,9 +401,10 @@ class Fedu(FLAgent):
         
         super().__init__(id, cfg, state, role, block)
 
-        self.alk_connection = np.random.rand(self.cfg.num_clients, self.cfg.num_clients)
-        self.alk_connection = self.alk_connection / self.alk_connection.sum(axis=1)[:, None]
-
+        b = np.random.uniform(0,1,size=(self.cfg.num_clients, self.cfg.num_clients))
+        b_symm = (b + b.T)/2
+        b_symm[b_symm < 0.25] = 0
+        self.alk_connection = b_symm
 
 # %% ../../nbs/02_federated.agents.ipynb 46
 @patch
