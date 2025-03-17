@@ -131,7 +131,7 @@ def runFL(self: FLAgent):
         len_clients_ds = []
         round_res = []
 
-        test_history = self.server_test(all_ids, t)
+        test_history = self.server_test(t)
         round_res.append(test_history)
         
         for id in lst_active_ids:
