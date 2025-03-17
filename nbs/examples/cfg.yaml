@@ -17,6 +17,7 @@ writer: WandbWriter
 
 
 # save and log directories
+root_dir: root
 save_dir : models
 res_dir: results
 log_dir: logs
