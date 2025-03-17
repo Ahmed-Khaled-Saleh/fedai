@@ -157,10 +157,10 @@ def runFL(self: FLAgent):
 
 # %% ../../nbs/02_federated.agents.ipynb 24
 @patch
-def server_test(self: FLAgent, all_ids, t):
+def server_test(self: FLAgent, t):
     losses = []
     metrics = []
-    for id in all_ids:
+    for id in range(self.cfg.num_clients):
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
         client_loss, client_metrics = client.test()
         losses.append(client_loss)
