@@ -11,6 +11,7 @@ import pandas as pd
 import wandb
 import os
 import argparse
+import numpy as np
 
 # %% ../nbs/10_wandb_writer.ipynb 4
 class WandbWriter:
@@ -22,23 +23,60 @@ class WandbWriter:
         wandb.login(key=key, verify=False)
         self.run = wandb.init(project=self.cfg.project_name, name= self.exp_name, config=self.cfg)
 
-# %% ../nbs/10_wandb_writer.ipynb 5
+# %% ../nbs/10_wandb_writer.ipynb 7
 @patch
-def write(self: WandbWriter, lst_metrics, round):
-    table = wandb.Table(dataframe= pd.DataFrame(lst_metrics))
-    avg_metrics = {key: sum(d[key] for d in lst_metrics) / len(lst_metrics) for key in lst_metrics[0]}
-    all_metrics = {f"Round {round} Metrics": table}
-    all_metrics.update(avg_metrics)
-    self.run.log(all_metrics)
+def write(self: WandbWriter, lst_active_ids, lst_train_res, lst_test_res, round):
 
-# %% ../nbs/10_wandb_writer.ipynb 6
+    # Training results (for participating clients)
+    local_train_losses = [r["loss"] for r in lst_train_res] if lst_train_res else []
+    local_train_metrics = [r["metrics"] for r in lst_train_res] if lst_train_res else []
+
+    lst_train_histories = [{"client_id": client_id, "loss": loss, **metrics} 
+                           for client_id, loss, metrics in zip(lst_active_ids, local_train_losses, local_train_metrics)]
+    train_table = wandb.Table(dataframe=pd.DataFrame(lst_train_histories))
+
+    # Test results (for all clients)
+    local_test_losses = [r["loss"] for r in lst_test_res] if lst_test_res else []
+    local_test_metrics = [r["metrics"] for r in lst_test_res] if lst_test_res else []
+
+    lst_test_histories = [{"client_id": client_id, "loss": loss, **metrics} 
+                          for client_id, loss, metrics in zip(range(len(lst_test_res)), local_test_losses, local_test_metrics)]
+    test_table = wandb.Table(dataframe=pd.DataFrame(lst_test_histories))
+
+    # Compute averages safely
+    avg_train_losses = np.mean(local_train_losses) if local_train_losses else 0.0
+    avg_train_metrics = self.avg_lst_dicts(local_train_metrics) if local_train_metrics else {}
+
+    avg_test_losses = np.mean(local_test_losses) if local_test_losses else 0.0
+    avg_test_metrics = self.avg_lst_dicts(local_test_metrics) if local_test_metrics else {}
+
+    # Prepare logs
+    train_metrics = {f"train_{k}": v for k, v in avg_train_metrics.items()}
+    test_metrics = {f"test_{k}": v for k, v in avg_test_metrics.items()}
+
+    to_log = {"train_loss": avg_train_losses,
+              **train_metrics,
+              "avg_test_loss": avg_test_losses,
+              **test_metrics,
+              f"Round {round} Train metrics": train_table,
+              f"Round {round} Test metrics": test_table}
+
+    self.run.log(to_log)
+
+
+# %% ../nbs/10_wandb_writer.ipynb 8
+@patch
+def avg_lst_dicts(self: WandbWriter, lst_dict):
+    return {key: sum(d[key] for d in lst_dict) / len(lst_dict) for key in lst_dict[0]}
+
+# %% ../nbs/10_wandb_writer.ipynb 9
 @patch
 def save(self: WandbWriter, res):
     df = pd.concat([pd.DataFrame(d1) for d1 in res])
     os.makedirs(self.cfg.res_dir, exist_ok=True)
     df.to_csv(f"{self.cfg.res_dir}/results.csv", index=False)
 
-# %% ../nbs/10_wandb_writer.ipynb 7
+# %% ../nbs/10_wandb_writer.ipynb 10
 @patch
 def finish(self: WandbWriter):
     self.run.finish()

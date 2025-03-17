@@ -131,7 +131,7 @@ def runFL(self: FLAgent):
         len_clients_ds = []
         round_res = []
 
-        test_history = self.server_test(t)
+        test_res = self.server_test(t)
         
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
@@ -139,16 +139,16 @@ def runFL(self: FLAgent):
             
             self.communicate(client) 
 
-            client_history = client.fit() 
-            client_history.update(test_history)
-            round_res.append(client_history)
+            train_history = client.fit() # train_history = {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}
+            round_res.append(train_history) 
             res.append(round_res)
 
             client.communicate(self) 
             self.latest_round[id] = t 
 
         self.aggregate(lst_active_ids, t, len_clients_ds) 
-        self.writer.write(round_res, t) 
+        #round_res = [{'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}, {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}]
+        self.writer.write(lst_active_ids, round_res, test_res, t) 
         
     self.writer.save(res)
     self.writer.finish()
@@ -158,23 +158,14 @@ def runFL(self: FLAgent):
 # %% ../../nbs/02_federated.agents.ipynb 24
 @patch
 def server_test(self: FLAgent, t):
-    losses = []
-    metrics = []
+    lst_res = []
     for id in range(self.cfg.num_clients):
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
-        client_loss, client_metrics = client.test()
-        losses.append(client_loss)
-        metrics.append(client_metrics)
+        res = client.test()
+        lst_res.append(res)
+    return lst_res    
+    #[{'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}, {'loss': 0.2, 'metrics': {"accuracy": 0.5, "f1": 0.6}}]
     
-    avg_loss = np.mean(losses)
-
-    avg_metrics = {k: np.mean([m[k] for m in metrics]) for k in list(self.cfg.test_metrics)}
-    avg_metrics = {f'test_{k}': v for k, v in avg_metrics.items()}
-
-    history = {"test_loss": avg_loss}
-    history.update(avg_metrics)
-    
-    return history
 
 # %% ../../nbs/02_federated.agents.ipynb 26
 @patch
@@ -276,7 +267,6 @@ def _run_epoch(self: FLAgent):
 def fit(self: FLAgent) -> dict:
     
     self.model = self.model.to(self.device)
-    # test_loss, test_metrics = self.test()
     train_loss = []
     train_metrics = []
     for _ in range(self.cfg.local_epochs):
@@ -288,18 +278,14 @@ def fit(self: FLAgent) -> dict:
     # average the metrics across all local rounds to get local train metrics (e.g, train accuracy)
     train_metrics = {k: sum([m[k] for m in train_metrics]) / len(train_metrics) for k in list(self.cfg.training_metrics)}
 
-    train_metrics = {f'train_{k}': v for k, v in train_metrics.items()}
-    # test_metrics = {f'test_{k}': v for k, v in test_metrics.items()}
+    # train_metrics = {f'train_{k}': v for k, v in train_metrics.items()}
 
-    history =  {
-        'train_loss': np.mean(train_loss)
-        # 'test_loss': test_loss,
-    }
+    # history =  {
+    #     'train_loss': np.mean(train_loss)
+    # }
 
-    history.update(train_metrics)
-    # history.update(test_metrics)
-    
-    return history
+    # history.update(train_metrics)
+    return {'loss': np.mean(train_loss), 'metrics': train_metrics}
     
 
 
@@ -330,7 +316,7 @@ def test(self: FLAgent) -> dict:
             
     total_test_metrics = {k: sum([m[k] for m in lst_metrics]) / len(lst_metrics) for k in list(self.cfg.test_metrics)}
 
-    return total_loss / num_eval, total_test_metrics
+    return {"loss": total_loss / num_eval, "metrics": total_test_metrics}
 
 # %% ../../nbs/02_federated.agents.ipynb 35
 @patch
