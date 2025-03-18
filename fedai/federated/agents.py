@@ -127,9 +127,13 @@ def runFL(self: FLAgent):
     res =  []
     all_ids = self.client_selector.select()
     
-    for t in range(1, self.cfg.n_rounds):
+    for t in range(1, self.cfg.n_rounds + 1):
         lst_active_ids = all_ids[t]
         len_clients_ds = []
+        
+        train_res, test_res = self.evaluate(t)
+        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
+        res.append((train_df, test_df))
         
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
@@ -143,9 +147,7 @@ def runFL(self: FLAgent):
 
         self.aggregate(lst_active_ids, t, len_clients_ds)
         
-        train_res, test_res = self.evaluate(t)
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
+        
         
         
     self.writer.save(res)
@@ -167,7 +169,7 @@ def evaluate(self: FLAgent, t):
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
     return lst_train_res, lst_test_res    
-    
+
 
 # %% ../../nbs/02_federated.agents.ipynb 26
 @patch
@@ -226,7 +228,7 @@ def _run_batch(self: FLAgent, batch: dict) -> tuple:
     self.model.zero_grad()
     loss, metrics = self._closure(batch)
 
-    if loss.item() == 0:
+    if loss.item() == 0.0:
         return loss, metrics
     
     loss.backward()
@@ -270,7 +272,6 @@ def evaluate_local(self: FLAgent, loader= 'train') -> dict:
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             batch = self.get_batch(batch)
-
             loss, metrics = self._closure(batch)                 
 
             if not math.isnan(loss.item()):
