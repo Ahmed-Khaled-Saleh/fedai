@@ -56,7 +56,7 @@ def write(self: WandbWriter, lst_active_ids, lst_train_res, lst_test_res, round)
 
     to_log = {"train_loss": avg_train_losses,
               **train_metrics,
-              "avg_test_loss": avg_test_losses,
+              "test_loss": avg_test_losses,
               **test_metrics,
               f"Round {round} Train metrics": train_table,
               f"Round {round} Test metrics": test_table}
@@ -76,9 +76,9 @@ def save(self: WandbWriter, res):
     train_df = pd.concat([pd.DataFrame(d0) for d0 in res[0]])
     test_df = pd.concat([pd.DataFrame(d1) for d1 in res[1]])
 
-    os.makedirs(self.cfg.save_dir, exist_ok=True)
-    test_df.to_csv(f"{self.cfg.save_dir}/test.csv", index=False)
-    train_df.to_csv(f"{self.cfg.save_dir}/train.csv", index=False)
+    os.makedirs(self.cfg.res_dir, exist_ok=True)
+    test_df.to_csv(f"{self.cfg.res_dir}/test.csv", index=False)
+    train_df.to_csv(f"{self.cfg.res_dir}/train.csv", index=False)
 
 # %% ../nbs/10_wandb_writer.ipynb 10
 @patch
