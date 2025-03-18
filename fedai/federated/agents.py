@@ -336,7 +336,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
                     for key, value in client_state_dict.items()
                 }
 
-            n_k = len_clients_ds[id]
+            n_k = len_clients_ds[i]
             weight =  n_k / m_t 
 
         
