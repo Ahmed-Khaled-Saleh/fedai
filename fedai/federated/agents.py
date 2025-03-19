@@ -691,11 +691,11 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
 
         optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
         for i, batch in enumerate(self.train_loader):
-            batch = self.get_batch(batch)
+            batch = client.get_batch(batch)
             X = batch['x']
             optimizer.zero_grad()
             h_prime = client.model.encoder(X)
-            loss = self.alignment_criterion(h_prime, h_c)
+            loss = client.alignment_criterion()(h_prime, h_c)
             loss.backward()
             optimizer.step()
             h_c = self.cfg.beta1 * h_c + (1-self.cfg.beta1) * h_prime
