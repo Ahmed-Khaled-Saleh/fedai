@@ -578,7 +578,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
         
-    return graph
+    return G
 
 # %% ../../nbs/02_federated.agents.ipynb 61
 @patch
