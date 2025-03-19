@@ -10,6 +10,7 @@ from fastcore.utils import *
 from fastcore.all import *
 import os
 import networkx as nx
+import pickle
 import json
 from collections import defaultdict,OrderedDict
 from copy import deepcopy
@@ -602,7 +603,8 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
     self.graph = self.build_graph(lst_active_ids, comm_round)
     graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
-    nx.write_gpickle(self.graph, graph_path)
+    with open(graph_path, "wb") as f:
+        pickle.dump(self.g, f, pickle.HIGHEST_PROTOCOL)
 
     self.colaitions = self.get_coalitions(self.graph)
     coalitions_path = os.path.join(self.cfg.save_dir, str(comm_round), "coalitions.pth")
