@@ -711,7 +711,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             loss.backward()
             optimizer.step()
             with torch.no_grad():
-                client.h_c.data.mul_(self.cfg.beta1).add_(1-self.cfg.beta1, h_prime.data)
+                client.h_c.data.mul_(self.cfg.beta1).add_(h_prime.data, alpha=1 - self.cfg.beta1)
 
         
         state = {
@@ -721,7 +721,9 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
         }
 
         state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_aligned_{id}", "state.pth")
-        
+        if not os.path.exists(os.path.dirname(state_path)):
+            os.makedirs(os.path.dirname(state_path))
+
         torch.save(state, state_path)
 
         for param in client.model.classifier.parameters():
