@@ -505,7 +505,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
     data_point = self.train_ds[np.random.randint(0, len(self.train_ds))]
     data_point = self.get_batch(data_point)
     data = data_point['x']
-    batched_data_point = data.view(1, -1)
+    batched_data_point = data.view(1, 3, 32, 32)
     state_dict['h'] = self.model.encoder(batched_data_point)
 
     torch.save(state_dict, state_path)
