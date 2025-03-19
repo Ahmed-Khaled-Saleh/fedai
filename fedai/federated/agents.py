@@ -450,11 +450,7 @@ def runFL(self: DMTL):
     for t in range(1, self.cfg.n_rounds + 1):
         lst_active_ids = all_ids[t]
         len_clients_ds = {}
-        
-        train_res, test_res = self.evaluate(t)
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
-        
+               
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'local_output_aligned_')
             len_clients_ds[id] = len(client.train_ds)
@@ -467,7 +463,10 @@ def runFL(self: DMTL):
 
         self.aggregate(lst_active_ids, t, len_clients_ds)
         self.extra_computation(lst_active_ids, t)
-                
+        
+        train_res, test_res = self.evaluate(t)
+        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
+        res.append((train_df, test_df))
         
     self.writer.save(res)
     self.writer.finish()
@@ -578,7 +577,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
         
-    return G
+    return G, graph
 
 # %% ../../nbs/02_federated.agents.ipynb 61
 @patch
@@ -601,24 +600,24 @@ def get_shapley_vals(self: DMTL):
 @patch
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
-    self.graph = self.build_graph(lst_active_ids, comm_round)
+    self.graph, self.akl_connection = self.build_graph(lst_active_ids, comm_round)
     graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
     with open(graph_path, "wb") as f:
         pickle.dump(self.graph, f, pickle.HIGHEST_PROTOCOL)
 
-    self.colaitions = self.get_coalitions(self.graph)
+    self.coalitions = self.get_coalitions(self.graph)
     coalitions_path = os.path.join(self.cfg.save_dir, str(comm_round), "coalitions.pth")
-    torch.save(self.colaitions, coalitions_path)
+    torch.save(self.coalitions, coalitions_path)
 
     global_lr = float(self.cfg.lr) * float(self.cfg.local_epochs)
     reg_param = self.cfg.lambda_
     
     with torch.no_grad():
         coalitions_reprs = {}
-        for col_ind, col in self.colaitions.items():
+        for col_ind, lst_clients in self.coalitions.items():
 
-            m_t = sum(len_clients_ds[id] for id in col)
-            for i, id in enumerate(col):
+            m_t = sum(len_clients_ds[id] for id in lst_clients)
+            for i, id in enumerate(lst_clients):
                 if not id in lst_active_ids:
                     continue
                 state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
@@ -635,8 +634,8 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
             coalitions_reprs[col_ind] = col_repr
             
 
-        for col_ind, col in self.colaitions.items():
-            for i, id in enumerate(col):
+        for col_ind, lst_clients in self.coalitions.items():
+            for i, id in enumerate(lst_clients):
                 if not id in lst_active_ids:
                     continue
                 state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
@@ -650,7 +649,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                     for key, value in client_model.classifier.items()
                 }
 
-                for j, other_id in enumerate(col):
+                for j, other_id in enumerate(lst_clients):
                     if i == j:
                         continue
                     other_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{other_id}", "state.pth")
@@ -658,9 +657,9 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                     other_state = torch.load(other_state_path, weights_only= False)
                     other_client_model = other_state['model']
 
-                    weight = self.graph[i, j]['weight']
+                    a_kl = self.akl_connection[i, j]
                     for key in client_model.classifier.keys():
-                        client_diff[key].add_(weight * (client_model.classifier[key] - other_client_model.classifier[key]))
+                        client_diff[key].add_(a_kl * (client_model.classifier[key] - other_client_model.classifier[key]))
 
                 for key in client_model.classifier:
                     client_model.classifier[key].sub_(global_lr * reg_param * client_diff[key])
@@ -668,7 +667,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                 clinet_state = {
                     'model': client_model,
                     'h': client_h,
-                    'h_c': coalitions_reprs[col]
+                    'h_c': coalitions_reprs[col_ind],
                 }
 
                 agg_client_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
