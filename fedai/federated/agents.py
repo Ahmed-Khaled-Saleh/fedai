@@ -697,14 +697,14 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             param.requires_grad = False
 
         client.model = client.model.to(client.device)
-
+        client.h_c = client.h_c.to(client.device)
         optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
         for i, batch in enumerate(client.train_loader):
             batch = client.get_batch(batch)
             X = batch['x']
             optimizer.zero_grad()
             h_prime = client.model.encoder(X)
-            client.h_c = client.h_c.to(client.device)
+            
             loss = client.alignment_criterion()(h_prime, client.h_c)
             loss.backward()
             optimizer.step()
