@@ -706,7 +706,6 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             X = batch['x']
             optimizer.zero_grad()
             h_prime = client.model.encoder(X)
-            
             loss = client.alignment_criterion()(h_prime, client.h_c)
             loss.backward()
             optimizer.step()
@@ -715,7 +714,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
 
         
         state = {
-            'model': client.model,
+            'model': client.model.state_dict(),
             'h_c': client.h_c,
             'h': client.h
         }
