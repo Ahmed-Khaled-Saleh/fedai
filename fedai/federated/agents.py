@@ -494,10 +494,7 @@ def evaluate(self: DMTL, t):
 def save_state(self: DMTL, state_dict):  # noqa: F811
     # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
     
-    state_path = os.path.join(self.cfg.save_dir, 
-                              str(self.t),
-                              f"local_output_{self.id}",
-                              "state.pth")
+    state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
     if not os.path.exists(os.path.dirname(state_path)):
         os.makedirs(os.path.dirname(state_path))
 
@@ -509,7 +506,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
     data_point = self.get_batch(data_point)
     data = data_point['x']
     batched_data_point = data.view(1, -1)
-    state_dict['h'] = self.cfg.model.encoder(batched_data_point)
+    state_dict['h'] = self.model.encoder(batched_data_point)
 
     torch.save(state_dict, state_path)
 
