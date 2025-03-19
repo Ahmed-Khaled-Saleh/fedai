@@ -604,7 +604,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
     self.graph = self.build_graph(lst_active_ids, comm_round)
     graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
     with open(graph_path, "wb") as f:
-        pickle.dump(self.g, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(self.graph, f, pickle.HIGHEST_PROTOCOL)
 
     self.colaitions = self.get_coalitions(self.graph)
     coalitions_path = os.path.join(self.cfg.save_dir, str(comm_round), "coalitions.pth")
@@ -658,7 +658,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                     other_state = torch.load(other_state_path, weights_only= False)
                     other_client_model = other_state['model']
 
-                    weight = self.graph[int(id), int(other_id)]['weight']
+                    weight = self.graph[i, j]['weight']
                     for key in client_model.classifier.keys():
                         client_diff[key].add_(weight * (client_model.classifier[key] - other_client_model.classifier[key]))
 
