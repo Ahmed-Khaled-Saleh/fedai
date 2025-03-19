@@ -559,8 +559,9 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             w_sim = self.model_similarity(model1, model2)
             h_sim = self.h_similarity(h1, h2)
 
-            graph[id][other_id] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
-            graph[other_id][id] = graph[id][other_id]
+            graph[i][j] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
+            graph[i][j] = graph[i][j]
+
             visited[(id, other_id)] = True
             visited[(other_id, id)] = True
 
@@ -568,12 +569,14 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     for i in range(num_active):
         for j in range(num_active):
             if i != j:
-                edges.append((i, j, graph
-                              [i][j]))
+                edges.append((i, j, graph[i][j]))
                 
     G = nx.Graph()
     G.add_weighted_edges_from(edges)
 
+    for node, label in zip(list(range(num_active)), lst_active_ids):
+        G.nodes[node]['label'] = label
+        
     return graph
 
 # %% ../../nbs/02_federated.agents.ipynb 61
@@ -598,11 +601,10 @@ def get_shapley_vals(self: DMTL):
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
     self.graph = self.build_graph(lst_active_ids, comm_round)
+    graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
+    nx.write_gpickle(self.graph, graph_path)
+
     self.colaitions = self.get_coalitions(self.graph)
-
-    graph_path = os.path.join(self.cfg.save_dir, str(comm_round), "graph.edgelist")
-    nx.write_edgelist(self.graph, graph_path)
-
     coalitions_path = os.path.join(self.cfg.save_dir, str(comm_round), "coalitions.pth")
     torch.save(self.colaitions, coalitions_path)
 
