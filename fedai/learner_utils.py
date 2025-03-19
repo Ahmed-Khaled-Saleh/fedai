@@ -81,6 +81,8 @@ def get_criterion(customm_fn):
         return nn.CrossEntropyLoss()
 
 # %% ../nbs/10_learner_utils.ipynb 9
+from peft import *  # type: ignore # noqa: F403
+
 def load_state_from_disk(cfg, state, latest_round, id, t):
     
     if cfg.agg == "one_model":
@@ -88,37 +90,35 @@ def load_state_from_disk(cfg, state, latest_round, id, t):
                                         str(t-1),
                                         "global_model",
                                         "state.pth")
-        
+
         gloabal_model_state = torch.load(global_model_path, weights_only= False)
-        
-        if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
+        # print(type(state["model"]))
+        if isinstance(state["model"], torch.nn.Module):
             state["model"].load_state_dict(gloabal_model_state["model"])
-            
+            print(f"Loaded Global model state from {global_model_path}")
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       gloabal_model_state["model"],
                                       "default")
-        print(f"Loaded client model state from {global_model_path}")
 
     else:
         if id not in latest_round:
             return state
-        
+
         latest_comm_round = latest_round[id]
         old_state_path = os.path.join(cfg.save_dir,
                                        str(latest_comm_round),
                                        f"aggregated_model_{id}",
                                        "state.pth")
-        
+
         old_saved_state = torch.load(old_state_path, weights_only= False)
 
-        if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict):
+        if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict) :
             state["model"].load_state_dict(old_saved_state["model"])
-            
+            print(f"Loaded client model state from {old_state_path}")
         else:
             set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
                                       old_saved_state["model"],
-                                      "default")    
-        print(f"Loaded client model state from {old_state_path}")
-        
+                                      "default")
+
     return state
