@@ -615,7 +615,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
     
     with torch.no_grad():
         coalitions_reprs = {}
-        for col in self.colaitions:
+        for col_ind, col in self.colaitions.items():
 
             m_t = sum(len_clients_ds[id] for id in col)
             for i, id in enumerate(col):
@@ -632,10 +632,10 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                 weight =  n_k / m_t 
 
                 col_repr.add_(weight * client_h)
-            coalitions_reprs[col] = col_repr
+            coalitions_reprs[col_ind] = col_repr
             
 
-        for col in self.colaitions:
+        for col_ind, col in self.colaitions.items():
             for i, id in enumerate(col):
                 if not id in lst_active_ids:
                     continue
