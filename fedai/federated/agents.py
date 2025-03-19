@@ -696,7 +696,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             param.requires_grad = False
 
         optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
-        for i, batch in enumerate(self.train_loader):
+        for i, batch in enumerate(client.train_loader):
             batch = client.get_batch(batch)
             X = batch['x']
             optimizer.zero_grad()
