@@ -646,7 +646,6 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                 
                 state = torch.load(state_path, weights_only= False)
                 client_model = state['model']
-                client_h = state['h']
 
                 client_diff = {
                     key: torch.zeros_like(value) 
@@ -672,7 +671,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
                 clinet_state = {
                     'model': client_model,
-                    'h': client_h,
+                    'h': state['h'],
                     'h_c': coalitions_reprs[col_ind],
                 }
 
@@ -698,6 +697,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
 
         client.model = client.model.to(client.device)
         client.h_c = client.h_c.to(client.device)
+
         optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
         for i, batch in enumerate(client.train_loader):
             batch = client.get_batch(batch)
@@ -708,19 +708,17 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             loss = client.alignment_criterion()(h_prime, client.h_c)
             loss.backward()
             optimizer.step()
-            client.h_c = self.cfg.beta1 * client.h_c + (1-self.cfg.beta1) * h_prime
-        
+            with torch.no_grad():
+                client.h_c.data.mul_(self.cfg.beta1).add_(1-self.cfg.beta1, h_prime.data)
 
+        
         state = {
             'model': client.model,
             'h_c': client.h_c,
             'h': client.h
         }
 
-        state_path = os.path.join(self.cfg.save_dir,
-                                  str(comm_round),
-                                  f"local_output_aligned_{id}",
-                                  "state.pth")
+        state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_aligned_{id}", "state.pth")
         
         torch.save(state, state_path)
 
