@@ -647,10 +647,10 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                 state = torch.load(state_path, weights_only= False)
                 client_model = state['model']
                 client_h = state['h']
-                
+
                 client_diff = {
                     key: torch.zeros_like(value) 
-                    for key, value in client_model.classifier.items()
+                    for key, value in client_model.items() if key.startswith("fc2") or key.startswith("dropout")
                 }
 
                 for j, other_id in enumerate(lst_clients):
@@ -662,11 +662,13 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
                     other_client_model = other_state['model']
 
                     a_kl = self.akl_connection[i, j]
-                    for key in client_model.classifier.keys():
-                        client_diff[key].add_(a_kl * (client_model.classifier[key] - other_client_model.classifier[key]))
+                    for key in client_model.keys():
+                        if key.startswith("fc2") or key.startswith("dropout"):
+                            client_diff[key].add_(a_kl * (client_model[key] - other_client_model[key]))
 
-                for key in client_model.classifier:
-                    client_model.classifier[key].sub_(global_lr * reg_param * client_diff[key])
+                for key in client_model.keys():
+                    if key.startswith("fc2") or key.startswith("dropout"):
+                        client_model[key].sub_(global_lr * reg_param * client_diff[key])
 
                 clinet_state = {
                     'model': client_model,
@@ -718,6 +720,9 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
                                   "state.pth")
         
         torch.save(state, state_path)
+
+        for param in client.model.classifier.parameters():
+            param.requires_grad = True
 
 # %% ../../nbs/02_federated.agents.ipynb 72
 class PeftAgent(FLAgent):
