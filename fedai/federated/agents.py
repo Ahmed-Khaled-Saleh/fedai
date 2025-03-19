@@ -698,7 +698,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
         client.model = client.model.to(client.device)
         client.h_c = client.h_c.to(client.device)
 
-        optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
+        optimizer = get_cls("torch.nn", self.cfg.optimizer2)(client.model.encoder.parameters(), lr=self.cfg.lr2)
         
         client.train_loader = torch.utils.data.DataLoader(client.train_ds, batch_size=1, shuffle=True)
         for i, batch in enumerate(client.train_loader):

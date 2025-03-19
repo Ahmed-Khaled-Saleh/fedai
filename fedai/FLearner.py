@@ -51,6 +51,7 @@ class FLearner:
         
         self.cfg = cfg
         self.cfg.now = datetime.now().strftime("%Y%m%d_%H%M%S")
+        cfg.root_dir = os.path.join(cfg.root_dir, cfg.project_name)
         self.cfg.save_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.save_dir)
         self.cfg.log_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.log_dir)
         self.cfg.res_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.res_dir)

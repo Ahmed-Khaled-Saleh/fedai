@@ -87,15 +87,14 @@ class Cifar10_20clients(torch.utils.data.Dataset):
         self.id = id
         self.download_data()
         self.data = self.load_client_data()
-    
-    
+
+
     def download_data(self):
-        if os.path.exists(os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "cifar10_test_20.zip")) and \
-        os.path.exists(os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "cifar10_train_20.zip")):
+        if os.path.exists(os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "cifar10_test_20.zip")):
             return
         else:
             os.makedirs(os.path.join(self.cfg.data.data_dir, self.cfg.data.name), exist_ok= True)
-        
+
         if self.train:
             url = "https://drive.google.com/file/d/14NBQaoW8etKzJ70Jf7BuANkR8MsN-j2Q/view?usp=sharing"
             output = os.path.join(self.cfg.data.data_dir, self.cfg.data.name, "cifar10_train_20.zip")
@@ -108,7 +107,7 @@ class Cifar10_20clients(torch.utils.data.Dataset):
             zip_ref.extractall(f'{self.train_path}' if self.train else f'{self.test_path}')
 
         print(f'Data downloaded and extracted to {self.train_path if self.train else self.test_path}')
-            
+
     def tensorify(self, data):
         X = torch.tensor(data['x'], dtype= torch.float32)
         y = torch.tensor(data['y'], dtype= torch.int64)
@@ -116,20 +115,21 @@ class Cifar10_20clients(torch.utils.data.Dataset):
 
     def load_client_data(self):
         path, dir = (self.train_path, 'train') if self.train else (self.test_path, 'test')
+        print(self.id)
         if self.id < 10:
             id = f'0000{self.id}'
         else:
             id = f'000{self.id}'
-        
+
         with h5py.File(os.path.join(path, f'f_{id}'), 'r') as hf_file:
             x = hf_file['x'][:]
             y = hf_file['y'][:]
         return self.tensorify({'x': x, 'y': y})
-    
+
     def __getitem__(self, idx):
         x = self.data['x'][idx]
         y = self.data['y'][idx]
         return {'x': x, 'y': y}
-    
+
     def __len__(self):
-        return len(self.data)
+        return len(self.data['y'])
