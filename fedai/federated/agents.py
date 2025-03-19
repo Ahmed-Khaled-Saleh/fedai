@@ -692,8 +692,11 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
     for id in lst_active_ids:
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, comm_round, self.loss_fn, to_read_from= 'aggregated_model_')
         
+        client.model.train()
         for param in client.model.classifier.parameters():
             param.requires_grad = False
+
+        client.model = client.model.to(client.device)
 
         optimizer = torch.optim.Adam(client.model.encoder.parameters(), lr=0.001)
         for i, batch in enumerate(client.train_loader):
@@ -701,12 +704,12 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
             X = batch['x']
             optimizer.zero_grad()
             h_prime = client.model.encoder(X)
-            loss = client.alignment_criterion()(h_prime, h_c)
+            client.h_c = client.h_c.to(client.device)
+            loss = client.alignment_criterion()(h_prime, client.h_c)
             loss.backward()
             optimizer.step()
-            h_c = self.cfg.beta1 * h_c + (1-self.cfg.beta1) * h_prime
+            client.h_c = self.cfg.beta1 * client.h_c + (1-self.cfg.beta1) * h_prime
         
-        client.h_c = h_c
 
         state = {
             'model': client.model,
