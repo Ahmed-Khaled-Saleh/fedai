@@ -691,26 +691,26 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
     for id in lst_active_ids:
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, comm_round, self.loss_fn, to_read_from= 'aggregated_model_', extra= True)
         
-        client.model.train()
-        for param in client.model.classifier.parameters():
-            param.requires_grad = False
+        # client.model.train()
+        # for param in client.model.classifier.parameters():
+        #     param.requires_grad = False
 
-        client.model = client.model.to(client.device)
-        client.h_c = client.h_c.to(client.device)
+        # client.model = client.model.to(client.device)
+        # client.h_c = client.h_c.to(client.device)
 
-        optimizer = get_cls("torch.nn", self.cfg.optimizer2)(client.model.encoder.parameters(), lr=self.cfg.lr2)
+        # optimizer = get_cls("torch.nn", self.cfg.optimizer2)(client.model.encoder.parameters(), lr=self.cfg.lr2)
         
-        client.train_loader = torch.utils.data.DataLoader(client.train_ds, batch_size=1, shuffle=True)
-        for i, batch in enumerate(client.train_loader):
-            batch = client.get_batch(batch)
-            X = batch['x']
-            optimizer.zero_grad()
-            h_prime = client.model.encoder(X)
-            loss = client.alignment_criterion()(h_prime, client.h_c)
-            loss.backward()
-            optimizer.step()
-            with torch.no_grad():
-                client.h_c.data.mul_(self.cfg.beta1).add_(h_prime.data, alpha=1 - self.cfg.beta1)
+        # client.train_loader = torch.utils.data.DataLoader(client.train_ds, batch_size=1, shuffle=True)
+        # for i, batch in enumerate(client.train_loader):
+        #     batch = client.get_batch(batch)
+        #     X = batch['x']
+        #     optimizer.zero_grad()
+        #     h_prime = client.model.encoder(X)
+        #     loss = client.alignment_criterion()(h_prime, client.h_c)
+        #     loss.backward()
+        #     optimizer.step()
+        #     with torch.no_grad():
+        #         client.h_c.data.mul_(self.cfg.beta1).add_(h_prime.data, alpha=1 - self.cfg.beta1)
 
         
         state = {
