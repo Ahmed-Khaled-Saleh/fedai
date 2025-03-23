@@ -451,7 +451,7 @@ class DMTL(FLAgent):
 # %% ../../nbs/02_federated.agents.ipynb 51
 @patch
 def server_init(self: DMTL, client_fn, client_selector, client_cls, loss_fn, writer):
-    super().server_init(client_fn, client_selector, client_cls, loss_fn, writer)
+    FLAgent.server_init(self, client_fn, client_selector, client_cls, loss_fn, writer)
     self.classes = self.cfg.data.classes
     self.idx_to_cls = {i: self.classes[i] for i in range(len(self.classes))}
 
