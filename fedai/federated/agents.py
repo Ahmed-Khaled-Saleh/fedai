@@ -138,7 +138,7 @@ def runFL(self: FLAgent):
         res.append((train_df, test_df))
         
         for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
+            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'global_model')
             len_clients_ds.append(len(client.train_ds))
             
             self.communicate(client) 
@@ -163,7 +163,7 @@ def evaluate(self: FLAgent, t):
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
-        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn)
+        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'global_model')
         
         res_train = client.evaluate_local(loader= 'train')
         lst_train_res.append(res_train)
@@ -355,8 +355,9 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
                                     str(comm_round),
                                     "global_model",
                                     "state.pth")
-        os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
-
+        
+        if not os.path.exists(os.path.dirname(server_state_path)):
+            os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
         torch.save(server_state, server_state_path)
 
     
@@ -441,10 +442,17 @@ class DMTL(FLAgent):
                  block= None):
         
         super().__init__(id, cfg, state, role, block)
-        self.anchorloss = AnchorLoss(self.cfg.num_classes, self.cfg.dims_feature).to(self.device)
-        self.label_set = set(self.train_ds[self.label_key].tolist())
+        self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
+        self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
 
-# %% ../../nbs/02_federated.agents.ipynb 50
+# %% ../../nbs/02_federated.agents.ipynb 51
+@patch
+def server_init(self: DMTL, client_fn, client_selector, client_cls, loss_fn, writer):
+    super().server_init(client_fn, client_selector, client_cls, loss_fn, writer)
+    self.classes = self.cfg.data.classes
+    self.idx_to_cls = {i: self.classes[i] for i in range(len(self.classes))}
+
+# %% ../../nbs/02_federated.agents.ipynb 52
 @patch
 def runFL(self: DMTL):
     res =  []
@@ -453,9 +461,9 @@ def runFL(self: DMTL):
     for t in range(1, self.cfg.n_rounds + 1):
         lst_active_ids = all_ids[t]
         len_clients_ds = {}
-               
+        
         for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'local_output_aligned_')
+            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'aggregated_model_')
             len_clients_ds[id] = len(client.train_ds)
             
             self.communicate(client) 
@@ -465,7 +473,7 @@ def runFL(self: DMTL):
             self.latest_round[id] = t 
 
         self.aggregate(lst_active_ids, t, len_clients_ds)
-        self.extra_computation(lst_active_ids, t)
+        # self.extra_computation(lst_active_ids, t)
         
         train_res, test_res = self.evaluate(t)
         train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
@@ -476,7 +484,7 @@ def runFL(self: DMTL):
 
     return res
 
-# %% ../../nbs/02_federated.agents.ipynb 51
+# %% ../../nbs/02_federated.agents.ipynb 53
 @patch
 def _forward(self: DMTL, batch):
     X, y = batch['x'], batch['y']
@@ -491,7 +499,7 @@ def _forward(self: DMTL, batch):
     loss = self.criterion(outputs, y_copied)
     return loss + loss_anchor, h, outputs, labels
 
-# %% ../../nbs/02_federated.agents.ipynb 52
+# %% ../../nbs/02_federated.agents.ipynb 54
 @patch
 def _closure(self: DMTL, batch: dict) -> tuple:
     metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
@@ -514,10 +522,10 @@ def _closure(self: DMTL, batch: dict) -> tuple:
     return loss, metrics, h, labels
 
 
-# %% ../../nbs/02_federated.agents.ipynb 53
+# %% ../../nbs/02_federated.agents.ipynb 55
 @patch
 def _run_batch(self: DMTL, batch: dict) -> tuple:
-    batch_mean_anchor = torch.zeros(self.cfg.num_classes, self.cfg.dims_feature).to(self.device)
+    batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
     self.model.zero_grad()
 
     loss, metrics, h, labels = self._closure(batch)
@@ -536,11 +544,11 @@ def _run_batch(self: DMTL, batch: dict) -> tuple:
 
     return loss, metrics, batch_mean_anchor
 
-# %% ../../nbs/02_federated.agents.ipynb 54
+# %% ../../nbs/02_federated.agents.ipynb 56
 @patch
 def _run_epoch(self: DMTL):
 
-    epoch_mean_anchor = torch.zeros(self.cfg.num_classes, self.cfg.dims_feature).to(self.device)
+    epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
     for batch_idx, batch in enumerate(self.train_loader):
         batch = self.get_batch(batch)
         _, _, batch_mean_anchor = self._run_batch(batch)
@@ -556,13 +564,13 @@ def _run_epoch(self: DMTL):
 
     self.anchorloss.anchor =  epoch_mean_anchor
 
-# %% ../../nbs/02_federated.agents.ipynb 55
+# %% ../../nbs/02_federated.agents.ipynb 57
 @patch
 def evaluate(self: DMTL, t):
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
-        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'local_output_aligned_')
+        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'aggregated_model_')
         
         res_train = client.evaluate_local(loader= 'train')
         lst_train_res.append(res_train)
@@ -572,34 +580,32 @@ def evaluate(self: DMTL, t):
     return lst_train_res, lst_test_res    
 
 
-# %% ../../nbs/02_federated.agents.ipynb 56
+# %% ../../nbs/02_federated.agents.ipynb 58
 @patch
 def pick_n_points(self: DMTL, n= 3):
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 59
+# %% ../../nbs/02_federated.agents.ipynb 61
 @patch
 def save_state(self: DMTL, state_dict):  # noqa: F811
     # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
     
-    state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
-    if not os.path.exists(os.path.dirname(state_path)):
-        os.makedirs(os.path.dirname(state_path))
-
+    
     state_dict['model'] = self.model.state_dict()
     state_dict['optimizer'] = self.optimizer.state_dict()
-
-    # # pick a random data point from each class (we have three classes) and save it to the state_dict
+    state_dict['h'] = self.anchorloss.anchor # (num_classes, hidden_size)
+    state_dict['label_set'] = self.label_set
+    
+    # pick a random data point from the train_ds and save it to the state_dict
     # data_point = self.train_ds[np.random.randint(0, len(self.train_ds))]
     # data_point = self.get_batch(data_point)
     # data = data_point['x']
+    # batched_data_point = data.view(1, 3, 32, 32) # (B, C, H, W)
+    # state_dict['h'] = self.model.encoder(batched_data_point)
 
-    # pick a random data point from the train_ds and save it to the state_dict
-    data_point = self.train_ds[np.random.randint(0, len(self.train_ds))]
-    data_point = self.get_batch(data_point)
-    data = data_point['x']
-    batched_data_point = data.view(1, 3, 32, 32) # (B, C, H, W)
-    state_dict['h'] = self.model.encoder(batched_data_point)
+    state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
+    if not os.path.exists(os.path.dirname(state_path)):
+        os.makedirs(os.path.dirname(state_path))
 
     torch.save(state_dict, state_path)
 
@@ -607,7 +613,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
         save_space(self)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 63
+# %% ../../nbs/02_federated.agents.ipynb 65
 @patch
 def model_similarity(self: DMTL, model1, model2):
     total_l1_norm = 0.0
@@ -620,13 +626,26 @@ def model_similarity(self: DMTL, model1, model2):
     
     return total_l1_norm
 
-# %% ../../nbs/02_federated.agents.ipynb 65
+# %% ../../nbs/02_federated.agents.ipynb 72
 @patch
-def h_similarity(self: DMTL, h1, h2):
-    h1, h2 = h1.squeeze(0), h2.squeeze(0)
-    return torch.nn.functional.cosine_similarity(h1, h2, dim=0).item()
+def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
+    h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
+    h2 = h2.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
+    
+    h1_norm = F.normalize(h1, p=2, dim=1)  # (3, 512)
+    h2_norm = F.normalize(h2, p=2, dim=1)  # (3, 512)
+    
+    cos_sim_matrix = torch.mm(h1_norm, h2_norm.T)  # (3, 3)
+    max_similarity = cos_sim_matrix.max(dim=1).values.mean()# This gives a higher similarity score if each class in h1 has at least one good match in h2.
+    data = cos_sim_matrix.numpy()
 
-# %% ../../nbs/02_federated.agents.ipynb 67
+    cols1 = [self.idx_to_cls[i] for i in label_set]
+    cols2 = [self.idx_to_cls[i] for i in label_set2]
+
+    df = pd.DataFrame(data, columns= cols1, index= cols2)
+    return df, max_similarity.item()
+
+# %% ../../nbs/02_federated.agents.ipynb 74
 @patch
 def sym_nromalization(self: DMTL, A):
     "normalize the adjacency matrix while ensuring symmetry"
@@ -644,7 +663,7 @@ def sym_nromalization(self: DMTL, A):
 
     return A_normalized
 
-# %% ../../nbs/02_federated.agents.ipynb 69
+# %% ../../nbs/02_federated.agents.ipynb 76
 @patch
 def build_graph(self: DMTL, lst_active_ids, comm_round):
 
@@ -652,12 +671,14 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     graph = np.random.rand(num_active, num_active)
     graph = graph / graph.sum(axis=1)[:, None]
 
+    pair_wise_h_df = []
     visited = {}
     for i, id in enumerate(lst_active_ids):
         state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
         state = torch.load(state_path, weights_only= False)
         model1 = state['model']
         h1 = state['h']
+        label_set = state['label_set']
 
         for j, other_id in enumerate(lst_active_ids):
             if i == j or (id, other_id) in visited:
@@ -666,9 +687,11 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             other_state = torch.load(other_state_path, weights_only= False)
             model2 = other_state['model']
             h2 = other_state['h']
+            label_set2 = state['label_set']
 
             w_sim = self.model_similarity(model1, model2)
-            h_sim = self.h_similarity(h1, h2)
+            h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
+            pair_wise_h_df.append(h_sim_df)
 
             graph[i][j] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
             graph[i][j] = graph[i][j]
@@ -689,10 +712,15 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
-        
+    
+    df_path = os.path.join(self.cfg.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
+    if not os.path.exists(os.path.dirname(df_path)):
+        os.makedirs(os.path.dirname(df_path))
+    torch.save(pair_wise_h_df, df_path)
+
     return G, graph
 
-# %% ../../nbs/02_federated.agents.ipynb 71
+# %% ../../nbs/02_federated.agents.ipynb 78
 @patch
 def get_coalitions(self: DMTL, G):
     correct_clients_indices = nx.get_node_attributes(G, 'label')
@@ -708,15 +736,16 @@ def get_coalitions(self: DMTL, G):
     return communities
 
 
-# %% ../../nbs/02_federated.agents.ipynb 74
+# %% ../../nbs/02_federated.agents.ipynb 81
 @patch
 def get_shapley_vals(self: DMTL):
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 76
+# %% ../../nbs/02_federated.agents.ipynb 83
 @patch
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
-
+    classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     self.graph, self.akl_connection = self.build_graph(lst_active_ids, comm_round)
     graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
     with open(graph_path, "wb") as f:
@@ -797,7 +826,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
 
 
-# %% ../../nbs/02_federated.agents.ipynb 79
+# %% ../../nbs/02_federated.agents.ipynb 86
 @patch
 def extra_computation(self: DMTL, lst_active_ids, comm_round):
     
@@ -841,7 +870,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
         for param in client.model.classifier.parameters():
             param.requires_grad = True
 
-# %% ../../nbs/02_federated.agents.ipynb 81
+# %% ../../nbs/02_federated.agents.ipynb 88
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -853,7 +882,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 82
+# %% ../../nbs/02_federated.agents.ipynb 89
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -869,13 +898,13 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 83
+# %% ../../nbs/02_federated.agents.ipynb 90
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 84
+# %% ../../nbs/02_federated.agents.ipynb 91
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -889,7 +918,7 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 86
+# %% ../../nbs/02_federated.agents.ipynb 93
 class FedSophiaAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -900,14 +929,14 @@ class FedSophiaAgent(FLAgent):
         super().__init__(id, cfg, state, role, block)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 87
+# %% ../../nbs/02_federated.agents.ipynb 94
 @patch
 def train(self: FedSophiaAgent):
     trainer = self.trainer(self) 
     client_history = trainer.fit() 
     return client_history
 
-# %% ../../nbs/02_federated.agents.ipynb 89
+# %% ../../nbs/02_federated.agents.ipynb 96
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -921,7 +950,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 90
+# %% ../../nbs/02_federated.agents.ipynb 97
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -953,7 +982,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 94
+# %% ../../nbs/02_federated.agents.ipynb 101
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -990,7 +1019,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 96
+# %% ../../nbs/02_federated.agents.ipynb 103
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -1059,7 +1088,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 101
+# %% ../../nbs/02_federated.agents.ipynb 108
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,

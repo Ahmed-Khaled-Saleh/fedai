@@ -7,7 +7,7 @@ n_rounds: 10
 m: 0.1 
 local_epochs: 2 # number of local epochs
 lr: 0.01 
-agg: one_model # aggregation method, either 'one_model' or 'diff'
+agg: one_model # aggregation method, either one_model or diff
 
 # FLearner arguments
 client_selector: BaseClientSelector
@@ -37,7 +37,8 @@ data:
   partitioner: DirPartitioner
   alpha: 0.1
   train_ratio: 0.75
-  num_classes: 2
+  num_classes: 3
+  classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
 # Model configuration
 model:
