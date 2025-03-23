@@ -744,8 +744,7 @@ def get_shapley_vals(self: DMTL):
 # %% ../../nbs/02_federated.agents.ipynb 83
 @patch
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
-    classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    
     self.graph, self.akl_connection = self.build_graph(lst_active_ids, comm_round)
     graph_path = os.path.join(self.cfg.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
     with open(graph_path, "wb") as f:
