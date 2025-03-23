@@ -445,7 +445,7 @@ class DMTL(FLAgent):
         
         if self.role == AgentRole.CLIENT:
             self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
-            self.anchorloss.anchor = state["h_c"]
+            self.anchorloss.anchor = self.h_c if self.t > 1 else self.anchorloss.anchor
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
 
 # %% ../../nbs/02_federated.agents.ipynb 51
