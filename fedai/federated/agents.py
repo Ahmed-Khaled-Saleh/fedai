@@ -227,7 +227,7 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
 # %% ../../nbs/02_federated.agents.ipynb 31
 @patch
 def _run_batch(self: FLAgent, batch: dict) -> tuple:
-    self.model.zero_grad()
+    self.optimizer.zero_grad()
     loss, metrics = self._closure(batch)
 
     if loss.item() == 0.0:
@@ -506,6 +506,7 @@ def _forward(self: DMTL, batch):
 @patch
 def _closure(self: DMTL, batch: dict) -> tuple:
     metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
+    h, labels = None, None
     try:
         loss, h, logits, labels = self._forward(batch)
 
@@ -520,7 +521,7 @@ def _closure(self: DMTL, batch: dict) -> tuple:
                 metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true)
 
     except Exception as e:
-        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics  # Return safe values
+        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics, h  # Return safe values
 
     return loss, metrics, h, labels
 
@@ -529,14 +530,16 @@ def _closure(self: DMTL, batch: dict) -> tuple:
 @patch
 def _run_batch(self: DMTL, batch: dict) -> tuple:
     batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
-    self.model.zero_grad()
+    self.optimizer.zero_grad()
 
     loss, metrics, h, labels = self._closure(batch)
+    if loss.item() == 0.0:
+        return loss, metrics, batch_mean_anchor
+    
     for i in set(labels.tolist()):
         batch_mean_anchor[i] += torch.mean(h[labels==i],dim=0)
 
-    if loss.item() == 0.0:
-        return loss, metrics
+    
     
     loss.backward()
     
