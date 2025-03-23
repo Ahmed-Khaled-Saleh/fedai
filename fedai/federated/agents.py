@@ -534,7 +534,7 @@ def _run_batch(self: DMTL, batch: dict) -> tuple:
     self.optimizer.zero_grad()
 
     loss, metrics, h, labels = self._closure(batch)
-    if loss.item() == 0.0:
+    if loss.item() == 0.0 or h is None:
         return loss, metrics, batch_mean_anchor
     
     for i in set(labels.tolist()):
