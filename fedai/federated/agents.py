@@ -521,7 +521,8 @@ def _closure(self: DMTL, batch: dict) -> tuple:
                 metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true)
 
     except Exception as e:
-        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics, h  # Return safe values
+        print(e)
+        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics, h, labels  # Return safe values
 
     return loss, metrics, h, labels
 
