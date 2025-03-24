@@ -539,9 +539,7 @@ def _run_batch(self: DMTL, batch: dict) -> tuple:
     
     for i in set(labels.tolist()):
         batch_mean_anchor[i] += torch.mean(h[labels==i],dim=0)
-
-    
-    
+   
     loss.backward()
     
     if self.cfg.model.grad_norm_clip:
