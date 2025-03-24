@@ -628,7 +628,7 @@ def model_similarity(self: DMTL, model1, model2):
         
         total_l1_norm += torch.norm(param1 - param2, p=1).item()
     
-    return total_l1_norm.item()
+    return total_l1_norm
 
 # %% ../../nbs/02_federated.agents.ipynb 73
 @patch
