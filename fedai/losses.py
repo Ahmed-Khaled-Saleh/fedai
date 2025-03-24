@@ -21,7 +21,12 @@ class AnchorLoss(nn.Module):
         self.num_classes = num_classes
         self.feature_num = feature_num
         self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
-        self.anchor = nn.Parameter(h_c, requires_grad= True) if t > 1 and h_c  else self.anchor
+        
+        if t > 1 and h_c is not None:
+            with torch.no_grad():  # This ensures the operation doesn't track gradients
+                h_c = h_c.to(self.device)
+                self.anchor.copy_(h_c)
+        # self.anchor = nn.Parameter(h_c, requires_grad= True) if t > 1 and h_c  else self.anchor
 
 # %% ../nbs/11_losses.ipynb 5
 @patch
