@@ -490,6 +490,8 @@ def runFL(self: DMTL):
 # %% ../../nbs/02_federated.agents.ipynb 53
 @patch
 def _forward(self: DMTL, batch):
+    from IPython.core.debugger import Pdb
+    ipdb = Pdb(); ipdb.set_trace()
     X, y = batch['x'], batch['y']
     y_copied = deepcopy(y)
     labels = y.type(torch.LongTensor).to(self.device)

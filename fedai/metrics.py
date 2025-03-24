@@ -27,7 +27,7 @@ class Metrics:
 @patch
 def prepare_sequence(self: Metrics, y_true):
     if isinstance(y_true, torch.Tensor):
-        y_true = y_true.cpu().numpy()
+        y_true = y_true.detach().cpu().numpy()
     elif isinstance(y_true, list):
         y_true = np.array(y_true)
     
