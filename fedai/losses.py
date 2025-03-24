@@ -28,6 +28,10 @@ def forward(self: AnchorLoss, feature, _target, Lambda = 0.1):
     assert not torch.isnan(_target).any(), "Found NaN in _target!"
     # broadcast feature anchors for all inputs
     centre = self.anchor.cuda().index_select(dim=0, index=_target.long())
+    print("Target:", _target)
+    print("Target dtype:", _target.dtype)
+    print("Target shape:", _target.shape)
+
     # compute the number of samples in each class
     counter = torch.histc(_target.cpu().float(), bins=self.num_classes, min=0, max=self.num_classes-1)
     counter = counter.to(_target.device)  # Move back to the same device as _target
