@@ -631,7 +631,7 @@ def model_similarity(self: DMTL, model1, model2):
     
     return total_l1_norm
 
-# %% ../../nbs/02_federated.agents.ipynb 73
+# %% ../../nbs/02_federated.agents.ipynb 74
 @patch
 def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
@@ -640,9 +640,12 @@ def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     h1_norm = F.normalize(h1, p=2, dim=1)  # (3, 512)
     h2_norm = F.normalize(h2, p=2, dim=1)  # (3, 512)
     
-    cos_sim_matrix = torch.mm(h1_norm, h2_norm.T)  # (3, 3)
+    cos_sim_matrix = torch.mm(h1_norm, h2_norm.T)  # (10, 10)
     max_similarity = cos_sim_matrix.max(dim=1).values.mean()# This gives a higher similarity score if each class in h1 has at least one good match in h2.
     data = cos_sim_matrix.cpu().numpy()
+
+    # index only data for the label_set
+    data = data[label_set][:, label_set2]
 
     cols1 = [self.idx_to_cls[i] for i in label_set]
     cols2 = [self.idx_to_cls[i] for i in label_set2]
@@ -650,7 +653,7 @@ def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     df = pd.DataFrame(data, columns= cols1, index= cols2)
     return df, max_similarity.item()
 
-# %% ../../nbs/02_federated.agents.ipynb 75
+# %% ../../nbs/02_federated.agents.ipynb 76
 @patch
 def sym_nromalization(self: DMTL, A):
     "normalize the adjacency matrix while ensuring symmetry"
@@ -668,7 +671,7 @@ def sym_nromalization(self: DMTL, A):
 
     return A_normalized
 
-# %% ../../nbs/02_federated.agents.ipynb 77
+# %% ../../nbs/02_federated.agents.ipynb 78
 @patch
 def build_graph(self: DMTL, lst_active_ids, comm_round):
 
@@ -725,7 +728,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
     return G, graph
 
-# %% ../../nbs/02_federated.agents.ipynb 79
+# %% ../../nbs/02_federated.agents.ipynb 80
 @patch
 def get_coalitions(self: DMTL, G):
     correct_clients_indices = nx.get_node_attributes(G, 'label')
@@ -741,12 +744,12 @@ def get_coalitions(self: DMTL, G):
     return communities
 
 
-# %% ../../nbs/02_federated.agents.ipynb 82
+# %% ../../nbs/02_federated.agents.ipynb 83
 @patch
 def get_shapley_vals(self: DMTL):
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 84
+# %% ../../nbs/02_federated.agents.ipynb 85
 @patch
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
@@ -828,7 +831,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
                 torch.save(clinet_state, agg_client_state_path)
 
-# %% ../../nbs/02_federated.agents.ipynb 87
+# %% ../../nbs/02_federated.agents.ipynb 88
 @patch
 def extra_computation(self: DMTL, lst_active_ids, comm_round):
     
@@ -872,7 +875,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
         for param in client.model.classifier.parameters():
             param.requires_grad = True
 
-# %% ../../nbs/02_federated.agents.ipynb 89
+# %% ../../nbs/02_federated.agents.ipynb 90
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -884,7 +887,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 90
+# %% ../../nbs/02_federated.agents.ipynb 91
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -900,13 +903,13 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 91
+# %% ../../nbs/02_federated.agents.ipynb 92
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 92
+# %% ../../nbs/02_federated.agents.ipynb 93
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -920,7 +923,7 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 94
+# %% ../../nbs/02_federated.agents.ipynb 95
 class FedSophiaAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -931,14 +934,14 @@ class FedSophiaAgent(FLAgent):
         super().__init__(id, cfg, state, role, block)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 95
+# %% ../../nbs/02_federated.agents.ipynb 96
 @patch
 def train(self: FedSophiaAgent):
     trainer = self.trainer(self) 
     client_history = trainer.fit() 
     return client_history
 
-# %% ../../nbs/02_federated.agents.ipynb 97
+# %% ../../nbs/02_federated.agents.ipynb 98
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -952,7 +955,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 98
+# %% ../../nbs/02_federated.agents.ipynb 99
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -984,7 +987,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 102
+# %% ../../nbs/02_federated.agents.ipynb 103
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -1021,7 +1024,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 104
+# %% ../../nbs/02_federated.agents.ipynb 105
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -1090,7 +1093,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 109
+# %% ../../nbs/02_federated.agents.ipynb 110
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
