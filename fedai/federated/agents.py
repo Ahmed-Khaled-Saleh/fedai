@@ -275,7 +275,7 @@ def evaluate_local(self: FLAgent, loader= 'train') -> dict:
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             batch = self.get_batch(batch)
-            loss, metrics = self._closure(batch)                 
+            loss, metrics = FLAgent._closure(self, batch)                 
 
             if not math.isnan(loss.item()):
                 total_loss += loss.item()  
