@@ -16,24 +16,12 @@ from fastcore.utils import * # type: ignore # noqa: F403
 
 # %% ../nbs/11_losses.ipynb 4
 class AnchorLoss(nn.Module):
-    def __init__(self, num_classes, feature_num, ablation=0):
+    def __init__(self, num_classes, feature_num):
         super().__init__()
         self.num_classes = num_classes
         self.feature_num = feature_num
 
-        # initiate anchors
-        if num_classes > feature_num:
-            self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
-        elif ablation==1:
-            self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
-        elif ablation==2:
-            self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
-            self.anchor.data = torch.load('utils/converged_anchors_data.pt')
-        else:
-            I = torch.eye(feature_num,feature_num)
-            index = torch.LongTensor(random.sample(range(feature_num), num_classes))
-            init = torch.index_select(I, 0, index)
-            self.anchor = nn.Parameter(init, requires_grad=True)
+        self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
 
     
 
