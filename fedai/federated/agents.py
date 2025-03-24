@@ -444,8 +444,7 @@ class DMTL(FLAgent):
         super().__init__(id, cfg, state, role, block)
         
         if self.role == AgentRole.CLIENT:
-            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
-            self.anchorloss.anchor = self.h_c if self.t > 1 else self.anchorloss.anchor
+            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size, self.t, self.h_c).to(self.device)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
 
 # %% ../../nbs/02_federated.agents.ipynb 51
@@ -490,8 +489,6 @@ def runFL(self: DMTL):
 # %% ../../nbs/02_federated.agents.ipynb 53
 @patch
 def _forward(self: DMTL, batch):
-    from IPython.core.debugger import Pdb
-    ipdb = Pdb(); ipdb.set_trace()
     X, y = batch['x'], batch['y']
     y_copied = deepcopy(y)
     labels = y.type(torch.LongTensor).to(self.device)
@@ -600,7 +597,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
     
     state_dict['model'] = self.model.state_dict()
     state_dict['optimizer'] = self.optimizer.state_dict()
-    state_dict['h'] = self.anchorloss.anchor # (num_classes, hidden_size)
+    state_dict['h'] = self.anchorloss.anchor.detach() # (num_classes, hidden_size)
     state_dict['label_set'] = self.label_set
     
     # pick a random data point from the train_ds and save it to the state_dict
