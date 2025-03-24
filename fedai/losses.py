@@ -20,10 +20,7 @@ class AnchorLoss(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.feature_num = feature_num
-
         self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
-
-    
 
 # %% ../nbs/11_losses.ipynb 5
 @patch
@@ -31,7 +28,8 @@ def forward(self: AnchorLoss, feature, _target, Lambda = 0.1):
     # broadcast feature anchors for all inputs
     centre = self.anchor.cuda().index_select(dim=0, index=_target.long())
     # compute the number of samples in each class
-    counter = torch.histc(_target, bins=self.num_classes, min=0, max=self.num_classes-1)
+    counter = torch.histc(_target.to("cpu"), bins=self.num_classes, min=0, max=self.num_classes-1)
+    counter = counter.to("cuda")
     count = counter[_target.long()]
     centre_dis = feature - centre				# compute distance between input and anchors
     pow_ = torch.pow(centre_dis, 2)				# squre
