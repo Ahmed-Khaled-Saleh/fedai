@@ -628,7 +628,7 @@ def model_similarity(self: DMTL, model1, model2):
         
         total_l1_norm += torch.norm(param1 - param2, p=1).item()
     
-    return total_l1_norm
+    return total_l1_norm.item()
 
 # %% ../../nbs/02_federated.agents.ipynb 73
 @patch
@@ -641,7 +641,7 @@ def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     
     cos_sim_matrix = torch.mm(h1_norm, h2_norm.T)  # (3, 3)
     max_similarity = cos_sim_matrix.max(dim=1).values.mean()# This gives a higher similarity score if each class in h1 has at least one good match in h2.
-    data = cos_sim_matrix.numpy()
+    data = cos_sim_matrix.cpu().numpy()
 
     cols1 = [self.idx_to_cls[i] for i in label_set]
     cols2 = [self.idx_to_cls[i] for i in label_set2]
