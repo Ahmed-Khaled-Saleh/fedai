@@ -793,7 +793,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 def extra_computation(self: DMTL, lst_active_ids, comm_round):
     
     for id in lst_active_ids:
-        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, comm_round, self.loss_fn, to_read_from= 'aggregated_model_', extra= True)
+        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, comm_round, self.loss_fn, to_read_from= 'aggregated_model_')
         
         client.model.train()
         for param in client.model.classifier.parameters():
