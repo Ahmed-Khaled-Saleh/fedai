@@ -14,6 +14,7 @@ import pickle
 import json
 from collections import defaultdict,OrderedDict
 from copy import deepcopy
+import random
 from enum import Enum
 import torch
 import torch
@@ -85,7 +86,7 @@ def save_state(self: Agent):
 def clear_model(self: Agent):
     self.model = None
 
-# %% ../../nbs/02_federated.agents.ipynb 19
+# %% ../../nbs/02_federated.agents.ipynb 17
 class FLAgent(Agent):
     # A Federated Learning Agent implementing `FedAVG`.
     def __init__(self,
@@ -114,7 +115,7 @@ class FLAgent(Agent):
 
             self.data_key, self.label_key = 'x', 'y'
 
-# %% ../../nbs/02_federated.agents.ipynb 20
+# %% ../../nbs/02_federated.agents.ipynb 18
 @patch
 def server_init(self: FLAgent, client_fn, client_selector, client_cls, loss_fn, writer):
     self.client_fn = client_fn
@@ -124,7 +125,7 @@ def server_init(self: FLAgent, client_fn, client_selector, client_cls, loss_fn, 
     self.writer = writer
     self.latest_round = {}
 
-# %% ../../nbs/02_federated.agents.ipynb 23
+# %% ../../nbs/02_federated.agents.ipynb 21
 @patch
 def runFL(self: FLAgent):
     res =  []
@@ -134,12 +135,8 @@ def runFL(self: FLAgent):
         lst_active_ids = all_ids[t]
         len_clients_ds = []
         
-        train_res, test_res = self.evaluate(t)
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
-        
         for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'global_model')
+            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, state_dir= self.cfg.state_dir)
             len_clients_ds.append(len(client.train_ds))
             
             self.communicate(client) 
@@ -150,31 +147,16 @@ def runFL(self: FLAgent):
 
         self.aggregate(lst_active_ids, t, len_clients_ds)
         
-        
-        
+        train_res, test_res = self.evaluate(t)
+        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
+        res.append((train_df, test_df))
         
     self.writer.save(res)
     self.writer.finish()
 
     return res
 
-# %% ../../nbs/02_federated.agents.ipynb 24
-@patch
-def evaluate(self: FLAgent, t):
-    lst_train_res = []
-    lst_test_res = []
-    for id in range(self.cfg.num_clients):
-        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'global_model')
-        
-        res_train = client.evaluate_local(loader= 'train')
-        lst_train_res.append(res_train)
-
-        res_test = client.evaluate_local(loader= 'test')
-        lst_test_res.append(res_test)
-    return lst_train_res, lst_test_res    
-
-
-# %% ../../nbs/02_federated.agents.ipynb 26
+# %% ../../nbs/02_federated.agents.ipynb 23
 @patch
 def __str__(self: FLAgent) -> str:
     return f'''{self.__class__.__name__}: {self.__class__.__name__}
@@ -184,17 +166,17 @@ def __str__(self: FLAgent) -> str:
     Optimizer: {self.optimizer.__class__.__name__}'''
 
 
-# %% ../../nbs/02_federated.agents.ipynb 27
+# %% ../../nbs/02_federated.agents.ipynb 24
 @patch
 def clear_model(self: FLAgent):
     self.model = None if hasattr(self, 'model') else None
 
-# %% ../../nbs/02_federated.agents.ipynb 28
+# %% ../../nbs/02_federated.agents.ipynb 25
 @patch
 def get_batch(self: FLAgent, batch):
     return {k: v.to(self.device) for k, v in batch.items()}
 
-# %% ../../nbs/02_federated.agents.ipynb 29
+# %% ../../nbs/02_federated.agents.ipynb 27
 @patch
 def _forward(self: FLAgent, batch):
     X, y = batch['x'], batch['y']
@@ -202,7 +184,7 @@ def _forward(self: FLAgent, batch):
     loss = self.criterion(outputs, y)
     return loss, outputs
 
-# %% ../../nbs/02_federated.agents.ipynb 30
+# %% ../../nbs/02_federated.agents.ipynb 28
 @patch
 def _closure(self: FLAgent, batch: dict) -> tuple:
     metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
@@ -225,7 +207,7 @@ def _closure(self: FLAgent, batch: dict) -> tuple:
     return loss, metrics
 
 
-# %% ../../nbs/02_federated.agents.ipynb 31
+# %% ../../nbs/02_federated.agents.ipynb 29
 @patch
 def _run_batch(self: FLAgent, batch: dict) -> tuple:
     self.optimizer.zero_grad()
@@ -243,7 +225,7 @@ def _run_batch(self: FLAgent, batch: dict) -> tuple:
 
     return loss, metrics
 
-# %% ../../nbs/02_federated.agents.ipynb 32
+# %% ../../nbs/02_federated.agents.ipynb 30
 @patch
 def _run_epoch(self: FLAgent):
 
@@ -251,7 +233,7 @@ def _run_epoch(self: FLAgent):
         batch = self.get_batch(batch)
         self._run_batch(batch)
 
-# %% ../../nbs/02_federated.agents.ipynb 33
+# %% ../../nbs/02_federated.agents.ipynb 31
 @patch
 def fit(self: FLAgent) -> dict:
     
@@ -261,368 +243,9 @@ def fit(self: FLAgent) -> dict:
         self._run_epoch()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 34
+# %% ../../nbs/02_federated.agents.ipynb 33
 @patch
-def evaluate_local(self: FLAgent, loader= 'train') -> dict:
-    total_loss = 0
-    lst_metrics = []
-
-    self.model = self.model.to(self.device)
-    self.model.eval()
-    num_eval = 0
-    data_loader = self.train_loader if loader == 'train' else self.test_loader
-    
-    with torch.no_grad():
-        for i, batch in enumerate(data_loader):
-            batch = self.get_batch(batch)
-            loss, metrics = self._closure(batch)                 
-
-            if not math.isnan(loss.item()):
-                total_loss += loss.item()  
-                num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
-                lst_metrics.append(metrics)           
-    
-    avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
-
-    if lst_metrics:
-        total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
-    else:
-        total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
-
-    return {"loss": avg_loss, "metrics": total_metrics}
-
-
-# %% ../../nbs/02_federated.agents.ipynb 35
-@patch
-def save_state(self: FLAgent, state_dict):  # noqa: F811
-    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
-    
-    state_path = os.path.join(self.cfg.save_dir, 
-                              str(self.t),
-                              f"local_output_{self.id}",
-                              "state.pth")
-    if not os.path.exists(os.path.dirname(state_path)):
-        os.makedirs(os.path.dirname(state_path))
-
-    state_dict['model'] = self.model.state_dict()
-    state_dict['optimizer'] = self.optimizer.state_dict()
-
-    torch.save(state_dict, state_path)
-
-    if self.role == AgentRole.CLIENT:
-        save_space(self)
-
-
-# %% ../../nbs/02_federated.agents.ipynb 38
-@patch
-def communicate(self: Agent, another_agent: Agent):  # noqa: F811
-    if self.role == AgentRole.CLIENT:
-        self.save_state(self.state)
-
-# %% ../../nbs/02_federated.agents.ipynb 41
-@patch
-def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
-        
-    m_t = sum(len_clients_ds)
-    with torch.no_grad():
-        for i, id in enumerate(lst_active_ids):
-            state_path = os.path.join(self.cfg.save_dir, 
-                                    str(comm_round),
-                                    f"local_output_{id}",
-                                    "state.pth")
-            
-            state = torch.load(state_path, weights_only=False)
-            client_state_dict = state['model']
-
-            if i == 0:
-                global_model = {
-                    key: torch.zeros_like(value) 
-                    for key, value in client_state_dict.items()
-                }
-
-            n_k = len_clients_ds[i]
-            weight =  n_k / m_t 
-
-        
-            for key in client_state_dict.keys():
-                global_model[key].add_(weight * client_state_dict[key])
-
-
-        server_state = {
-            'model': global_model,
-        }
-
-        server_state_path = os.path.join(self.cfg.save_dir, 
-                                    str(comm_round),
-                                    "global_model",
-                                    "state.pth")
-        
-        if not os.path.exists(os.path.dirname(server_state_path)):
-            os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
-        torch.save(server_state, server_state_path)
-
-    
-
-# %% ../../nbs/02_federated.agents.ipynb 44
-class Fedu(FLAgent):
-    def __init__(self, 
-                 id,
-                 cfg,
-                 state= None,
-                 role= AgentRole.CLIENT,
-                 block= None):
-        
-        super().__init__(id, cfg, state, role, block)
-
-        b = np.random.uniform(0,1,size=(self.cfg.num_clients, self.cfg.num_clients))
-        b_symm = (b + b.T)/2
-        b_symm[b_symm < 0.25] = 0
-        self.alk_connection = b_symm
-
-# %% ../../nbs/02_federated.agents.ipynb 45
-@patch
-def runFL(self: FLAgent):
-    res =  []
-    all_ids = self.client_selector.select()
-    
-    for t in range(1, self.cfg.n_rounds + 1):
-        lst_active_ids = all_ids[t]
-        len_clients_ds = []
-        
-        
-        for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'aggregated_model_')
-            len_clients_ds.append(len(client.train_ds))
-            
-            self.communicate(client) 
-            client.fit()
-
-            client.communicate(self) 
-            self.latest_round[id] = t 
-
-        self.aggregate(lst_active_ids, t, len_clients_ds)
-        
-        train_res, test_res = self.evaluate(t)
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
-        
-        
-        
-    self.writer.save(res)
-    self.writer.finish()
-
-    return res
-
-# %% ../../nbs/02_federated.agents.ipynb 47
-@patch
-def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
-
-    global_lr = float(self.cfg.lr) * float(self.cfg.local_epochs)
-    reg_param = self.cfg.lambda_
-    
-    with torch.no_grad():
-        for i, id in enumerate(lst_active_ids):
-            state_path = os.path.join(self.cfg.save_dir, 
-                                    str(comm_round),
-                                    f"local_output_{id}",
-                                    "state.pth")
-            
-            state = torch.load(state_path, weights_only= False)
-            client_state_dict = state['model']
-
-            client_diff = {
-                key: torch.zeros_like(value) 
-                for key, value in client_state_dict.items()
-            }
-            
-            for j, other_id in enumerate(lst_active_ids):
-                if i == j:
-                    continue
-                other_state_path = os.path.join(self.cfg.save_dir,
-                                                str(comm_round),
-                                                f"local_output_{other_id}",
-                                                "state.pth")
-                
-                other_state = torch.load(other_state_path, weights_only= False)
-                other_state_dict = other_state['model']
-
-                weight = self.alk_connection[int(id)][int(other_id)]
-                for key in client_state_dict.keys():
-                    client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
-
-            for key in client_state_dict:
-                client_state_dict[key].sub_(global_lr * reg_param * client_diff[key])
-
-            clinet_state = {
-                'model': client_state_dict,
-            }
-
-            agg_client_state_path = os.path.join(self.cfg.save_dir,
-                                                 str(comm_round),
-                                                 f"aggregated_model_{id}",
-                                                 "state.pth")
-            
-            if not os.path.exists(os.path.dirname(agg_client_state_path)):
-                os.makedirs(os.path.dirname(agg_client_state_path))
-
-            torch.save(clinet_state, agg_client_state_path)
-
-# %% ../../nbs/02_federated.agents.ipynb 50
-class DMTL(FLAgent):
-    def __init__(self, 
-                 id,
-                 cfg,
-                 state= None,
-                 role= AgentRole.CLIENT,
-                 block= None):
-        
-        super().__init__(id, cfg, state, role, block)
-        
-        if self.role == AgentRole.CLIENT:
-            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size, self.t, self.h_c).to(self.device)
-            self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
-
-# %% ../../nbs/02_federated.agents.ipynb 52
-@patch
-def server_init(self: DMTL, client_fn, client_selector, client_cls, loss_fn, writer):
-    FLAgent.server_init(self, client_fn, client_selector, client_cls, loss_fn, writer)
-    self.classes = self.cfg.data.classes
-    self.idx_to_cls = {i: self.classes[i] for i in range(len(self.classes))}
-
-# %% ../../nbs/02_federated.agents.ipynb 53
-@patch
-def runFL(self: DMTL):
-    res =  []
-    all_ids = self.client_selector.select()
-    
-    for t in range(1, self.cfg.n_rounds + 1):
-        lst_active_ids = all_ids[t]
-        len_clients_ds = {}
-        
-        for id in lst_active_ids:
-            client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'aggregated_model_')
-            len_clients_ds[id] = len(client.train_ds)
-            
-            self.communicate(client) 
-            client.fit()
-
-            client.communicate(self) 
-            self.latest_round[id] = t 
-
-        self.aggregate(lst_active_ids, t, len_clients_ds)
-        # self.extra_computation(lst_active_ids, t)
-        
-        train_res, test_res = self.evaluate(t)
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
-        
-    self.writer.save(res)
-    self.writer.finish()
-
-    return res
-
-# %% ../../nbs/02_federated.agents.ipynb 54
-@patch
-def _forward(self: DMTL, batch):
-    X, y = batch['x'], batch['y']
-    y_copied = deepcopy(y)
-    labels = y.type(torch.LongTensor).to(self.device)
-    ys = labels.float()
-    
-    h = self.model.encoder(X)
-    outputs = self.model.classifier(h)    
-    
-    loss_anchor = self.anchorloss(h, ys, Lambda = self.cfg.lambda_anchor)
-    loss = self.criterion(outputs, y_copied)
-    
-    return loss + loss_anchor, h, outputs, labels
-
-# %% ../../nbs/02_federated.agents.ipynb 55
-@patch
-def _closure(self: DMTL, batch: dict) -> tuple:
-    metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
-    h, labels = None, None
-    try:
-        loss, h, logits, labels = self._forward(batch)
-
-        probs = torch.nn.functional.softmax(logits, dim=-1)
-        y_pred = probs.argmax(dim=-1)
-        y_true = batch[self.label_key]
-
-        if hasattr(self, "training_metrics") and self.cfg.training_metrics:
-            if hasattr(self, "tokenizer"):
-                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true, tokenizer=self.tokenizer)
-            else:
-                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true)
-
-    except Exception as e:
-        print(e)
-        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics, h, labels  # Return safe values
-
-    return loss, metrics, h, labels
-
-
-# %% ../../nbs/02_federated.agents.ipynb 56
-@patch
-def _run_batch(self: DMTL, batch: dict) -> tuple:
-    batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
-    self.optimizer.zero_grad()
-
-    loss, metrics, h, labels = self._closure(batch)
-    if loss.item() == 0.0 or h is None:
-        return loss, metrics, batch_mean_anchor
-    
-    for i in set(labels.tolist()):
-        batch_mean_anchor[i] += torch.mean(h[labels==i],dim=0)
-   
-    loss.backward()
-    
-    if self.cfg.model.grad_norm_clip:
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
-
-    self.optimizer.step()
-
-    return loss, metrics, batch_mean_anchor
-
-# %% ../../nbs/02_federated.agents.ipynb 57
-@patch
-def _run_epoch(self: DMTL):
-
-    epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
-    for batch_idx, batch in enumerate(self.train_loader):
-        batch = self.get_batch(batch)
-        _, _, batch_mean_anchor = self._run_batch(batch)
-
-        for i in self.label_set:
-            #compute batch mean anchor according to batch label
-            batch_mean_anchor[i] = batch_mean_anchor[i]/(batch_idx+1)
-
-            #compute epoch mean anchor according to batch mean anchor
-            lambda_momentum = self.cfg.momentum_anchor #pow(2, -(epoch+1))
-            epoch_mean_anchor[i] = lambda_momentum*epoch_mean_anchor[i] + (1-lambda_momentum)*batch_mean_anchor[i]
-        
-
-    self.anchorloss.anchor =  torch.nn.Parameter(epoch_mean_anchor, requires_grad=False)
-
-# %% ../../nbs/02_federated.agents.ipynb 58
-@patch
-def evaluate(self: DMTL, t):
-    lst_train_res = []
-    lst_test_res = []
-    for id in range(self.cfg.num_clients):
-        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, to_read_from= 'aggregated_model_')
-        
-        res_train = client.evaluate_local(loader= 'train')
-        lst_train_res.append(res_train)
-
-        res_test = client.evaluate_local(loader= 'test')
-        lst_test_res.append(res_test)
-    return lst_train_res, lst_test_res    
-
-
-# %% ../../nbs/02_federated.agents.ipynb 59
-@patch
-def train_test_stats(self: DMTL, batch: dict) -> tuple:
+def train_test_stats(self: FLAgent, batch: dict) -> tuple:
     metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
 
     try:
@@ -645,9 +268,9 @@ def train_test_stats(self: DMTL, batch: dict) -> tuple:
     return loss, metrics
 
 
-# %% ../../nbs/02_federated.agents.ipynb 60
+# %% ../../nbs/02_federated.agents.ipynb 34
 @patch
-def evaluate_local(self: DMTL, loader= 'train') -> dict:
+def evaluate_local(self: FLAgent, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
@@ -676,12 +299,255 @@ def evaluate_local(self: DMTL, loader= 'train') -> dict:
     return {"loss": avg_loss, "metrics": total_metrics}
 
 
-# %% ../../nbs/02_federated.agents.ipynb 61
+# %% ../../nbs/02_federated.agents.ipynb 35
 @patch
-def pick_n_points(self: DMTL, n= 3):
-    pass
+def evaluate(self: FLAgent, t):
+    lst_train_res = []
+    lst_test_res = []
+    for id in range(self.cfg.num_clients):
+        client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, state_dir= self.cfg.state_dir)
+        
+        res_train = client.evaluate_local(loader= 'train')
+        lst_train_res.append(res_train)
 
-# %% ../../nbs/02_federated.agents.ipynb 64
+        res_test = client.evaluate_local(loader= 'test')
+        lst_test_res.append(res_test)
+    return lst_train_res, lst_test_res    
+
+
+# %% ../../nbs/02_federated.agents.ipynb 38
+@patch
+def save_state(self: FLAgent, state_dict):  # noqa: F811
+    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
+    
+    state_path = os.path.join(self.cfg.save_dir, 
+                              str(self.t),
+                              f"local_output_{self.id}",
+                              "state.pth")
+    if not os.path.exists(os.path.dirname(state_path)):
+        os.makedirs(os.path.dirname(state_path))
+
+    state_dict['model'] = self.model.state_dict()
+    state_dict['optimizer'] = self.optimizer.state_dict()
+
+    torch.save(state_dict, state_path)
+
+    if self.role == AgentRole.CLIENT:
+        save_space(self)
+
+
+# %% ../../nbs/02_federated.agents.ipynb 39
+@patch
+def communicate(self: Agent, another_agent: Agent):  # noqa: F811
+    if self.role == AgentRole.CLIENT:
+        self.save_state(self.state)
+
+# %% ../../nbs/02_federated.agents.ipynb 42
+@patch
+def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
+        
+    m_t = sum(len_clients_ds)
+    with torch.no_grad():
+        for i, id in enumerate(lst_active_ids):
+            state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
+            
+            state = torch.load(state_path, weights_only=False)
+            client_state_dict = state['model']
+
+            if i == 0:
+                global_model = {
+                    key: torch.zeros_like(value) 
+                    for key, value in client_state_dict.items()
+                }
+
+            n_k = len_clients_ds[i]
+            weight =  n_k / m_t 
+
+        
+            for key in client_state_dict.keys():
+                global_model[key].add_(weight * client_state_dict[key])
+
+
+        server_state = {
+            'model': global_model,
+        }
+
+        server_state_path = os.path.join(self.cfg.save_dir, str(comm_round), "global_model", "state.pth")
+        
+        if not os.path.exists(os.path.dirname(server_state_path)):
+            os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
+            
+        torch.save(server_state, server_state_path)
+
+    
+
+# %% ../../nbs/02_federated.agents.ipynb 45
+class Fedu(FLAgent):
+    def __init__(self, 
+                 id,
+                 cfg,
+                 state= None,
+                 role= AgentRole.CLIENT,
+                 block= None):
+        
+        super().__init__(id, cfg, state, role, block)
+
+        b = np.random.uniform(0,1,size=(self.cfg.num_clients, self.cfg.num_clients))
+        b_symm = (b + b.T)/2
+        b_symm[b_symm < 0.25] = 0
+        self.alk_connection = b_symm
+
+# %% ../../nbs/02_federated.agents.ipynb 47
+@patch
+def aggregate(self: Fedu, lst_active_ids, comm_round, len_clients_ds):
+
+    global_lr = float(self.cfg.lr) * float(self.cfg.local_epochs)
+    reg_param = self.cfg.lambda_
+    
+    with torch.no_grad():
+        for i, id in enumerate(lst_active_ids):
+            state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
+            
+            state = torch.load(state_path, weights_only= False)
+            client_state_dict = state['model']
+
+            client_diff = {
+                key: torch.zeros_like(value) 
+                for key, value in client_state_dict.items()
+            }
+            
+            for j, other_id in enumerate(lst_active_ids):
+                if i == j:
+                    continue
+                other_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{other_id}", "state.pth")
+                
+                other_state = torch.load(other_state_path, weights_only= False)
+                other_state_dict = other_state['model']
+
+                weight = self.alk_connection[int(id)][int(other_id)]
+                for key in client_state_dict.keys():
+                    client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
+
+            for key in client_state_dict:
+                client_state_dict[key].sub_(global_lr * reg_param * client_diff[key])
+
+            clinet_state = {
+                'model': client_state_dict,
+            }
+
+            agg_client_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
+            
+            if not os.path.exists(os.path.dirname(agg_client_state_path)):
+                os.makedirs(os.path.dirname(agg_client_state_path))
+
+            torch.save(clinet_state, agg_client_state_path)
+
+# %% ../../nbs/02_federated.agents.ipynb 49
+class DMTL(FLAgent):
+    def __init__(self, 
+                 id,
+                 cfg,
+                 state= None,
+                 role= AgentRole.CLIENT,
+                 block= None):
+        
+        super().__init__(id, cfg, state, role, block)
+        
+        if self.role == AgentRole.CLIENT:
+            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size, self.t, self.h_c).to(self.device)
+            self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
+
+# %% ../../nbs/02_federated.agents.ipynb 50
+@patch
+def server_init(self: DMTL, client_fn, client_selector, client_cls, loss_fn, writer):
+    FLAgent.server_init(self, client_fn, client_selector, client_cls, loss_fn, writer)
+    self.classes = self.cfg.data.classes
+    self.idx_to_cls = {i: self.classes[i] for i in range(len(self.classes))}
+
+# %% ../../nbs/02_federated.agents.ipynb 51
+@patch
+def _forward(self: DMTL, batch):
+    X, y = batch['x'], batch['y']
+    y_copied = deepcopy(y)
+    labels = y.type(torch.LongTensor).to(self.device)
+    ys = labels.float()
+    
+    h = self.model.encoder(X)
+    outputs = self.model.classifier(h)    
+    
+    loss_anchor = self.anchorloss(h, ys, Lambda = self.cfg.lambda_anchor)
+    loss = self.criterion(outputs, y_copied)
+    
+    return loss + loss_anchor, h, outputs, labels
+
+# %% ../../nbs/02_federated.agents.ipynb 52
+@patch
+def _closure(self: DMTL, batch: dict) -> tuple:
+    metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
+    h, labels = None, None
+    try:
+        loss, h, logits, labels = self._forward(batch)
+
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        y_pred = probs.argmax(dim=-1)
+        y_true = batch[self.label_key]
+
+        if hasattr(self, "training_metrics") and self.cfg.training_metrics:
+            if hasattr(self, "tokenizer"):
+                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true, tokenizer=self.tokenizer)
+            else:
+                metrics = self.training_metrics.compute(y_pred=y_pred, y_true=y_true)
+
+    except Exception as e:
+        print(e)
+        return torch.tensor(0.0, dtype=torch.float32, device=self.device), metrics, h, labels  # Return safe values
+
+    return loss, metrics, h, labels
+
+
+# %% ../../nbs/02_federated.agents.ipynb 53
+@patch
+def _run_batch(self: DMTL, batch: dict) -> tuple:
+    batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
+    self.optimizer.zero_grad()
+
+    loss, metrics, h, labels = self._closure(batch)
+    if loss.item() == 0.0 or h is None:
+        return loss, metrics, batch_mean_anchor
+    
+    for i in set(labels.tolist()):
+        batch_mean_anchor[i] += torch.mean(h[labels==i],dim=0)
+   
+    loss.backward()
+    
+    if self.cfg.model.grad_norm_clip:
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
+
+    self.optimizer.step()
+
+    return loss, metrics, batch_mean_anchor
+
+# %% ../../nbs/02_federated.agents.ipynb 54
+@patch
+def _run_epoch(self: DMTL):
+
+    epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
+    for batch_idx, batch in enumerate(self.train_loader):
+        batch = self.get_batch(batch)
+        _, _, batch_mean_anchor = self._run_batch(batch)
+
+        for i in self.label_set:
+            #compute batch mean anchor according to batch label
+            batch_mean_anchor[i] = batch_mean_anchor[i]/(batch_idx+1)
+
+            #compute epoch mean anchor according to batch mean anchor
+            lambda_momentum = self.cfg.momentum_anchor #pow(2, -(epoch+1))
+            epoch_mean_anchor[i] = lambda_momentum*epoch_mean_anchor[i] + (1-lambda_momentum)*batch_mean_anchor[i]
+        
+
+    self.anchorloss.anchor =  torch.nn.Parameter(epoch_mean_anchor, requires_grad=False)
+
+# %% ../../nbs/02_federated.agents.ipynb 57
 @patch
 def save_state(self: DMTL, state_dict):  # noqa: F811
     # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
@@ -709,7 +575,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
         save_space(self)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 68
+# %% ../../nbs/02_federated.agents.ipynb 61
 @patch
 def model_similarity(self: DMTL, model1, model2):
     total_l1_norm = 0.0
@@ -722,7 +588,7 @@ def model_similarity(self: DMTL, model1, model2):
     
     return total_l1_norm
 
-# %% ../../nbs/02_federated.agents.ipynb 76
+# %% ../../nbs/02_federated.agents.ipynb 63
 @patch
 def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
@@ -744,7 +610,7 @@ def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
     df = pd.DataFrame(data, columns= cols1, index= cols2)
     return df, max_similarity.item()
 
-# %% ../../nbs/02_federated.agents.ipynb 78
+# %% ../../nbs/02_federated.agents.ipynb 65
 @patch
 def sym_nromalization(self: DMTL, A):
     "normalize the adjacency matrix while ensuring symmetry"
@@ -762,7 +628,7 @@ def sym_nromalization(self: DMTL, A):
 
     return A_normalized
 
-# %% ../../nbs/02_federated.agents.ipynb 80
+# %% ../../nbs/02_federated.agents.ipynb 67
 @patch
 def build_graph(self: DMTL, lst_active_ids, comm_round):
 
@@ -819,7 +685,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
     return G, graph
 
-# %% ../../nbs/02_federated.agents.ipynb 82
+# %% ../../nbs/02_federated.agents.ipynb 69
 @patch
 def get_coalitions(self: DMTL, G):
     correct_clients_indices = nx.get_node_attributes(G, 'label')
@@ -835,12 +701,12 @@ def get_coalitions(self: DMTL, G):
     return communities
 
 
-# %% ../../nbs/02_federated.agents.ipynb 85
+# %% ../../nbs/02_federated.agents.ipynb 78
 @patch
-def get_shapley_vals(self: DMTL):
+def compute_weighted_akl(self: DMTL, graph):
     pass
 
-# %% ../../nbs/02_federated.agents.ipynb 87
+# %% ../../nbs/02_federated.agents.ipynb 81
 @patch
 def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
@@ -922,7 +788,7 @@ def aggregate(self: DMTL, lst_active_ids, comm_round, len_clients_ds):
 
                 torch.save(clinet_state, agg_client_state_path)
 
-# %% ../../nbs/02_federated.agents.ipynb 90
+# %% ../../nbs/02_federated.agents.ipynb 84
 @patch
 def extra_computation(self: DMTL, lst_active_ids, comm_round):
     
@@ -966,7 +832,7 @@ def extra_computation(self: DMTL, lst_active_ids, comm_round):
         for param in client.model.classifier.parameters():
             param.requires_grad = True
 
-# %% ../../nbs/02_federated.agents.ipynb 92
+# %% ../../nbs/02_federated.agents.ipynb 86
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -978,7 +844,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 93
+# %% ../../nbs/02_federated.agents.ipynb 87
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -994,13 +860,13 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 94
+# %% ../../nbs/02_federated.agents.ipynb 88
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 95
+# %% ../../nbs/02_federated.agents.ipynb 89
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -1014,7 +880,7 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 97
+# %% ../../nbs/02_federated.agents.ipynb 91
 class FedSophiaAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -1025,14 +891,14 @@ class FedSophiaAgent(FLAgent):
         super().__init__(id, cfg, state, role, block)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 98
+# %% ../../nbs/02_federated.agents.ipynb 92
 @patch
 def train(self: FedSophiaAgent):
     trainer = self.trainer(self) 
     client_history = trainer.fit() 
     return client_history
 
-# %% ../../nbs/02_federated.agents.ipynb 100
+# %% ../../nbs/02_federated.agents.ipynb 94
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -1046,7 +912,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 101
+# %% ../../nbs/02_federated.agents.ipynb 95
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -1078,7 +944,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 105
+# %% ../../nbs/02_federated.agents.ipynb 96
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -1115,7 +981,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 107
+# %% ../../nbs/02_federated.agents.ipynb 98
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -1184,7 +1050,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 112
+# %% ../../nbs/02_federated.agents.ipynb 103
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,

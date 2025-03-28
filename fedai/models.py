@@ -16,21 +16,21 @@ from .text.models import *  # noqa: F403
 
 # %% ../nbs/06_models.ipynb 4
 class LogisticRegression(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, num_classes):
         super(LogisticRegression, self).__init__()
-        self.linear = nn.Linear(input_dim, output_dim)
+        self.linear = nn.Linear(input_dim, num_classes)
 
     def forward(self, x):
         return self.linear(x)
 
 # %% ../nbs/06_models.ipynb 5
 class MLP(nn.Module):
-    def __init__(self, dim_in, dim_hidden, dim_out):
+    def __init__(self, input_dim, hidden_dim, num_classes):
         super(MLP, self).__init__()
-        self.layer_input = nn.Linear(dim_in, dim_hidden)
+        self.layer_input = nn.Linear(input_dim, hidden_dim)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout()
-        self.layer_hidden = nn.Linear(dim_hidden, dim_out)
+        self.layer_hidden = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, x):
         x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])

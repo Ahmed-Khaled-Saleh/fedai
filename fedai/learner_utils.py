@@ -8,6 +8,7 @@ __all__ = ['get_cls', 'get_block', 'get_model', 'get_criterion', 'load_state_fro
 # %% ../nbs/10_learner_utils.ipynb 3
 import os
 import random
+from copy import deepcopy
 import numpy as np
 import torch.nn as nn
 import torch
@@ -33,37 +34,50 @@ def get_block(cfg, id, train=True):
 def get_model(cfg):
     model_name = cfg.model.name
 
-    # Set seed before model creation to ensure the same initialization
+    # Set seed before model creation to ensure the same initialization (cleints start from the same model)
     torch.manual_seed(cfg.random_seed)  
     np.random.seed(cfg.random_seed)
     random.seed(cfg.random_seed)
 
     # Check if the model name contains "hf://"
     if model_name.startswith("hf://"):
-        return get_hf_model(cfg)  # type: ignore # Call your HF model loader function  # noqa: F405
-
-    # Define the rest of the model mapping
-    mapping = {
-    "LogisticRegression": LogisticRegression(  
-        input_dim=getattr(cfg.model, "dim_in", 784),  
-        output_dim=getattr(cfg.model, "dim_out", 10)
-    ),
-    "MNISTCNN": MNISTCNN(num_classes=10),  
-    "CIFAR10CNN": CIFAR10CNN(num_classes=10),  
+        return get_hf_model(cfg)  
     
-    "MLP": MLP(  
-        dim_in=getattr(cfg.model, "dim_in", 784),  
-        dim_hidden=getattr(cfg.model, "dim_hidden", 128),  
-        dim_out=getattr(cfg.model, "dim_out", 10)
-    ),
+    mapping = {
 
-    "CharacterLSTM": CharacterLSTM(  
-        vocab_size=getattr(cfg.model, "vocab_size", 50000),  
-        embed_size=getattr(cfg.model, "embed_size", 512),  
-        hidden_size=getattr(cfg.model, "hidden_size", 512),  
-        num_layers=getattr(cfg.model, "num_layers", 8)
-    )
-}
+                "LogisticRegression": LogisticRegression(  
+                    input_dim=getattr(cfg.model, "input_dim", 784),  
+                    output_dim=getattr(cfg.model, "num_classes", 10)
+                ),
+
+                "MLP": MLP(  
+                    dim_in=getattr(cfg.model, "input_dim", 784),  
+                    dim_hidden=getattr(cfg.model, "hidden_dim", 128),  
+                    dim_out=getattr(cfg.model, "num_classes", 10)
+                ),
+
+                "MNISTCNN": MNISTCNN(
+                    in_channels=getattr(cfg.model, "in_channels", 1),
+                    img_size=getattr(cfg.model, "img_size", 28),  
+                    hidden_dim=getattr(cfg.model, "hidden_dim", 256),  
+                    num_classes=getattr(cfg.model, "num_classes", 10)
+                ),  
+
+                "CIFAR10Model": CIFAR10Model(
+                    in_channels=getattr(cfg.model, "in_channels", 3),
+                    img_size=getattr(cfg.model, "img_size", 32),  
+                    hidden_dim=getattr(cfg.model, "hidden_dim", 512),  
+                    num_classes=getattr(cfg.model, "num_classes", 10)
+                ),
+
+                "CharacterLSTM": CharacterLSTM(  
+                    vocab_size=getattr(cfg.model, "vocab_size", 50000),  
+                    embed_size=getattr(cfg.model, "embed_size", 512),  
+                    hidden_size=getattr(cfg.model, "hidden_dim", 512),  
+                    num_layers=getattr(cfg.model, "num_layers", 8)
+                )
+
+            }
 
 
     # Look up the model in the mapping
@@ -81,44 +95,37 @@ def get_criterion(customm_fn):
         return nn.CrossEntropyLoss()
 
 # %% ../nbs/10_learner_utils.ipynb 9
-from peft import *  # type: ignore # noqa: F403
+def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
 
-def load_state_from_disk(cfg, state, latest_round, id, t):
-    
     if cfg.agg == "one_model":
-        global_model_path = os.path.join(cfg.save_dir,
-                                        str(t-1),
-                                        "global_model",
-                                        "state.pth")
-
+        global_model_path = os.path.join(cfg.save_dir, str(t-1), "global_model", "state.pth")
         gloabal_model_state = torch.load(global_model_path, weights_only= False)
-        # print(type(state["model"]))
-        if isinstance(state["model"], torch.nn.Module):
+
+        if isinstance(state["model"], torch.nn.Module) or isinstance(state["model"], dict) :
             state["model"].load_state_dict(gloabal_model_state["model"])
             print(f"Loaded Global model state from {global_model_path}")
+
         else:
-            set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
-                                      gloabal_model_state["model"],
-                                      "default")
+            set_peft_model_state_dict(state["model"], gloabal_model_state["model"], "default")  # type: ignore
 
     else:
+
         if id not in latest_round:
             return state
-
         latest_comm_round = latest_round[id]
-        old_state_path = os.path.join(cfg.save_dir,
-                                       str(latest_comm_round),
-                                       f"aggregated_model_{id}",
-                                       "state.pth")
-
+        
+        old_state_path = os.path.join(cfg.save_dir, str(latest_comm_round), f"{state_dir}{id}", "state.pth")
         old_saved_state = torch.load(old_state_path, weights_only= False)
 
         if isinstance(state["model"], nn.Module) or isinstance(state["model"], dict) :
             state["model"].load_state_dict(old_saved_state["model"])
+
+            if cfg.client_cls == "DMTL":
+                    state["h_c"] = old_saved_state["h_c"]
+                    state["h"] = state["h_c"]
+
             print(f"Loaded client model state from {old_state_path}")
         else:
-            set_peft_model_state_dict(state["model"],  # noqa: F405 # type: ignore
-                                      old_saved_state["model"],
-                                      "default")
+            set_peft_model_state_dict(state["model"], old_saved_state["model"], "default") # type: ignore
 
     return state
