@@ -133,11 +133,11 @@ def runFL(self: FLAgent):
     
     for t in range(1, self.cfg.n_rounds + 1):
         lst_active_ids = all_ids[t]
-        len_clients_ds = []
+        len_clients_ds = {}
         
         for id in lst_active_ids:
             client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, state_dir= self.cfg.state_dir)
-            len_clients_ds.append(len(client.train_ds))
+            len_clients_ds[id] = len(client.train_ds)
             
             self.communicate(client) 
             client.fit()
@@ -346,7 +346,7 @@ def communicate(self: Agent, another_agent: Agent):  # noqa: F811
 @patch
 def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
         
-    m_t = sum(len_clients_ds)
+    m_t = sum(len_clients_ds.values())
     with torch.no_grad():
         for i, id in enumerate(lst_active_ids):
             state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
@@ -360,7 +360,7 @@ def aggregate(self: FLAgent, lst_active_ids, comm_round, len_clients_ds):
                     for key, value in client_state_dict.items()
                 }
 
-            n_k = len_clients_ds[i]
+            n_k = len_clients_ds[id]
             weight =  n_k / m_t 
 
         
@@ -454,7 +454,7 @@ class DMTL(FLAgent):
         super().__init__(id, cfg, state, role, block)
         
         if self.role == AgentRole.CLIENT:
-            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_size, self.t, self.h_c).to(self.device)
+            self.anchorloss = AnchorLoss(self.cfg.data.num_classes, self.cfg.model.hidden_dim, self.t, self.h_c).to(self.device)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
 
 # %% ../../nbs/02_federated.agents.ipynb 50
@@ -508,7 +508,7 @@ def _closure(self: DMTL, batch: dict) -> tuple:
 # %% ../../nbs/02_federated.agents.ipynb 54
 @patch
 def _run_batch(self: DMTL, batch: dict) -> tuple:
-    batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
+    batch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_dim).to(self.device)
     self.optimizer.zero_grad()
 
     loss, metrics, h, labels = self._closure(batch)
@@ -531,7 +531,7 @@ def _run_batch(self: DMTL, batch: dict) -> tuple:
 @patch
 def _run_epoch(self: DMTL):
 
-    epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_size).to(self.device)
+    epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_dim).to(self.device)
     for batch_idx, batch in enumerate(self.train_loader):
         batch = self.get_batch(batch)
         _, _, batch_mean_anchor = self._run_batch(batch)
@@ -591,8 +591,8 @@ def model_similarity(self: DMTL, model1, model2):
 # %% ../../nbs/02_federated.agents.ipynb 64
 @patch
 def h_similarity(self: DMTL, h1, h2, label_set, label_set2):
-    h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
-    h2 = h2.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_size)
+    h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_dim)
+    h2 = h2.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_dim)
     
     h1_norm = F.normalize(h1, p=2, dim=1)  # (3, 512)
     h2_norm = F.normalize(h2, p=2, dim=1)  # (3, 512)
