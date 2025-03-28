@@ -47,13 +47,13 @@ def get_model(cfg):
 
                 "LogisticRegression": LogisticRegression(  
                     input_dim=getattr(cfg.model, "input_dim", 784),  
-                    output_dim=getattr(cfg.model, "num_classes", 10)
+                    num_classes=getattr(cfg.model, "num_classes", 10)
                 ),
 
                 "MLP": MLP(  
                     dim_in=getattr(cfg.model, "input_dim", 784),  
-                    dim_hidden=getattr(cfg.model, "hidden_dim", 128),  
-                    dim_out=getattr(cfg.model, "num_classes", 10)
+                    hidden_dim=getattr(cfg.model, "hidden_dim", 128),  
+                    num_classes=getattr(cfg.model, "num_classes", 10)
                 ),
 
                 "MNISTCNN": MNISTCNN(
