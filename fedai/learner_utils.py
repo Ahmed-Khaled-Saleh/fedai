@@ -51,7 +51,7 @@ def get_model(cfg):
                 ),
 
                 "MLP": MLP(  
-                    dim_in=getattr(cfg.model, "input_dim", 784),  
+                    input_dim=getattr(cfg.model, "input_dim", 784),  
                     hidden_dim=getattr(cfg.model, "hidden_dim", 128),  
                     num_classes=getattr(cfg.model, "num_classes", 10)
                 ),
