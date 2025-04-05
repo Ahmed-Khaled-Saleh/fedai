@@ -9,12 +9,13 @@ __all__ = ['MNISTCNNEncoder', 'MNISTCNNClassificationHead', 'MNISTCNN', 'CIFAR10
 # %% ../../nbs/07_vision.models.ipynb 3
 from fastcore.utils import *  # noqa: F403
 from torch import nn
+import torch.nn.functional as F
 import torch
 from peft import *  # noqa: F403
 
-# %% ../../nbs/07_vision.models.ipynb 5
+# %% ../../nbs/07_vision.models.ipynb 6
 class MNISTCNNEncoder(nn.Module):
-    def __init__(self, in_channels=3, img_size=3, hidden_dim=512):
+    def __init__(self, in_channels=1, img_size=28, hidden_dim=512):
         super(MNISTCNNEncoder, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=5, stride=1, padding=2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
@@ -29,7 +30,7 @@ class MNISTCNNEncoder(nn.Module):
         x = self.pool(x)
         x = self.relu(self.conv2(x))
         x = self.pool(x)
-        x = x.view(x.size(0), -1)  # Flatten
+        x = x.reshape(x.size(0), -1)# x.view(x.size(0), -1)  # Flatten
         x = self.fc1(x)
         return x
     
@@ -51,16 +52,19 @@ class MNISTCNNClassificationHead(nn.Module):
 class MNISTCNN(nn.Module):
     def __init__(self, in_channels=1, img_size= 28, hidden_dim=512, num_classes=10):
         super(MNISTCNN, self).__init__()
+        self.in_channels = in_channels
         self.encoder = MNISTCNNEncoder(in_channels=in_channels, img_size= img_size, hidden_dim=hidden_dim)
         self.classifier = MNISTCNNClassificationHead(hidden_dim= hidden_dim, num_classes= num_classes)
 
     def forward(self, x):
+        if x.ndim == 4 and x.shape[1] not in (1, 3) and x.shape[-1] in (1, 3):
+            x = x.permute(0, 3, 1, 2)
         x = self.encoder(x)
         x = self.classifier(x)
         return x
     
 
-# %% ../../nbs/07_vision.models.ipynb 8
+# %% ../../nbs/07_vision.models.ipynb 9
 import torch
 import torch.nn as nn
 import numpy as np
