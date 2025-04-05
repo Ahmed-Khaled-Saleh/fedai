@@ -852,12 +852,12 @@ class pFedMe(FLAgent):
 @patch
 def save_init_global(self: pFedMe, state):  # noqa: F811
     
-    state_path = os.path.join(self.cfg.save_dir, "0", "global_model", "state.pth")
+    state_path = os.path.join(self.cfg.save_dir, "0", "global_model", "init_global_state.pth")
 
     if not os.path.exists(os.path.dirname(state_path)):
         os.makedirs(os.path.dirname(state_path))
 
-    torch.save(state["model"].state_dict(), state_path)
+    torch.save(state, state_path)
 
 
 # %% ../../nbs/02_federated.agents.ipynb 89
@@ -1023,7 +1023,8 @@ def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
     m_t = sum(len_clients_ds.values())
     with torch.no_grad():
 
-        prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round - 1), "global_model", "state.pth")
+        name = "init_global_state" if comm_round == 1 else "state"
+        prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round - 1), "global_model", f"{name}.pth")
         prev_server_state = torch.load(prev_server_state_path, weights_only=False)
         prev_global_model = prev_server_state['model']
 
