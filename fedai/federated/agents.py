@@ -843,7 +843,7 @@ class pFedMe(FLAgent):
         
         if self.role == AgentRole.CLIENT:
             self.local_model = deepcopy(self.model)
-            self.optimizer = pFedMeOptimizer(self.model.parameters(), lr=self.cfg.personal_lr, lambda_=self.cfg.lambda_)
+            self.optimizer = pFedMeOptimizer(self.model.to(self.device).parameters(), lr=self.cfg.personal_lr, lambda_=self.cfg.lambda_)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
         
         self.saved_global = 0
@@ -928,6 +928,7 @@ def _run_epoch(self: pFedMe):
 def fit(self: pFedMe) -> dict:
     
     self.model = self.model.to(self.device)
+    self.local_model = self.local_model.to(self.device)
     self.model.train()
     for _ in range(self.cfg.local_epochs):
         self._run_epoch()
@@ -967,9 +968,11 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
-    self.persionalized_model_bar = deepcopy(self.local_model)
-    self.persionalized_model_bar.load_state_dict(self.persionalized_model_bar.state_dict())
-    self.persionalized_model_bar = self.persionalized_model_bar.to(self.device)
+    model = deepcopy(self.local_model)
+    for param, per_param in zip(model.parameters(), self.persionalized_model_bar):
+        param.copy_(per_param)
+
+    self.persionalized_model_bar = model.to(self.device)
     self.persionalized_model_bar.eval()
 
     num_eval = 0
