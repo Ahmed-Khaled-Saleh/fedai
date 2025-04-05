@@ -121,8 +121,11 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
             state["model"].load_state_dict(old_saved_state["model"])
 
             if cfg.client_cls == "DMTL":
-                    state["h_c"] = old_saved_state["h_c"]
-                    state["h"] = state["h_c"]
+                state["h_c"] = old_saved_state["h_c"]
+                state["h"] = state["h_c"]
+
+            if cfg.client_cls == "pFedMe":
+                state["persionalized_model_bar"] = old_saved_state["persionalized_model_bar"]
 
             print(f"Loaded client model state from {old_state_path}")
         else:
