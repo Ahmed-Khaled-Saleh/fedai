@@ -842,6 +842,7 @@ class pFedMe(FLAgent):
         super().__init__(id, cfg, state, role, block)
         
         if self.role == AgentRole.CLIENT:
+            self.local_model = deepcopy(self.model)
             self.optimizer = pFedMeOptimizer(self.model.parameters(), lr=self.cfg.personal_lr, lambda_=self.cfg.lambda_)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
             self.saved_global = 0
@@ -900,11 +901,11 @@ def _run_batch(self: pFedMe, batch: dict) -> tuple:
             return loss, metrics
         
         loss.backward()
-        self.persionalized_model_bar, _ = self.optimizer.step(self.model) # FIXME model ???
+        self.persionalized_model_bar, _ = self.optimizer.step(self.local_model)
 
     # update local weight after finding aproximate theta
     with torch.no_grad():
-        for new_param, localweight in zip(self.persionalized_model_bar, self.model):
+        for new_param, localweight in zip(self.persionalized_model_bar, self.local_model):
             localweight.sub_(self.cfg.lambda_* self.learning_rate * (localweight - new_param))
 
     if self.cfg.model.grad_norm_clip:
@@ -930,13 +931,13 @@ def fit(self: pFedMe) -> dict:
     for _ in range(self.cfg.local_epochs):
         self._run_epoch()
 
-    # with torch.no_grad():
-    #     for model_param, localweight in zip(self.model, self.model):
-    #         model_param.copy_(localweight)
+    with torch.no_grad():
+        for model_param, localweight in zip(self.model, self.model):
+            model_param.copy_(localweight)
 
 # %% ../../nbs/02_federated.agents.ipynb 96
 @patch
-def per_train_test_stats(self: pFedMe, batch: dict) -> tuple:
+def train_test_stats(self: pFedMe, batch: dict) -> tuple:
     metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
 
     try:
@@ -961,7 +962,7 @@ def per_train_test_stats(self: pFedMe, batch: dict) -> tuple:
 
 # %% ../../nbs/02_federated.agents.ipynb 97
 @patch
-def local_evaluate_personalized(self: pFedMe, loader= 'train') -> dict:
+def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
@@ -992,16 +993,16 @@ def local_evaluate_personalized(self: pFedMe, loader= 'train') -> dict:
 
 # %% ../../nbs/02_federated.agents.ipynb 98
 @patch
-def evaluate_personalized(self: pFedMe, t):
+def evaluate(self: pFedMe, t):
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
         client = self.client_fn(self.client_cls, self.cfg, id, self.latest_round, t, self.loss_fn, state_dir= self.cfg.state_dir)
         
-        res_train = client.local_evaluate_personalized(loader= 'train')
+        res_train = client.evaluate_local(loader= 'train')
         lst_train_res.append(res_train)
 
-        res_test = client.local_evaluate_personalized(loader= 'test')
+        res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
     return lst_train_res, lst_test_res    
 
