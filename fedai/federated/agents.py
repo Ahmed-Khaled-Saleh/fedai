@@ -845,7 +845,8 @@ class pFedMe(FLAgent):
             self.local_model = deepcopy(self.model)
             self.optimizer = pFedMeOptimizer(self.model.parameters(), lr=self.cfg.personal_lr, lambda_=self.cfg.lambda_)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
-            self.saved_global = 0
+        
+        self.saved_global = 0
 
 # %% ../../nbs/02_federated.agents.ipynb 88
 @patch
