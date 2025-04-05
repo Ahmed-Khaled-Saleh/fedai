@@ -857,7 +857,10 @@ def save_init_global(self: pFedMe, state):  # noqa: F811
     if not os.path.exists(os.path.dirname(state_path)):
         os.makedirs(os.path.dirname(state_path))
 
-    torch.save(state, state_path)
+    init_state = {
+        'model': state['model'].state_dict(),
+    }
+    torch.save(init_state, state_path)
 
 
 # %% ../../nbs/02_federated.agents.ipynb 89
@@ -1019,7 +1022,7 @@ def evaluate(self: pFedMe, t):
 # %% ../../nbs/02_federated.agents.ipynb 100
 @patch
 def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
-        
+
     m_t = sum(len_clients_ds.values())
     with torch.no_grad():
 
