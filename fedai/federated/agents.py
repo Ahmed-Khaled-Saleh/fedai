@@ -894,7 +894,7 @@ def communicate(self: pFedMe, another_agent: Agent):  # noqa: F811
 @patch
 def _run_batch(self: pFedMe, batch: dict) -> tuple:
     
-    for j in range(self.K):
+    for j in range(self.cfg.K):
         self.optimizer.zero_grad()
         loss, metrics = self._closure(batch)
 
