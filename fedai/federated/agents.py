@@ -857,7 +857,7 @@ def save_init_global(self: pFedMe, state):  # noqa: F811
     if not os.path.exists(os.path.dirname(state_path)):
         os.makedirs(os.path.dirname(state_path))
 
-    torch.save(state.state_dict(), state_path)
+    torch.save(state["model"].state_dict(), state_path)
 
 
 # %% ../../nbs/02_federated.agents.ipynb 89
