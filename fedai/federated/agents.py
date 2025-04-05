@@ -906,8 +906,8 @@ def _run_batch(self: pFedMe, batch: dict) -> tuple:
 
     # update local weight after finding aproximate theta
     with torch.no_grad():
-        for new_param, localweight in zip(self.persionalized_model_bar, self.local_model):
-            localweight.sub_(self.cfg.lambda_* self.learning_rate * (localweight - new_param))
+        for new_param, localweight in zip(self.persionalized_model_bar, self.local_model.parameters()):
+            localweight.sub_(self.cfg.lambda_* self.cfg.lr * (localweight - new_param))
 
     if self.cfg.model.grad_norm_clip:
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.model.grad_norm_clip)
@@ -933,7 +933,7 @@ def fit(self: pFedMe) -> dict:
         self._run_epoch()
 
     with torch.no_grad():
-        for model_param, localweight in zip(self.model, self.model):
+        for model_param, localweight in zip(self.model.parameters(), self.local_model.parameters()):
             model_param.copy_(localweight)
 
 # %% ../../nbs/02_federated.agents.ipynb 96
@@ -967,8 +967,11 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
+    self.persionalized_model_bar = deepcopy(self.local_model)
+    self.persionalized_model_bar.load_state_dict(self.persionalized_model_bar.state_dict())
     self.persionalized_model_bar = self.persionalized_model_bar.to(self.device)
     self.persionalized_model_bar.eval()
+
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
     

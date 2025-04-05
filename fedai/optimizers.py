@@ -35,9 +35,8 @@ class pFedMeOptimizer(Optimizer):
         loss = None
         if closure is not None:
             loss = closure
-        weight_update = local_weight_updated.copy()
         for group in self.param_groups:
-            for p, localweight in zip( group['params'], weight_update):
+            for p, localweight in zip( group['params'], local_weight_updated.parameters()):
                 p.data = p.data - group['lr'] * (p.grad.data + group['lambda_'] * (p.data - localweight.data) + group['mu']*p.data)
         return  group['params'], loss
     
