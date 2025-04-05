@@ -26,6 +26,8 @@ class MNISTCNNEncoder(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        if x.ndim == 4 and x.shape[1] not in (1, 3) and x.shape[-1] in (1, 3):
+            x = x.permute(0, 3, 1, 2)
         x = self.relu(self.conv1(x))
         x = self.pool(x)
         x = self.relu(self.conv2(x))
