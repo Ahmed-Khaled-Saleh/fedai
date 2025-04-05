@@ -974,7 +974,7 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             batch = self.get_batch(batch)
-            loss, metrics = self.per_train_test_stats(batch)                 
+            loss, metrics = self.train_test_stats(batch)                 
             if not math.isnan(loss.item()):
                 total_loss += loss.item()  
                 num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
@@ -994,6 +994,7 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
 # %% ../../nbs/02_federated.agents.ipynb 98
 @patch
 def evaluate(self: pFedMe, t):
+    self.cfg.agg == "mtl"
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
@@ -1004,6 +1005,7 @@ def evaluate(self: pFedMe, t):
 
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
+    self.cfg.agg == "one_model"
     return lst_train_res, lst_test_res    
 
 

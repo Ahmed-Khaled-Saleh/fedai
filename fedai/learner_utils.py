@@ -109,7 +109,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
             set_peft_model_state_dict(state["model"], gloabal_model_state["model"], "default")  # type: ignore
 
         if cfg.client_cls == "pFedMe":
-            state["persionalized_model_bar"] = old_saved_state["persionalized_model_bar"]
+            state["persionalized_model_bar"] = gloabal_model_state["persionalized_model_bar"]
 
     else:
 
@@ -127,6 +127,8 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
                 state["h_c"] = old_saved_state["h_c"]
                 state["h"] = state["h_c"]
 
+            if cfg.client_cls == "pFedMe":
+                state["persionalized_model_bar"] = old_saved_state["persionalized_model_bar"]
             
             print(f"Loaded client model state from {old_state_path}")
         else:
