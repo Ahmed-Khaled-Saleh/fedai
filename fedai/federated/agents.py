@@ -1022,8 +1022,8 @@ def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
         else:
             id = lst_active_ids[0]
             prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
-            prev_server_state = torch.load(state_path, weights_only=False)
-            prev_global_model = state['w0']
+            prev_server_state = torch.load(prev_server_state_path, weights_only=False)
+            prev_global_model = prev_server_state['w0']
 
 
         for i, id in enumerate(lst_active_ids):
