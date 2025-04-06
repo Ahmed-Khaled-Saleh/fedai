@@ -29,7 +29,7 @@ def client_fn(client_cls, cfg, id, latest_round, t, loss_fn = None, optimizer = 
 
     state = {'model': model, 'optimizer': None, 'criterion': criterion, 't': t, 'h': None, 'h_c': None, "persionalized_model_bar": None}
 
-    if t > 1:
+    if t > 1 or cfg.client_cls == "pFedMe":
         state = load_state_from_disk(cfg, state, latest_round, id, t, state_dir)  
 
     state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.lr)      
