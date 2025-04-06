@@ -932,7 +932,7 @@ def train_test_stats(self: pFedMe, batch: dict) -> tuple:
 
     try:
         X, y = batch['x'], batch['y']
-        logits = self.personalized_model(X)
+        logits = self.per_model(X)
         loss = self.criterion(logits, y)
         probs = torch.nn.functional.softmax(logits, dim=-1)
         y_pred = probs.argmax(dim=-1)
@@ -956,13 +956,14 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
 
-    self.personalized_model = deepcopy(self.model)
-    self.personalized_model = self.personalized_model.to(self.device)
+    self.per_model = deepcopy(self.model)
+    self.per_model = self.per_model.to(self.device)
 
-    for param, per_param in zip(self.personalized_model.parameters(), self.persionalized_model_bar.to(self.device).parameters()):
-        param.copy_(per_param)
+    with torch.no_grad():
+        for param, per_param in zip(self.per_model.parameters(), self.persionalized_model_bar.to(self.device).parameters()):
+            param.copy_(per_param)
     
-    self.personalized_model.eval()
+    self.per_model.eval()
 
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
