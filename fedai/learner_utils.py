@@ -112,6 +112,8 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
     else:
 
         if id not in latest_round:
+            if cfg.client_cls == "pFedMe":
+                state["persionalized_model_bar"] = state['model']
             return state
         
         latest_comm_round = latest_round[id]
