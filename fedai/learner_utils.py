@@ -97,6 +97,7 @@ def get_criterion(customm_fn):
 # %% ../nbs/10_learner_utils.ipynb 9
 def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
 
+
     if cfg.agg == "one_model":
         global_model_path = os.path.join(cfg.save_dir, str(t-1), "global_model", "state.pth")
         gloabal_model_state = torch.load(global_model_path, weights_only= False)
@@ -108,13 +109,11 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
         else:
             set_peft_model_state_dict(state["model"], gloabal_model_state["model"], "default")  # type: ignore
 
-        if cfg.client_cls == "pFedMe":
-            state["persionalized_model_bar"] = gloabal_model_state["persionalized_model_bar"]
-
     else:
 
         if id not in latest_round:
             return state
+        
         latest_comm_round = latest_round[id]
         
         old_state_path = os.path.join(cfg.save_dir, str(latest_comm_round), f"{state_dir}{id}", "state.pth")

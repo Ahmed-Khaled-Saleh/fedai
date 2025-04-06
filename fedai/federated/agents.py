@@ -846,38 +846,24 @@ class pFedMe(FLAgent):
             self.optimizer = pFedMeOptimizer(self.model.to(self.device).parameters(), lr=self.cfg.personal_lr, lambda_=self.cfg.lambda_)
             self.label_set = list(set(np.array([batch['y'] for batch in self.train_ds])))
         
-        self.saved_global = 0
-
-# %% ../../nbs/02_federated.agents.ipynb 89
-@patch
-def save_init_global(self: pFedMe, state):  # noqa: F811
-    
-    state_path = os.path.join(self.cfg.save_dir, "0", "global_model", "init_global_state.pth")
-
-    if not os.path.exists(os.path.dirname(state_path)):
-        os.makedirs(os.path.dirname(state_path))
-
-    init_state = {
-        'model': state['model'].state_dict(),
-    }
-    torch.save(init_state, state_path)
-
 
 # %% ../../nbs/02_federated.agents.ipynb 90
 @patch
-def save_state(self: pFedMe, state_dict):  # noqa: F811
-    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
-    
+def save_state(self: pFedMe, state_dict):  # noqa: F811    
     state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
     
     if not os.path.exists(os.path.dirname(state_path)):
         os.makedirs(os.path.dirname(state_path))
 
-    state_dict['model'] = self.model.state_dict()
-    state_dict['optimizer'] = self.optimizer.state_dict()
-    state_dict['persionalized_model_bar'] = self.persionalized_model_bar
+    client_state = {
+        **state_dict,
+        "model": self.model.state_dict(),
+        'optimizer': self.optimizer.state_dict(),
+        'persionalized_model_bar': self.persionalized_model_bar,
 
-    torch.save(state_dict, state_path)
+    }
+
+    torch.save(client_state, state_path)
 
     if self.role == AgentRole.CLIENT:
         save_space(self)
@@ -888,10 +874,6 @@ def save_state(self: pFedMe, state_dict):  # noqa: F811
 def communicate(self: pFedMe, another_agent: Agent):  # noqa: F811
     if self.role == AgentRole.CLIENT:
         self.save_state(self.state)
-        
-    elif self.role == AgentRole.SERVER and (not self.saved_global):
-        self.saved_global = 1
-        self.save_init_global(another_agent.state)
 
 # %% ../../nbs/02_federated.agents.ipynb 93
 @patch
@@ -935,6 +917,7 @@ def fit(self: pFedMe) -> dict:
     self.model = self.model.to(self.device)
     self.local_model = self.local_model.to(self.device)
     self.model.train()
+    self.local_model.train()
     for _ in range(self.cfg.local_epochs):
         self._run_epoch()
 
@@ -1003,10 +986,10 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     return {"loss": avg_loss, "metrics": total_metrics}
 
 
-# %% ../../nbs/02_federated.agents.ipynb 99
+# %% ../../nbs/02_federated.agents.ipynb 100
 @patch
 def evaluate(self: pFedMe, t):
-    self.cfg.agg == "mtl"
+    self.cfg.agg ="mtl"
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
@@ -1019,21 +1002,29 @@ def evaluate(self: pFedMe, t):
 
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
-    self.cfg.agg == "one_model"
+        
+    self.cfg.agg = "one_model"
     return lst_train_res, lst_test_res    
 
 
-# %% ../../nbs/02_federated.agents.ipynb 101
+# %% ../../nbs/02_federated.agents.ipynb 102
 @patch
 def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
 
     m_t = sum(len_clients_ds.values())
     with torch.no_grad():
 
-        name = "init_global_state" if comm_round == 1 else "state"
-        prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round - 1), "global_model", f"{name}.pth")
-        prev_server_state = torch.load(prev_server_state_path, weights_only=False)
-        prev_global_model = prev_server_state['model']
+        if comm_round > 1:
+            prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round - 1), "global_model", "state.pth")
+            prev_server_state = torch.load(prev_server_state_path, weights_only=False)
+            prev_global_model = prev_server_state['model']
+
+        else:
+            id = lst_active_ids[0]
+            prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
+            prev_server_state = torch.load(state_path, weights_only=False)
+            prev_global_model = state['w0']
+
 
         for i, id in enumerate(lst_active_ids):
             state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
@@ -1068,7 +1059,7 @@ def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
 
     
 
-# %% ../../nbs/02_federated.agents.ipynb 104
+# %% ../../nbs/02_federated.agents.ipynb 105
 class PeftAgent(FLAgent):
     def __init__(self,
                  cfg,
@@ -1080,7 +1071,7 @@ class PeftAgent(FLAgent):
         super().__init__(cfg, block, id, state, role)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 105
+# %% ../../nbs/02_federated.agents.ipynb 106
 @patch
 def peftify(self: PeftAgent):
     # extract only the adapter's parameters from the model and store them in a dictionary
@@ -1096,13 +1087,13 @@ def peftify(self: PeftAgent):
         )
     ).__get__(self.model, type(self.model))
 
-# %% ../../nbs/02_federated.agents.ipynb 106
+# %% ../../nbs/02_federated.agents.ipynb 107
 @patch 
 def init_agent(self: PeftAgent):  # noqa: F811
     self.peftify()
 
 
-# %% ../../nbs/02_federated.agents.ipynb 107
+# %% ../../nbs/02_federated.agents.ipynb 108
 @patch
 def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selected_clients_set):  # noqa: F811
     # save the new adapter weights to disk
@@ -1116,7 +1107,7 @@ def save_state_(self: PeftAgent, epoch, local_dataset_len_dict, previously_selec
 
     return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
-# %% ../../nbs/02_federated.agents.ipynb 109
+# %% ../../nbs/02_federated.agents.ipynb 110
 class FedSophiaAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -1127,14 +1118,14 @@ class FedSophiaAgent(FLAgent):
         super().__init__(id, cfg, state, role, block)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 110
+# %% ../../nbs/02_federated.agents.ipynb 111
 @patch
 def train(self: FedSophiaAgent):
     trainer = self.trainer(self) 
     client_history = trainer.fit() 
     return client_history
 
-# %% ../../nbs/02_federated.agents.ipynb 112
+# %% ../../nbs/02_federated.agents.ipynb 113
 class PadgAgent(FLAgent):
     def __init__(self,
                  id, # the id of the agent
@@ -1148,7 +1139,7 @@ class PadgAgent(FLAgent):
             self.connections = torch.from_numpy(generate_graph(self.cfg.num_clients))  # noqa: F405
 
 
-# %% ../../nbs/02_federated.agents.ipynb 113
+# %% ../../nbs/02_federated.agents.ipynb 114
 @patch
 def apply_constraints(self: PadgAgent, 
                       graph, # (np.ndarray): The input matrix.
@@ -1180,7 +1171,7 @@ def apply_constraints(self: PadgAgent,
     return graph
 
 
-# %% ../../nbs/02_federated.agents.ipynb 114
+# %% ../../nbs/02_federated.agents.ipynb 115
 @patch
 def compute_probs(self: PadgAgent,
                   batch_size=32, # batch_size (int): Batch size for evaluation.
@@ -1217,7 +1208,7 @@ def compute_probs(self: PadgAgent,
     return torch.cat(all_probs, dim=0)
 
 
-# %% ../../nbs/02_federated.agents.ipynb 116
+# %% ../../nbs/02_federated.agents.ipynb 117
 @patch
 def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_model= False):
     
@@ -1286,7 +1277,7 @@ def aggregate(self: PadgAgent, lst_active_ids, comm_round, len_clients_ds, one_m
         self.save_state(client_state_dict, comm_round + 1, id)
         
 
-# %% ../../nbs/02_federated.agents.ipynb 121
+# %% ../../nbs/02_federated.agents.ipynb 122
 class AgentMira(FLAgent):
     def __init__(self,
                  data_dict: dict,
