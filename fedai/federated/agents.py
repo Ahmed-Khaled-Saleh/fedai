@@ -124,6 +124,7 @@ def server_init(self: FLAgent, client_fn, client_selector, client_cls, loss_fn, 
     self.loss_fn = loss_fn
     self.writer = writer
     self.latest_round = {}
+    self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # %% ../../nbs/02_federated.agents.ipynb 21
 @patch
@@ -1023,7 +1024,7 @@ def aggregate(self: pFedMe, lst_active_ids, comm_round, len_clients_ds):
             id = lst_active_ids[0]
             prev_server_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
             prev_server_state = torch.load(prev_server_state_path, weights_only=False)
-            prev_global_model = prev_server_state['w0']
+            prev_global_model = prev_server_state['w0'].to(self.device).state_dict()
 
 
         for i, id in enumerate(lst_active_ids):
