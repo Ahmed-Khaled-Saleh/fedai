@@ -129,6 +129,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
                 state["h"] = state["h_c"]
 
             if cfg.client_cls == "pFedMe":
+                state["pers_model"] = deepcopy(state['model'])
                 state["pers_model"].load_state_dict(old_saved_state["pers_model"])
             
             print(f"Loaded client model state from {old_state_path}")
