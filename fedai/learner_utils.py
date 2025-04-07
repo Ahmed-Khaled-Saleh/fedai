@@ -113,7 +113,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
 
         if id not in latest_round:
             if cfg.client_cls == "pFedMe":
-                state["persionalized_model_bar"] = deepcopy(state['model'])
+                state["pers_model"] = deepcopy(state['model'])
             return state
         
         latest_comm_round = latest_round[id]
@@ -129,7 +129,7 @@ def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
                 state["h"] = state["h_c"]
 
             if cfg.client_cls == "pFedMe":
-                state["persionalized_model_bar"] = old_saved_state["persionalized_model_bar"]
+                state["pers_model"].load_state_dict(old_saved_state["pers_model"])
             
             print(f"Loaded client model state from {old_state_path}")
         else:
