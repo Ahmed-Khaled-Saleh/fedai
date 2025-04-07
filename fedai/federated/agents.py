@@ -979,6 +979,7 @@ def evaluate_local(self: pFedMe, loader= 'train') -> dict:
     #         param.copy_(per_param)
     
     self.pers_model.eval()
+    self.pers_model = self.pers_model.to(self.device)
 
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
