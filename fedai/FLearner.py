@@ -43,7 +43,6 @@ def client_fn(client_cls, cfg, id, latest_round, t, loss_fn = None, optimizer = 
         
 
     state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.optimizer.lr)      
-    state['alignment_criterion']= get_cls("torch.nn", cfg.alignment_criterion)
     
     return client_cls(id, cfg, state, block= [train_block, test_block])
 

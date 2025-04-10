@@ -659,7 +659,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             other_state = torch.load(other_state_path, weights_only= False)
             model2 = other_state['model']
             h2 = other_state['h']
-            label_set2 = state['label_set']
+            label_set2 = other_state['label_set']
 
             w_sim = self.model_similarity(model1, model2)
             h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
