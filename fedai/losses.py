@@ -16,10 +16,15 @@ from copy import deepcopy
 
 # %% ../nbs/11_losses.ipynb 4
 class AnchorLoss(nn.Module):
-    def __init__(self, num_classes, feature_num, t=1, h_c=None):
+    def __init__(self, random_seed, num_classes, feature_num, t=1, h_c=None):
         super().__init__()
         self.num_classes = num_classes
         self.feature_num = feature_num
+
+        torch.manual_seed(random_seed)  
+        np.random.seed(random_seed)
+        random.seed(random_seed)
+
         self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
         
         if t > 1 and h_c is not None:

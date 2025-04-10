@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 import argparse
 import yaml
 from copy import deepcopy
+import numpy as np
 import torch
 from torch import nn
 from fastcore.utils import * 
@@ -41,7 +42,7 @@ def client_fn(client_cls, cfg, id, latest_round, t, loss_fn = None, optimizer = 
         state = load_state_from_disk(cfg, state, latest_round, id, t, state_dir)  
         
 
-    state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.lr)      
+    state['optimizer'] = get_cls("torch.optim", cfg.optimizer.name)(state['model'].parameters(), lr=cfg.optimizer.lr)      
     state['alignment_criterion']= get_cls("torch.nn", cfg.alignment_criterion)
     
     return client_cls(id, cfg, state, block= [train_block, test_block])
@@ -59,8 +60,9 @@ class FLearner:
                  writer= WandbWriter): # a writer to write results to an expirement tracking tool # noqa: F405
         
         self.cfg = cfg
-        self.cfg.now = datetime.now().strftime("%Y%m%d_%H%M%S")
-        cfg.root_dir = os.path.join(cfg.root_dir, cfg.project_name)
+        self.cfg.random_seed = np.random.randint(0, 100000)
+        cfg.root_dir = os.path.join(cfg.root_dir, cfg.project_name, cfg.client_cls)
+        
         self.cfg.save_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.save_dir)
         self.cfg.log_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.log_dir)
         self.cfg.res_dir = os.path.join(self.cfg.root_dir, self.cfg.now, self.cfg.res_dir)

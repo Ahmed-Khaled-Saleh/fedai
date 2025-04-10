@@ -97,7 +97,7 @@ def get_criterion(customm_fn):
 # %% ../nbs/10_learner_utils.ipynb 9
 def load_state_from_disk(cfg, state, latest_round, id, t, state_dir):
 
-
+    
     if cfg.agg == "one_model":
         global_model_path = os.path.join(cfg.save_dir, str(t-1), "global_model", "state.pth")
         gloabal_model_state = torch.load(global_model_path, weights_only= False)

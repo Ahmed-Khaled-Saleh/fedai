@@ -7,6 +7,8 @@ __all__ = ['BaseClientSelector']
 
 # %% ../nbs/10_client_selection.ipynb 3
 import numpy as np
+import random
+import torch
 
 # %% ../nbs/10_client_selection.ipynb 4
 class BaseClientSelector:
@@ -14,6 +16,10 @@ class BaseClientSelector:
         self.cfg = cfg
 
     def select(self):
+        torch.manual_seed(self.cfg.random_seed)  
+        np.random.seed(self.cfg.random_seed)
+        random.seed(self.cfg.random_seed)
+        
         active_clients_ids = []
         for _ in range(self.cfg.n_rounds):
             active_clients_ids.append(np.random.choice(a= np.arange(self.cfg.num_clients), 
