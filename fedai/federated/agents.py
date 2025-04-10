@@ -539,6 +539,9 @@ def _run_batch(self: DMTL, batch: dict) -> tuple:
 def _run_epoch(self: DMTL):
 
     epoch_mean_anchor = torch.zeros(self.cfg.data.num_classes, self.cfg.model.hidden_dim).to(self.device)
+    with torch.no_grad():
+        epoch_mean_anchor.copy_(self.anchorloss.anchor)
+
     for batch_idx, batch in enumerate(self.train_loader):
         batch = self.get_batch(batch)
         _, _, batch_mean_anchor = self._run_batch(batch)
@@ -549,10 +552,15 @@ def _run_epoch(self: DMTL):
 
             #compute epoch mean anchor according to batch mean anchor
             lambda_momentum = self.cfg.momentum_anchor #pow(2, -(epoch+1))
-            epoch_mean_anchor[i] = lambda_momentum*epoch_mean_anchor[i] + (1-lambda_momentum)*batch_mean_anchor[i]
+            # epoch_mean_anchor[i] = lambda_momentum * epoch_mean_anchor[i] + (1-lambda_momentum)*batch_mean_anchor[i]
+            epoch_mean_anchor[i].mul_(lambda_momentum).add_((1 - lambda_momentum) * batch_mean_anchor[i])
+
         
 
-    self.anchorloss.anchor =  torch.nn.Parameter(epoch_mean_anchor, requires_grad=False)
+    # self.anchorloss.anchor =  torch.nn.Parameter(epoch_mean_anchor, requires_grad=False)
+    with torch.no_grad():
+        self.anchorloss.anchor.copy_(epoch_mean_anchor)
+
 
 # %% ../../nbs/02_federated.agents.ipynb 60
 @patch
@@ -562,7 +570,7 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
     
     state_dict['model'] = self.model.state_dict()
     state_dict['optimizer'] = self.optimizer.state_dict()
-    state_dict['h'] = self.anchorloss.anchor.detach() # (num_classes, hidden_size)
+    state_dict['h'] = self.anchorloss.anchor.detach().clone() # (num_classes, hidden_size)
     state_dict['label_set'] = self.label_set
     
     # pick a random data point from the train_ds and save it to the state_dict
@@ -666,6 +674,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             clients_sim_dict[(id, other_id)] = h_sim_df
 
             graph[i][j] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
+            graph[j][i] = round(graph[i][j], ndigits=3)
             graph[i][j] = graph[j][i]
 
             visited[(id, other_id)] = True

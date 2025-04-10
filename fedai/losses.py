@@ -28,6 +28,7 @@ class AnchorLoss(nn.Module):
         self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, feature_num)), requires_grad=True)
         
         if t > 1 and h_c is not None:
+            print("Updating anchor with h_c")
             with torch.no_grad():  # This ensures the operation doesn't track gradients
                 h_c = h_c.to(self.anchor.device)
                 self.anchor.copy_(h_c)
