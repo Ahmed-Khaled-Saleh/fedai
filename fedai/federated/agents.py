@@ -643,7 +643,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     graph = np.random.rand(num_active, num_active)
     graph = graph / graph.sum(axis=1)[:, None]
 
-    pair_wise_h_df = []
+    clients_sim_dict = {}
     visited = {}
     for i, id in enumerate(lst_active_ids):
         state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
@@ -663,7 +663,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
             w_sim = self.model_similarity(model1, model2)
             h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
-            pair_wise_h_df.append(h_sim_df)
+            clients_sim_dict[(id, other_id)] = h_sim_df
 
             graph[i][j] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
             graph[i][j] = graph[j][i]
@@ -688,7 +688,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     df_path = os.path.join(self.cfg.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
     if not os.path.exists(os.path.dirname(df_path)):
         os.makedirs(os.path.dirname(df_path))
-    torch.save(pair_wise_h_df, df_path)
+    torch.save(clients_sim_dict, df_path)
 
     return G, graph
 
