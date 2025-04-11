@@ -673,7 +673,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
             clients_sim_dict[(id, other_id)] = h_sim_df
 
-            graph[i][j] = (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
+            graph[i][j] = - (self.cfg.alpha) * w_sim + (1-self.cfg.alpha) * h_sim
             graph[j][i] = round(graph[i][j], ndigits=3)
             graph[i][j] = graph[j][i]
 
