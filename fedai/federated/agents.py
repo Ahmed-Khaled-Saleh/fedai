@@ -677,6 +677,9 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             # graph[j][i] = round(graph[i][j], ndigits=3)
             # graph[i][j] = graph[j][i]
             val = - (self.cfg.alpha) * w_sim + (1 - self.cfg.alpha) * h_sim
+            print(f"Client {id} and {other_id} similarity: {val}")
+            print(f"Client {id} and {other_id} h similarity: {h_sim}")
+            print(f"Client {id} and {other_id} w similarity: {w_sim}")
             val = round(val, 3)
             val = max(val, 0)  # prevent negative edge weights
             graph[i][j] = graph[j][i] = val
