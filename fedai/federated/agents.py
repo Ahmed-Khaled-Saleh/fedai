@@ -701,7 +701,8 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             visited[(other_id, id)] = True
 
     print("Before sym:", graph)
-    graph = self.sym_nromalization(graph)
+    row_sums = graph.sum(axis=1, keepdims=True)
+    graph = graph / row_sums  
     print("After sym:", graph)
 
 
