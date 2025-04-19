@@ -597,14 +597,20 @@ def model_similarity(self: DMTL, h1, h2, model1, model2):
     model_cls = get_cls("fedai.vision.models", self.cfg.model.name)
 
     m1 = model_cls().classifier
-    m1.load_state_dict(model1)
-
+    with torch.no_grad():
+        for k, v in model1.items():
+            if k in m1.state_dict():
+                print("Copying weights from model1 to m1")
+                m1.state_dict()[k].copy_(v)
+            else:
+                print(f"Key {k} not found in model1")
+    
     m2 = model_cls().classifier
     m2.load_state_dict(model2)
 
     m1.to(self.device)
     m2.to(self.device)
-
+    
     avg_sim = 0.0
     for h in [h1, h2]:
         h = h.to(self.device)
