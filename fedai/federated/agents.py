@@ -594,14 +594,27 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
 @patch
 def model_similarity(self: DMTL, model1, model2):
     total_l1_norm = 0.0
-    
+    total_params = 0
+
     for key in model1.keys():
-        param1 = model1[key]
-        param2 = model2[key]
-        
-        total_l1_norm += torch.norm(param1 - param2, p=1).item()
-    
-    return total_l1_norm
+        if key in model2:
+            param1 = model1[key]
+            param2 = model2[key]
+
+            if param1.shape == param2.shape:
+                diff = param1 - param2
+                total_l1_norm += torch.norm(diff, p=1).item()
+                total_params += diff.numel()
+            else:
+                print(f"Shape mismatch at {key}: {param1.shape} vs {param2.shape}")
+        else:
+            print(f"{key} not found in model2")
+
+    if total_params == 0:
+        return float('inf')  # or raise an error
+
+    return total_l1_norm / total_params
+
 
 # %% ../../nbs/02_federated.agents.ipynb 66
 @patch
