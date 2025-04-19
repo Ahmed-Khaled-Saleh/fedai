@@ -78,7 +78,7 @@ random.seed(42)
 
 # Encoder Model
 class CIFAR10Encoder(nn.Module):
-    def __init__(self, in_channels=3, img_size= 3, hidden_dim=512):
+    def __init__(self, in_channels=3, img_size= 32, hidden_dim=512):
         super(CIFAR10Encoder, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
@@ -112,7 +112,7 @@ class CIFAR10ClassificationHead(nn.Module):
         return x
 
 class CIFAR10Model(nn.Module):
-    def __init__(self, in_channels=3, img_size= 3, hidden_dim=512, num_classes=10):
+    def __init__(self, in_channels=3, img_size= 32, hidden_dim=512, num_classes=10):
         super(CIFAR10Model, self).__init__()
         self.encoder = CIFAR10Encoder(in_channels=in_channels, img_size= img_size, hidden_dim=hidden_dim)
         self.classifier = CIFAR10ClassificationHead(hidden_dim= hidden_dim, num_classes= num_classes)
