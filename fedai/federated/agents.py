@@ -592,28 +592,39 @@ def save_state(self: DMTL, state_dict):  # noqa: F811
 
 # %% ../../nbs/02_federated.agents.ipynb 64
 @patch
-def model_similarity(self: DMTL, model1, model2):
-    total_l1_norm = 0.0
-    total_params = 0
+def model_similarity(self: DMTL, h1, h2, model1, model2):
 
-    for key in model1.keys():
-        if key in model2:
-            param1 = model1[key]
-            param2 = model2[key]
+    avg_sim = 0.0
+    for h in [h1, h2]:
+        with torch.no_grad():
+            out1 = model1(h)
+            out2 = model2(h)
+            sim = F.cosine_similarity(out1, out2, dim=1).mean()
+            avg_sim += sim.item()
 
-            if param1.shape == param2.shape:
-                diff = param1 - param2
-                total_l1_norm += torch.norm(diff, p=1).item()
-                total_params += diff.numel()
-            else:
-                print(f"Shape mismatch at {key}: {param1.shape} vs {param2.shape}")
-        else:
-            print(f"{key} not found in model2")
+    return avg_sim / 2  # correct normalization
 
-    if total_params == 0:
-        return float('inf')  # or raise an error
+    # total_l1_norm = 0.0
+    # total_params = 0
 
-    return total_l1_norm / total_params
+    # for key in model1.keys():
+    #     if key in model2:
+    #         param1 = model1[key]
+    #         param2 = model2[key]
+
+    #         if param1.shape == param2.shape:
+    #             diff = param1 - param2
+    #             total_l1_norm += torch.norm(diff, p=1).item()
+    #             total_params += diff.numel()
+    #         else:
+    #             print(f"Shape mismatch at {key}: {param1.shape} vs {param2.shape}")
+    #     else:
+    #         print(f"{key} not found in model2")
+
+    # if total_params == 0:
+    #     return float('inf')  # or raise an error
+
+    # return total_l1_norm / total_params
 
 
 # %% ../../nbs/02_federated.agents.ipynb 66
@@ -682,7 +693,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             h2 = other_state['h']
             label_set2 = other_state['label_set']
 
-            w_sim = self.model_similarity(model1, model2)
+            w_sim = self.model_similarity(h1, h2, model1, model2)
             h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
             clients_sim_dict[(id, other_id)] = h_sim_df
 
