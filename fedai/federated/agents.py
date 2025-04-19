@@ -609,8 +609,8 @@ def model_similarity(self: DMTL, h1, h2, model1, model2):
     for h in [h1, h2]:
         h = h.to(self.device)
         with torch.no_grad():
-            out1 = model1(h)
-            out2 = model2(h)
+            out1 = m1(h)
+            out2 = m2(h)
             sim = F.cosine_similarity(out1, out2, dim=1).mean()
             avg_sim += sim.item()
 
