@@ -649,7 +649,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
     num_active = len(lst_active_ids)
     graph = np.zeros((num_active, num_active))
-    graph = graph / graph.sum(axis=1)[:, None]
+    # graph = graph / graph.sum(axis=1)[:, None]
 
     clients_sim_dict = {}
     visited = {}
