@@ -700,8 +700,8 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
             visited[(id, other_id)] = True
             visited[(other_id, id)] = True
 
-    # print("Before sym:", graph)
-    # graph = self.sym_nromalization(graph)
+    print("Before sym:", graph)
+    graph = self.sym_nromalization(graph)
     print("After sym:", graph)
 
 
