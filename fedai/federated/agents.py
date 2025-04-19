@@ -686,7 +686,7 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
 
     # print("Before sym:", graph)
     # graph = self.sym_nromalization(graph)
-    # print("After sym:", graph)
+    print("After sym:", graph)
 
 
     edges = []
