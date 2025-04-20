@@ -743,8 +743,8 @@ def build_graph(self: DMTL, lst_active_ids, comm_round):
     print("Before sym:", graph)
     # row_sums = graph.sum(axis=1, keepdims=True)
     # graph = graph / row_sums  
-    graph = self.sym_nromalization(graph)
-    print("After sym:", graph)
+    # graph = self.sym_nromalization(graph)
+    # print("After sym:", graph)
 
 
     edges = []
