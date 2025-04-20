@@ -598,12 +598,13 @@ def model_similarity(self: DMTL, h1, h2, model1, model2):
 
     m1 = model_cls().classifier
     m2 = model_cls().classifier
+
     with torch.no_grad():
         for k, v in model1.items():
             if k.startswith("classifier."):
                 sub_k = k[len("classifier."):]
                 if sub_k in m1.state_dict():
-                    print(f"Copying {k} -> {sub_k} from model1 to m1")
+                    print(f"copying {sub_k} to m1")
                     m1.state_dict()[sub_k].copy_(v)
                 else:
                     print(f"Key {sub_k} not found in m1.state_dict()")
@@ -611,9 +612,9 @@ def model_similarity(self: DMTL, h1, h2, model1, model2):
         for k, v in model2.items():
             if k.startswith("classifier."):
                 sub_k = k[len("classifier."):]
-                if sub_k in m1.state_dict():
-                    print(f"Copying {k} -> {sub_k} from model2 to m1")
-                    m1.state_dict()[sub_k].copy_(v)
+                if sub_k in m2.state_dict():
+                    print(f"copying {sub_k} to m2")
+                    m2.state_dict()[sub_k].copy_(v)
                 else:
                     print(f"Key {sub_k} not found in m1.state_dict()")
 
