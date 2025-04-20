@@ -599,20 +599,24 @@ def model_similarity(self: DMTL, h1, h2, model1, model2):
     m1 = model_cls().classifier
     m2 = model_cls().classifier
     with torch.no_grad():
-        for k, v in model1.classifier.items():
-            if k in m1.state_dict():
-                print("Copying weights from model1 to m1")
-                m1.state_dict()[k].copy_(v)
-            else:
-                print(f"Key {k} not found in model1")
+        for k, v in model1.items():
+            if k.startswith("classifier."):
+                sub_k = k[len("classifier."):]
+                if sub_k in m1.state_dict():
+                    print(f"Copying {k} -> {sub_k} from model1 to m1")
+                    m1.state_dict()[sub_k].copy_(v)
+                else:
+                    print(f"Key {sub_k} not found in m1.state_dict()")
 
-        for k, v in model2.classifier.items():
-            if k in m1.state_dict():
-                print("Copying weights from model2 to m1")
-                m1.state_dict()[k].copy_(v)
-            else:
-                print(f"Key {k} not found in model2")
-    
+        for k, v in model2.items():
+            if k.startswith("classifier."):
+                sub_k = k[len("classifier."):]
+                if sub_k in m1.state_dict():
+                    print(f"Copying {k} -> {sub_k} from model2 to m1")
+                    m1.state_dict()[sub_k].copy_(v)
+                else:
+                    print(f"Key {sub_k} not found in m1.state_dict()")
+
 
     m1.to(self.device)
     m2.to(self.device)
