@@ -772,6 +772,8 @@ def build_random_graph(self: DMTL, lst_active_ids, comm_round):
 
     num_active = len(lst_active_ids)
 
+    # seed the random number generator for reproducibility
+    np.random.seed(42)
     A = np.random.rand(num_active, num_active)
     graph = (A + A.T) / 2
     np.fill_diagonal(graph, 0)
