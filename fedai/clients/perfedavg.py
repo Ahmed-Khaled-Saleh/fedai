@@ -19,9 +19,10 @@ from tqdm import tqdm
 from loguru import logger
 
 from .base_client import BaseClient
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/10d_clients.perFedAvg.ipynb #fe628af3
+@AlgorithmRegistry.register_client("perfedavg")
 class ClientPerFedAvg(BaseClient):
     def __init__(self,
                  id, # Unique identifier for the client

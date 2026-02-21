@@ -22,9 +22,10 @@ from loguru import logger
 import math
 
 from .base_server import BaseServer
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/11e_servers.fedu.ipynb #f99f66af
+@AlgorithmRegistry.register_server("fedu")
 class ServerFedu(BaseServer):
     def __init__(self,
                  cfg,

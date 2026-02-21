@@ -20,9 +20,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .base_server import BaseServer
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/11c_servers.pfedme.ipynb #8d941e9e
+@AlgorithmRegistry.register_server("pfedme")
 class pFedMe(BaseServer):
     def __init__(self,
                  cfg,

@@ -18,9 +18,10 @@ import torch
 import torch.nn.functional as F
 
 from .base_client import BaseClient
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/10c_clients.pfedme.ipynb #8d941e9e
+@AlgorithmRegistry.register_client("pfedme")
 class pFedMeClient(BaseClient):
     def __init__(self,
                  id, # Unique identifier for the client

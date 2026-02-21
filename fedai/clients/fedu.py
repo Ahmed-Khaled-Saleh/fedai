@@ -14,9 +14,10 @@ import torch
 import torch.nn.functional as F
 
 from .base_client import BaseClient
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/10e_clients.fedu.ipynb #f99f66af
+@AlgorithmRegistry.register_client("fedu")
 class ClientFedu(BaseClient):
     def __init__(self,
                  id, # Unique identifier for the client

@@ -21,9 +21,10 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .base_server import BaseServer
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/11b_server.fedavg.ipynb #c4456ff3
+@AlgorithmRegistry.register_server("fedavg")
 class ServerFedAvg(BaseServer):
     def __init__(self,
                  cfg,

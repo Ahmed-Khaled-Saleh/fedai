@@ -18,9 +18,10 @@ import torch
 import torch.nn.functional as F
 
 from .base_server import BaseServer
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/11d_servers.perFedAvg.ipynb #fe628af3
+@AlgorithmRegistry.register_server("perfedavg")
 class ServerPerFedAvg(BaseServer):
     def __init__(self,
                  cfg,

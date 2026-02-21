@@ -14,9 +14,10 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .base_client import BaseClient
-
+from ..utils.registery import AlgorithmRegistry
 
 # %% ../../nbs/10b_clients.fedavg.ipynb #c4456ff3
+@AlgorithmRegistry.register_client("fedavg")
 class ClientFedAvg(BaseClient):
     def __init__(self,
                  id, # Unique identifier for the client
