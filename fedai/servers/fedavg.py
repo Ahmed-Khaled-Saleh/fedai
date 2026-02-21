@@ -9,21 +9,9 @@ __all__ = ['StateManager', 'DiskStateManager', 'ServerFedAvg']
 from fastcore.utils import *
 from fastcore.all import *
 import os
-import math
-import pickle
-import json
-import gc
-
-from collections import defaultdict, OrderedDict
-from copy import deepcopy
-import random
-from enum import Enum
 
 from tqdm import tqdm
 from loguru import logger
-
-import networkx as nx
-from community import community_louvain
 
 import numpy as np
 import pandas as pd
@@ -32,13 +20,6 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from ..core import AgentRole
-from ..utils import *
-from ..client_selector import *
-from ..optimizers import *
-from ..utils import *
-from ..metrics import *
-from ..losses import *
 from .base_server import BaseServer
 
 

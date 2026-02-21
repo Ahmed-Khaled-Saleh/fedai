@@ -10,13 +10,6 @@ from fastcore.utils import *
 from fastcore.all import *
 import os
 import math
-import pickle
-import json
-
-from collections import defaultdict, OrderedDict
-from copy import deepcopy
-import random
-from enum import Enum
 
 from tqdm import tqdm
 from loguru import logger
@@ -26,14 +19,7 @@ import pandas as pd
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-
-from ..utils import *
-from ..client_selector import *
-from ..optimizers import *
-from ..utils import *
-from ..metrics import *
-from ..losses import *
+from ..metrics import Metrics
 
 
 # %% ../../nbs/10a_clients.base_client.ipynb #c4456ff3

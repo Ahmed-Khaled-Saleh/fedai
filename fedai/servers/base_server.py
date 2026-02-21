@@ -6,47 +6,22 @@
 __all__ = ['StateManager', 'DiskStateManager', 'BaseServer']
 
 # %% ../../nbs/11a_server.base_server.ipynb #95d57626
-from fastcore.utils import *
-from fastcore.all import *
-import os
-import math
-import pickle
-import json
 import gc
-
-from collections import defaultdict, OrderedDict
-from copy import deepcopy
-import random
-from enum import Enum
+from fastcore.utils import patch
 
 from tqdm import tqdm
 from loguru import logger
 
-import networkx as nx
-from community import community_louvain
-
-import numpy as np
-import pandas as pd
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
 
-from ..core import AgentRole
-from ..utils import *
-from ..client_selector import *
-from ..optimizers import *
-from ..utils import *
-from ..metrics import *
-from ..losses import *
+from ..client_selector import BaseClientSelector
 from ..data import prepare_dl
 from ..models import create_model
 from ..optimizers import get_optimizer
 
 # %% ../../nbs/11a_server.base_server.ipynb #84ff3d97
-import torch
-
 class StateManager:
     def __init__(self):
         self.registry = {} 

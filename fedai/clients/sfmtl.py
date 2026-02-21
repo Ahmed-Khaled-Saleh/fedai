@@ -9,36 +9,19 @@ __all__ = ['SFMTLServer']
 from fastcore.utils import *
 from fastcore.all import *
 import os
-import networkx as nx
 import pickle
-import json
-import gc
-from collections import defaultdict, OrderedDict
-from copy import deepcopy
 import random
-from enum import Enum
-import torch
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from peft import *
-from community import community_louvain
-from ..utils import *
-from ..client_selector import *
-from ..optimizers import *
-from ..servers.base_server import BaseServer
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from loguru import logger
-from ..utils import *
-from ..metrics import *
-from ..losses import *
-from . import *
-from transformers import AutoTokenizer
-from omegaconf.dictconfig import DictConfig
-import numpy as np
-import math
+import networkx as nx
+from community import community_louvain
 
+import torch
+import torch.nn.functional as F
+
+from ..servers.base_server import BaseServer
 
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #ddf5888e
