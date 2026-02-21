@@ -15,6 +15,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from loguru import logger
+from collections import defaultdict
 import networkx as nx
 from community import community_louvain
 
@@ -28,17 +29,16 @@ from ..servers.base_server import BaseServer
 class SFMTLServer(BaseServer):
     def __init__(self,
                  cfg,
-                 client_fn,
                  client_selector,
                  client_cls,
-                 loss_fn,
-                 writer,
-                 create_model_fn= None,
-                 fds= None,
+                 criterion,
+                 fds,
+                 writer= None,
+                 device= None,
                  **kwargs
                  ):  
                  
-        super().__init__(cfg, client_fn, client_selector, client_cls, loss_fn, writer, create_model_fn, fds, **kwargs)
+        super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs)
         self.classes = self.cfg.data.classes
         self.idx_to_cls = {i: self.classes[i] for i in range(len(self.classes))}
 

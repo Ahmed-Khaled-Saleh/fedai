@@ -28,16 +28,16 @@ from .base_server import BaseServer
 class ServerFedu(BaseServer):
     def __init__(self,
                  cfg,
-                 client_fn,
                  client_selector,
                  client_cls,
                  criterion,
-                 writer,
-                 create_model_fn= None,
+                 fds,
+                 writer= None,
+                 device= None,
                  **kwargs
                  ):  
                  
-        super().__init__(cfg, client_fn, client_selector, client_cls, criterion, writer, create_model_fn, **kwargs)
+        super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
 
         np.random.seed(self.cfg.seed)
         b = np.random.uniform(0,1,size=(self.cfg.num_clients, self.cfg.num_clients))

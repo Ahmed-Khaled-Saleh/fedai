@@ -26,16 +26,16 @@ from .base_server import BaseServer
 class pFedMe(BaseServer):
     def __init__(self,
                  cfg,
-                 client_fn,
                  client_selector,
                  client_cls,
-                 loss_fn,
-                 writer,
-                 create_model_fn= None, # used to create a model from `**cfg.model`
+                 criterion,
+                 fds,
+                 writer= None,
+                 device= None,
                  **kwargs
-                 ):
-        
-        super().__init__(cfg, client_fn, client_selector, client_cls, loss_fn, writer, create_model_fn, **kwargs)
+                 ):  
+                 
+        super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
         
 
 # %% ../../nbs/11c_servers.pfedme.ipynb #0005248d
