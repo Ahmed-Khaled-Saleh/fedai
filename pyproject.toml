@@ -1,3 +1,30 @@
 [build-system]
-requires = ["setuptools>=64.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fedai"
+dynamic = ["version"]
+description = "A minimalist Library for doing Federated learning research."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "Apache-2.0"}
+authors = [{name = "Ahmed-Khaled-Saleh", email = "ahmedkhaledsaleh11@gmail.com"}]
+keywords = ['nbdev', 'jupyter', 'notebook', 'python']
+classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = ['fastcore', 'pandas', 'torch', 'scikit-learn', 'torchvision', 'networkx', 'python-louvain', 'loguru', 'tqdm', 'peft', 'transformers', 'datasets', 'omegaconf', 'h5py', 'ujson', 'gdown', 'wandb', 'flwr-datasets[vision]']
+
+[project.urls]
+Repository = "https://github.com/Ahmed-Khaled-Saleh/fedai"
+Documentation = "https://Ahmed-Khaled-Saleh.github.io/fedai"
+
+[project.entry-points.nbdev]
+fedai = "fedai._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "fedai.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["fedai"]
+
+[tool.nbdev]

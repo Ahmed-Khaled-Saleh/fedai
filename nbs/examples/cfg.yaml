@@ -43,10 +43,14 @@ data:
   data_dir: data
   modality: [Vision]
   batch_size: 20
-  name: mnist_rotated_batched_40
+  name: mnist
   niid: false
   balance: false
-  partitioner: DirPartitioner
+  partitioner: 
+    name: DirichletPartitioner
+    alpha: 0.2
+    partition_by: label
+
   alpha: 0.1
   train_ratio: 0.75
   num_classes: 10
@@ -55,15 +59,18 @@ data:
 
 # Model configuration
 model:
-  name: MNISTCNN
-  n_channels: 1
-  input_dim: 784
+  model_name: lenet_fedavg
+  pretrained: false
+  # n_channels: 1
+  # input_dim: 784
+  img_size: [1, 28, 28]
   hidden_dim: 512
   num_classes: 10
-  grad_norm_clip: 1.0
+  # grad_norm_clip: 1.0
 
 
 # optimzer configuration
 optimizer:
   name: SGD
+  lr: 0.01
   weight_decay: 0.0

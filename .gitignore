@@ -21,7 +21,9 @@ __pycache__/
 
 # C extensions
 *.so
-
+*.f_000*
+mnist_rotated_batched_train_40/
+cifar-10-batches-py/
 # Distribution / packaging
 .Python
 env/
