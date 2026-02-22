@@ -49,16 +49,11 @@ from .. import clients
 from .. import servers
 from .registery import AlgorithmRegistry
 def init_server(algo_name, config, selector, criterion, fds, writer= None):
-    # 1. Automatically load all modules (as shown in previous step)
     load_all_modules(clients)
     load_all_modules(servers)
 
-    # 2. Get the specific classes for this run
-    # e.g., algo_name = "fedavg"
     ClientClass, ServerClass = AlgorithmRegistry.get_classes(algo_name)
 
-    # 3. Instantiate the server
-    # Note: We pass ClientClass itself, not an instance of it
     server = ServerClass(
         cfg=config,
         client_selector=selector,

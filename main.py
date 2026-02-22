@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, help='Learning rate local', required=False)
     parser.add_argument('--batch_size', type=int, help='Batch size', required=False)
     parser.add_argument('--optimizer', type=str, help='Optimizer', required=False)
-    parser.add_argument('--client_cls', type=str, help='Client class', required=False)
+    parser.add_argument('--algorithm', type=str, help='Client class', required=False)
     parser.add_argument('--agg', type=str, help='Aggregation', required=False)
     parser.add_argument('--lambda_', type=str, help='lambda for fedu and dmtl', required=False)
     parser.add_argument('--alpha', type=str, help='alpha for dmtl', required=False)
@@ -57,14 +57,14 @@ if __name__ == "__main__":
     cfg.data.batch_size = int(args.batch_size) if args.batch_size else cfg.data.batch_size
     cfg.optimizer.name = args.optimizer if args.optimizer else cfg.optimizer.name
 
-    cfg.client_cls = args.client_cls if args.client_cls else cfg.client_cls
+    cfg.algorithm = args.algorithm if args.algorithm else cfg.algorithm
 
     cfg.agg = args.agg if args.agg else cfg.agg
 
-    if  cfg.client_cls in ["pFedMe", "Fedu", "DMTL"]:
+    if  cfg.algorithm in ["pfedme", "fedu", "sfmtl"]:
         cfg.lambda_ = float(args.lambda_) if args.lambda_ else cfg.lambda_
 
-    if cfg.client_cls == "DMTL":
+    if cfg.algorithm == "sfmtl":
         cfg.alpha = float(args.alpha) if args.alpha else cfg.alpha
 
     
@@ -72,14 +72,14 @@ if __name__ == "__main__":
     fds = init_data(cfg)
 
     client_selector = BaseClientSelector(cfg)
-    loss_fn = get_criterion(None)
+    criterion = get_criterion(None)
     writer = WandbWriter(cfg)
 
-    server = init_server(algo_name=cfg.client_cls, 
-                          config=cfg, 
-                          selector=client_selector, 
-                          criterion=loss_fn, 
-                          fds=fds, 
-                          writer=writer)
+    server = init_server(algo_name= cfg.algorithm,
+                         config= cfg, 
+                         selector= client_selector,
+                         criterion= criterion,
+                         fds= fds,
+                         writer= writer)
     
     server.train()
