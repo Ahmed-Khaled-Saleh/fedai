@@ -52,8 +52,8 @@ class BaseClient:
         self.training_metrics = Metrics(list(self.cfg.training_metrics))  
         self.test_metrics = Metrics(list(self.cfg.test_metrics))  
 
-        self.data_key = train_loader.dataset.x_key
-        self.label_key = train_loader.dataset.y_key
+        self.data_key = 'image'#train_loader.dataset.x_key
+        self.label_key = 'label'#train_loader.dataset.y_key
 
 # %% ../../nbs/10a_clients.base_client.ipynb #ab25c508
 @patch
