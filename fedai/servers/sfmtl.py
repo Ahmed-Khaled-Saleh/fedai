@@ -11,6 +11,7 @@ from fastcore.all import *
 import os
 import pickle
 import random
+import copy
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -52,9 +53,8 @@ def model_similarity(self: SFMTLServer, h1, h2, model1, model2):
     # m1 = model_cls().head
     # m2 = model_cls().head  # Use head for both models
 
-    m1 = self.create_model_fn(**self.cfg.model)
-    m2 = self.create_model_fn(**self.cfg.model)
-    
+    m1 = copy.deepcopy(self.model)
+    m2 = copy.deepcopy(self.model)
     with torch.no_grad():
         for k, v in model1.items():
             if k.startswith("head."):
