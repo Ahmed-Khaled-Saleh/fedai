@@ -216,8 +216,8 @@ def evaluate(self: BaseServer, t):
 
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
-        self.logger.info(f"type of model key: {type(client_state['model'])}")
-        self.state_mgr.set_state(id, client_state)
+        self.logger.info(f"type of model key: {type(self.state_mgr.get_state(id)['model'])}")
+        # self.state_mgr.set_state(id, client_state)
         
         del client
         gc.collect()
