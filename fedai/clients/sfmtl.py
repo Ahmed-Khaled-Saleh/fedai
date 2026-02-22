@@ -42,7 +42,7 @@ class SFMTLClient(BaseClient):
         
 
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
-        self.h_c = self.h_c if hasattr(self, 'h_c') else None
+        self.h_c = self.h_c.to(self.device) if hasattr(self, 'h_c') else None
         self.anchorloss = AnchorLoss(random_seed= self.cfg.random_seed, 
                                      num_classes= self.cfg.data.num_classes,
                                      hidden_dim= self.cfg.model.hidden_dim,
