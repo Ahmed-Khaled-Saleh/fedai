@@ -176,6 +176,6 @@ checklink/cookies.txt
 *.pdf
 *.png
 rawdata/
-data/
+nbs/data/mnist_rotated_batched_40/*
 wandb/
 nbs/examples/
