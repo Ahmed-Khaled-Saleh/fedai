@@ -14,11 +14,15 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import torch
-from ..data import * # noqa: F403
+from ..data import *
 import importlib
 import pkgutil
 import torch.nn as nn
 import torch.optim as optim
+
+from .. import clients
+from .. import servers
+from .registery import AlgorithmRegistry
 
 # %% ../../nbs/05b_utils.ipynb.ipynb #c5ccb15a
 def get_criterion(customm_fn):
@@ -45,9 +49,6 @@ def load_all_modules(package):
             load_all_modules(importlib.import_module(full_name))
 
 # %% ../../nbs/05b_utils.ipynb.ipynb #9a7077ae
-from .. import clients
-from .. import servers
-from .registery import AlgorithmRegistry
 def init_server(algo_name, config, selector, criterion, fds, writer= None):
     load_all_modules(clients)
     load_all_modules(servers)

@@ -1,76 +1,56 @@
-project_name: mnist_rotated_batched_40
-random_seed: 42
+project_name: main_cifar10_20clients
 
-num_clients: 40
+algorithm: sfmtl
+num_clients: 20
 n_rounds: 200 
-m: 0.25
+m: 1.0
 local_epochs: 5 
-lr: 0.01
-lr2: 0.001
-personal_lr: 0.01
-K: 5
-agg: one_model 
-num_classes: 10
-alignment_criterion: MSELoss
+agg: mtl
+
+lambda_: 0.03
 alpha: 0.49
-beta1: 1
-tau: 0.1
-optimizer2: Adam
-lambda_: 15
 lambda_anchor: 0.1
 momentum_anchor: 0.5
 
-# FLearner arguments
+random_seed: 42
 client_selector: BaseClientSelector
-client_cls: pFedMe
-loss_fn: CrossEntropyLoss
 writer: WandbWriter
 
-
-# save and log directories
-root_dir: .
+root_dir: /scratch/project_2009050/
 save_dir : models
 res_dir: results
 log_dir: logs
-state_dir: local_output_
+state_dir: aggregated_model_
 
-# metrics
 training_metrics: [accuracy_score]
 test_metrics: [accuracy_score]
 
-# Data configuration
 data:
-  data_dir: data
+  data_dir: /scratch/project_2009050/
   modality: [Vision]
-  batch_size: 20
-  name: mnist
-  niid: false
-  balance: false
+  batch_size: 32
+  name: cifar10
   partitioner: 
-    name: DirichletPartitioner
-    alpha: 0.2
-    partition_by: label
-
+    name: PathologicalPartitioner
+    kwargs:
+      num_classes_per_partition: 2
+      # partition_by: y
+      # num_partitions: 20
   alpha: 0.1
   train_ratio: 0.75
   num_classes: 10
   classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
 
-# Model configuration
 model:
-  model_name: lenet_fedavg
-  pretrained: false
-  # n_channels: 1
-  # input_dim: 784
-  img_size: [1, 28, 28]
+  name: lenet_fedavg
+  img_size: [3, 32, 32]
   hidden_dim: 512
   num_classes: 10
   # grad_norm_clip: 1.0
 
 
-# optimzer configuration
 optimizer:
   name: SGD
-  lr: 0.01
+  lr: 0.05
   weight_decay: 0.0
