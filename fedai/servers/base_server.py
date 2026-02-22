@@ -215,6 +215,7 @@ def evaluate(self: BaseServer, t):
 
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
+        self.state_mgr.set_state(id, client_state)
         
         del client
         gc.collect()
