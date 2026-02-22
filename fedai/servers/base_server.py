@@ -143,6 +143,11 @@ def client_fn(self: BaseServer, id, comm_round, client_state):
 
     optimizer = get_optimizer(self.cfg)(model.parameters(), lr= 0.001)#self.cfg.optimizer.lr) # TODO: change function to be more dynamic.
     optimizer.load_state_dict(client_state['optimizer']) if 'optimizer' in client_state else None
+    for state in self.optimizer.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.to(self.device)
+                
     client_state['optimizer'] = optimizer
 
     train_loader = prepare_dl(self.cfg, id, self.fds, train=True, distributed=False)
