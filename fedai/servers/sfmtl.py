@@ -321,4 +321,5 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                     torch.save(clinet_state, agg_client_state_path)
 
         for i, id in enumerate(lst_active_ids):
+            self.logger.info(f"type of model for client {id} is {type(aggregated_states[i]['model'])}")
             self.state_mgr.set_state(id, aggregated_states[i])   
