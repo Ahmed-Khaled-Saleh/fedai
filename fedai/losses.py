@@ -14,42 +14,39 @@ import torch.nn.functional as F
 from fastcore.utils import *
 from copy import deepcopy
 
-# %% ../nbs/03_losses.ipynb #290ae153
+# %% ../nbs/03_losses.ipynb #7ba8067f
 class AnchorLoss(nn.Module):
     def __init__(self, random_seed, num_classes, hidden_dim, t=1, h_c=None):
         super().__init__()
         self.num_classes = num_classes
-        self.hidden_dim = hidden_dim
-
         torch.manual_seed(random_seed)  
         np.random.seed(random_seed)
         random.seed(random_seed)
-
-        self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, hidden_dim)), requires_grad=True)
+        
+        # Initialize anchor on CPU first
+        self.anchor = nn.Parameter(F.normalize(torch.randn(num_classes, hidden_dim)))
         
         if t > 1 and h_c is not None:
-            print("Updating anchor with h_c")
-            with torch.no_grad():  # This ensures the operation doesn't track gradients
-                # h_c = h_c.to(self.anchor.device)
+            # copy_ works regardless of device as long as we use no_grad
+            with torch.no_grad():
                 self.anchor.copy_(h_c)
-        # self.anchor = nn.Parameter(h_c, requires_grad= True) if t > 1 and h_c  else self.anchor
 
-# %% ../nbs/03_losses.ipynb #d587ec5e
-@patch
-def forward(self: AnchorLoss, feature, _target, Lambda = 0.1):
-    assert not torch.isnan(_target).any(), "Found NaN in _target!"
-    # broadcast feature anchors for all inputs
-    centre = self.anchor.cuda().index_select(dim=0, index=_target.long())
-    # compute the number of samples in each class
-    counter = torch.histc(_target.cpu().float(), bins=self.num_classes, min=0, max=self.num_classes-1)
-    counter = counter.to(_target.device)  # Move back to the same device as _target
-    count = counter[_target.long()]
-    centre_dis = feature - centre				# compute distance between input and anchors
-    pow_ = torch.pow(centre_dis, 2)				# squre
-    sum_1 = torch.sum(pow_, dim=1)
-    count = count.clamp(min=1)  # Avoid division by zero
-    dis_ = sum_1 / count.float()				# sum all distance
-    # dis_ = torch.div(sum_1, count.float())		# mean by class
-    sum_2 = torch.sum(dis_)/self.num_classes						# mean loss
-    res = Lambda*sum_2   							# time hyperparameter lambda 
-    return res
+    def forward(self, feature, _target, Lambda=0.1):
+        device = feature.device # Follow the lead of the input features
+        
+        # Ensure anchor and target are where they need to be
+        anchors = self.anchor.to(device)
+        _target = _target.long().to(device)
+
+        # index_select on the correct device
+        centre = anchors.index_select(dim=0, index=_target)
+        
+        # Use bincount instead of histc - it's faster and GPU-native
+        counter = torch.bincount(_target, minlength=self.num_classes).float()
+        count = counter[_target]
+        
+        # Math operations
+        centre_dis = feature - centre
+        dis_ = torch.pow(centre_dis, 2).sum(dim=1) / count.clamp(min=1)
+        
+        return Lambda * (dis_.sum() / self.num_classes)
