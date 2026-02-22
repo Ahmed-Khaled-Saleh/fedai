@@ -30,7 +30,7 @@ class AnchorLoss(nn.Module):
         if t > 1 and h_c is not None:
             print("Updating anchor with h_c")
             with torch.no_grad():  # This ensures the operation doesn't track gradients
-                h_c = h_c.to(self.anchor.device)
+                # h_c = h_c.to(self.anchor.device)
                 self.anchor.copy_(h_c)
         # self.anchor = nn.Parameter(h_c, requires_grad= True) if t > 1 and h_c  else self.anchor
 
