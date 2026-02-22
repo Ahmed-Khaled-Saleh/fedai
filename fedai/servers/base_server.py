@@ -11,7 +11,7 @@ from fastcore.utils import patch
 
 from tqdm import tqdm
 from loguru import logger
-
+import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -49,7 +49,7 @@ class StateManager:
             init_state = {}
             return init_state
      
-        return self.registry.get(client_id, {})
+        return copy.deepcopy(self.registry.get(client_id, {}))
 
     def _to_cpu(self, obj):
         """Recursively moves tensors in a nested structure to CPU."""
