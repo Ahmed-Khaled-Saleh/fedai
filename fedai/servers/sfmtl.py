@@ -175,7 +175,6 @@ def build_graph(self: SFMTLServer, lst_active_ids, comm_round):
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #9eae7219
 @patch    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
-
 def build_random_graph(self: SFMTLServer, lst_active_ids, comm_round):
 
     num_active = len(lst_active_ids)
@@ -306,7 +305,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                         client_model[key].sub_(global_lr * reg_param * client_diff[key])
 
                 clinet_state = {
-                    'model': client_model.state_dict(),
+                    'model': client_model,
                     'optimizer': state['optimizer'],
                     'h': state['h'],
                     'h_c': coalitions_reprs[col_ind],
