@@ -126,13 +126,14 @@ def evaluate_local(self: BaseClient, loader= 'train') -> dict:
                 lst_metrics.append(metrics)           
     
     avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
-    logger.info(f"Average {loader} Loss is : {avg_loss}")
+    self.logger.info(f"Average {loader} Loss is : {avg_loss}")
     
     if lst_metrics:
         total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
     else:
         total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
 
+    self.logger.info(f"Average {loader} Metrics: {total_metrics}")
     return {"loss": avg_loss, "metrics": total_metrics}
 
 

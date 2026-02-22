@@ -128,6 +128,7 @@ class BaseServer:
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.state_mgr = StateManager()
+        self.logger = logger
 
 # %% ../../nbs/11a_server.base_server.ipynb #e7538af5
 @patch
@@ -154,6 +155,7 @@ def client_fn(self: BaseServer, id, comm_round, client_state):
                              criterion= self.criterion,
                              device= self.device,
                              t= comm_round)
+    client.logger = self.logger
     return client
 
 
@@ -171,8 +173,8 @@ def train(self: BaseServer):
             client_state = self.state_mgr.get_state(id)
             client = self.client_fn(id= id, comm_round= t, client_state= client_state)
             client.fit()
-            logger.info(f"Client {id} finished training.")
-            logger.info("*"*20)
+            self.logger.info(f"Client {id} finished training.")
+            self.logger.info("*"*20)
             self.state_mgr.set_state(id, client.save_state())
             
             len_clients_ds[id] = len(client.train_loader.dataset)

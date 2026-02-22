@@ -60,19 +60,19 @@ def model_similarity(self: SFMTLServer, h1, h2, model1, model2):
             if k.startswith("head."):
                 sub_k = k[len("head."):]
                 if sub_k in m1.state_dict():
-                    print(f"copying {sub_k} to m1")
+                    self.logger.info(f"copying {sub_k} to m1")
                     m1.state_dict()[sub_k].copy_(v)
                 else:
-                    print(f"Key {sub_k} not found in m1.state_dict()")
+                    self.logger.info(f"Key {sub_k} not found in m1.state_dict()")
 
         for k, v in model2.items():
             if k.startswith("head."):
                 sub_k = k[len("head."):]
                 if sub_k in m2.state_dict():
-                    print(f"copying {sub_k} to m2")
+                    self.logger.info(f"copying {sub_k} to m2")
                     m2.state_dict()[sub_k].copy_(v)
                 else:
-                    print(f"Key {sub_k} not found in m2.state_dict()")
+                    self.logger.info(f"Key {sub_k} not found in m2.state_dict()")
 
 
     m1.to(self.device)
@@ -140,9 +140,9 @@ def build_graph(self: SFMTLServer, lst_active_ids, comm_round):
             clients_sim_dict[(id, other_id)] = h_sim_df
             
             val = (self.cfg.alpha) * w_sim + (1 - self.cfg.alpha) * h_sim
-            print(f"Client {id} and {other_id} similarity: {val}")
-            print(f"Client {id} and {other_id} h similarity: {h_sim}")
-            print(f"Client {id} and {other_id} w similarity: {w_sim}")
+            self.logger.info(f"Client {id} and {other_id} similarity: {val}")
+            self.logger.info(f"Client {id} and {other_id} h similarity: {h_sim}")
+            self.logger.info(f"Client {id} and {other_id} w similarity: {w_sim}")
             val = round(val, 3)
             val = max(val, 0)  # prevent negative edge weights
             graph[i][j] = graph[j][i] = val
@@ -150,7 +150,7 @@ def build_graph(self: SFMTLServer, lst_active_ids, comm_round):
             visited[(id, other_id)] = True
             visited[(other_id, id)] = True
 
-    print("Before sym:", graph)
+    self.logger.info(f"Before sym: {graph}")
     
 
 
@@ -306,7 +306,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                         client_model[key].sub_(global_lr * reg_param * client_diff[key])
 
                 clinet_state = {
-                    'model': client_model,
+                    'model': client_model.state_dict(),
                     'optimizer': state['optimizer'],
                     'h': state['h'],
                     'h_c': coalitions_reprs[col_ind],
