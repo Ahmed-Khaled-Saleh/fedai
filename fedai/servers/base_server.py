@@ -141,7 +141,7 @@ def client_fn(self: BaseServer, id, comm_round, client_state):
     model.load_state_dict(client_state['model'])
     client_state['model'] = model
 
-    optimizer = get_optimizer(self.cfg)(model.parameters(), lr= 0.001)#self.cfg.optimizer.lr) # TODO: change function to be more dynamic.
+    optimizer = get_optimizer(self.cfg)(model.parameters(), self.cfg.optimizer.lr) # TODO: change function to be more dynamic.
     optimizer.load_state_dict(client_state['optimizer']) if 'optimizer' in client_state else None
     for state in optimizer.state.values():
         for k, v in state.items():

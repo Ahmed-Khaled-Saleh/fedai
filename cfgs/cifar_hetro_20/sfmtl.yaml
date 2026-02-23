@@ -6,7 +6,7 @@ n_rounds: 200
 m: 1.0
 local_epochs: 5 
 agg: mtl
-
+graph_type: similarity
 lambda_: 0.03
 alpha: 0.49
 lambda_anchor: 0.1
@@ -31,10 +31,9 @@ data:
   name: cifar10
   partitioner: 
     name: PathologicalPartitioner
-    num_partitions: 20
-    num_classes_per_partition: 2
-  alpha: 0.1
-  train_ratio: 0.75
+    kwargs:
+      num_classes_per_partition: 2
+      num_partitions: 20
   num_classes: 10
   classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
@@ -44,10 +43,9 @@ model:
   img_size: [3, 32, 32]
   hidden_dim: 512
   num_classes: 10
-  grad_norm_clip: 1.0
 
 
 optimizer:
-  name: SGD
-  lr: 0.05
+  name: ADAM
+  lr: 0.01
   weight_decay: 0.0
