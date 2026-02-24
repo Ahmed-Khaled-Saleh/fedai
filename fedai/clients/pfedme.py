@@ -96,10 +96,12 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
-    self.pers_model = self.local_model.load_state_dict(self.pers_model)
+    pers_model = deepcopy(self.model)
+    self.logger.info(f"type of model is {type(self.pers_model)}")
+    pers_model.load_state_dict(self.pers_model)
+    self.pers_model = pers_model.to(self.device)
     self.logger.info(f"type of model is {type(self.pers_model)}")
     self.pers_model.eval()
-    self.pers_model = self.pers_model.to(self.device)
 
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
