@@ -46,8 +46,6 @@ model:
   img_size: [3, 32, 32]
   hidden_dim: 512
   num_classes: 10
-  grad_norm_clip: 1.0
-
 
 # optimzer configuration
 optimizer:

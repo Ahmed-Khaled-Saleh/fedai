@@ -1,9 +1,9 @@
-project_name: main_cifar10_20clients
+project_name: main_cifar10_100clients
 
 algorithm: fedavg
-num_clients: 20
+num_clients: 100
 n_rounds: 200 
-m: 1.0
+m: 0.3
 local_epochs: 3 
 agg: one_model 
 

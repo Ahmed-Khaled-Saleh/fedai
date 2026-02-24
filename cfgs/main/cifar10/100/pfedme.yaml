@@ -1,24 +1,28 @@
-project_name: main_cifar10_20clients
+project_name: main_cifar10_100clients
 
-algorithm: fedavg
-num_clients: 20
+algorithm: pfedme
+num_clients: 100
 n_rounds: 200 
-m: 1.0
-local_epochs: 3 
-agg: one_model 
+m: 0.3
+local_epochs: 5 
+agg: one_model
+
+K: 5
+lambda_: 15
+personal_lr: 0.01
+beta: 1
+
 
 client_selector: BaseClientSelector
 writer: WandbWriter
 
 
-# save and log directories
 root_dir: /scratch/project_2009050/
 save_dir : models
 res_dir: results
 log_dir: logs
-state_dir: global_model
+state_dir: local_output_
 
-# metrics
 training_metrics: [accuracy_score]
 test_metrics: [accuracy_score]
 
@@ -35,6 +39,7 @@ data:
   num_classes: 10
   classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
+
 model:
   name: lenet_cifar10
   img_size: [3, 32, 32]
@@ -42,9 +47,7 @@ model:
   num_classes: 10
 
 
-
-# optimzer configuration
 optimizer:
   name: SGD
-  lr: 0.03
+  lr: 0.01
   weight_decay: 0.0
