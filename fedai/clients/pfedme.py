@@ -96,11 +96,14 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
+    
+    original_keys = deepcopy(self.pers_model)
+    self.logger.info(f"type of model before is {type(self.pers_model)} in {loader} evaluation")
+
     pers_model = deepcopy(self.model)
-    self.logger.info(f"type of model is {type(self.pers_model)}")
     pers_model.load_state_dict(self.pers_model)
     self.pers_model = pers_model.to(self.device)
-    self.logger.info(f"type of model is {type(self.pers_model)}")
+    self.logger.info(f"type of model after is {type(self.pers_model)} in {loader} evaluation")
     self.pers_model.eval()
 
     num_eval = 0
@@ -122,7 +125,7 @@ def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
         total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
     else:
         total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
-
+    self.pers_model = original_keys
     return {"loss": avg_loss, "metrics": total_metrics}
 
 
