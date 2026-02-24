@@ -58,7 +58,7 @@ def fit(self: pFedMeClient):
                 
                 loss = self.criterion(outputs, y)
                 loss.backward()
-                self.persionalized_model_bar, _ = self.optimizer.step(self.local_model)
+                self.persionalized_model_bar = self.optimizer.step(self.local_model)
 
             # update local weight after finding aproximate theta
             with torch.no_grad():
@@ -96,7 +96,7 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
-    
+    self.pers_model = self.local_model.load_state_dict(self.pers_model)
     self.pers_model.eval()
     self.pers_model = self.pers_model.to(self.device)
 

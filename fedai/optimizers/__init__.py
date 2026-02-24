@@ -26,7 +26,7 @@ def get_optimizer(cfg):
         'perfedavg': PerFedAvgOpt,
         'pfedme': pFedMeOptimizer,
     }
-    if cfg.optimizer.name in custom_opt_dict:
-        return custom_opt_dict[cfg.optimizer.name]
+    if cfg.algorithm in custom_opt_dict:
+        return custom_opt_dict[cfg.algorithm]
     
     return torch.optim.SGD if cfg.optimizer.name == 'sgd' else torch.optim.Adam

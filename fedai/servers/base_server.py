@@ -213,7 +213,6 @@ def evaluate(self: BaseServer, t):
     lst_test_res = []
     for id in range(self.cfg.num_clients):
         client_state = self.state_mgr.get_state(id)
-        self.logger.info(f"type before : {type(client_state['model'])}")
         client = self.client_fn(id= id, comm_round= t, client_state= client_state)
         
         res_train = client.evaluate_local(loader= 'train')
