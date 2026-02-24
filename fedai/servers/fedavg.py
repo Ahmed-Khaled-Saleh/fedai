@@ -42,7 +42,7 @@ class ServerFedAvg(BaseServer):
 
 # %% ../../nbs/11b_server.fedavg.ipynb #ce0e22b2
 @patch
-def aggregate(self: ServerFedAvg, lst_active_ids, len_clients_ds):
+def aggregate(self: ServerFedAvg, lst_active_ids, comm_round, len_clients_ds):
     m_t = sum(len_clients_ds.values())
     
     with torch.no_grad():
