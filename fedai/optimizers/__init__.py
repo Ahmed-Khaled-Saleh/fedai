@@ -13,17 +13,20 @@ import torch
 from fastcore.utils import *
 from .custom_optimizers import *
 
-# %% ../../nbs/04b_optimizers.ipynb #f83bce6d
-random.seed(42)
-np.random.seed(42)
-torch.manual_seed(42)
-
 # %% ../../nbs/04b_optimizers.ipynb #0fca948f
 import math
 from torch import Tensor
 from torch.optim.optimizer import Optimizer
 from typing import List, Optional
+from .custom_optimizers import *
 
 # %% ../../nbs/04b_optimizers.ipynb #0d81a0e3
 def get_optimizer(cfg):
+    custom_opt_dict = {
+        'perfedavg': PerFedAvgOpt,
+        'pfedme': pFedMeOptimizer,
+    }
+    if cfg.optimizer.name in custom_opt_dict:
+        return custom_opt_dict[cfg.optimizer.name]
+    
     return torch.optim.SGD if cfg.optimizer.name == 'sgd' else torch.optim.Adam

@@ -1,22 +1,18 @@
-project_name: DMTL_graph_mnist_rotated_batched_40
+project_name: main_cifar10_20clients
 
-# FL configuration
-num_clients: 40
+
+algorithm: fedu
+num_clients: 20
 n_rounds: 200 
-m: 0.50
+m: 1.0
 local_epochs: 5 
 agg: mtl
 
-#DMTL params
+#fedu params
 lambda_: 0.03
-alpha: 0.49
-lambda_anchor: 0.1
-momentum_anchor: 0.5
 
 # FLearner arguments
 client_selector: BaseClientSelector
-client_cls: DMTL
-loss_fn: CrossEntropyLoss
 writer: WandbWriter
 
 
@@ -31,26 +27,23 @@ state_dir: aggregated_model_
 training_metrics: [accuracy_score]
 test_metrics: [accuracy_score]
 
-# Data configuration
 data:
   data_dir: /scratch/project_2009050/
   modality: [Vision]
   batch_size: 32
-  name: mnist_rotated_batched_40
-  niid: false
-  balance: false
-  partitioner: DirPartitioner
-  alpha: 0.1
-  train_ratio: 0.75
+  name: cifar10
+  partitioner: 
+    name: PathologicalPartitioner
+    kwargs:
+      num_classes_per_partition: 2
+      class_assignment_mode: first-deterministic
   num_classes: 10
-  classes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
 
-# Model configuration
 model:
-  name: MNISTCNN
-  in_channels: 1
-  img_size: 28
+  name: lenet_cifar10
+  img_size: [3, 32, 32]
   hidden_dim: 512
   num_classes: 10
   grad_norm_clip: 1.0
@@ -59,5 +52,5 @@ model:
 # optimzer configuration
 optimizer:
   name: SGD
-  lr: 0.05
+  lr: 0.01
   weight_decay: 0.0

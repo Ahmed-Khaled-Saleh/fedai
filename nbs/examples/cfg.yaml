@@ -34,10 +34,9 @@ data:
     name: PathologicalPartitioner
     kwargs:
       num_classes_per_partition: 2
+      class_assignment_mode: first-deterministic
       # partition_by: y
       # num_partitions: 20
-  alpha: 0.1
-  train_ratio: 0.75
   num_classes: 10
   classes: [plane, car, bird, cat, deer, dog, frog, horse, ship, truck]
 
