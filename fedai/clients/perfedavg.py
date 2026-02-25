@@ -82,7 +82,7 @@ def get_next_batch(self: ClientPerFedAvg, train= True) -> dict:
 # %% ../../nbs/10d_clients.perFedAvg.ipynb #f8f56932
 @patch
 def train_step(self: ClientPerFedAvg, num_steps= None):
-    self.num_minibatch = int(len(self.train_ds) / int(self.cfg.data.batch_size))
+    # self.num_minibatch = int(len(self.train_ds) / int(self.cfg.data.batch_size))
 
     self.model = self.model.to(self.device)
     self.local_model = self.local_model.to(self.device)
