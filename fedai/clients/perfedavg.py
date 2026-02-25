@@ -159,7 +159,7 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
             loss, metrics = self.train_test_stats(batch, model)                 
             if not math.isnan(loss.item()):
                 total_loss += loss.item()  
-                num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
+                num_eval += len(batch[-1])  # Ensure num_eval is updated
                 lst_metrics.append(metrics)           
     
     avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
