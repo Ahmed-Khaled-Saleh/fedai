@@ -1,6 +1,6 @@
 project_name: main_cifar10_20clients
 
-algorithm: pfedme
+algorithm: perfedavg
 num_clients: 20
 n_rounds: 200 
 m: 1.0
