@@ -36,6 +36,34 @@ class ServerPerFedAvg(BaseServer):
                  
         super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
 
+# %% ../../nbs/11d_servers.perFedAvg.ipynb #2846d271
+@patch
+def aggregate(self: ServerPerFedAvg, lst_active_ids, comm_round, len_clients_ds):
+    # m_t = sum(len_clients_ds.values())
+    weight = self.cfg.m * self.cfg.num_clients
+    with torch.no_grad():
+        global_model = None
+        
+        for id in lst_active_ids:
+            client_state_dict = self.state_mgr.get_state(id).get('model', None)
+
+            if global_model is None:
+                global_model = {k: torch.zeros_like(v) for k, v in client_state_dict.items()}
+
+            # n_k = len_clients_ds[id]
+            # weight = self.cfg.m * self.cfg.num_clients#n_k / m_t
+            for key in global_model.keys():
+                global_model[key].add_(client_state_dict[key], alpha=weight)
+
+        self.model.load_state_dict(global_model)
+
+        for id in lst_active_ids:
+            self.state_mgr.set_state(id, {
+                    'model': self.model.state_dict(),
+                    'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
+            })
+        
+
 # %% ../../nbs/11d_servers.perFedAvg.ipynb #98deb03c
 @patch
 def evaluate(self: ServerPerFedAvg, t):
