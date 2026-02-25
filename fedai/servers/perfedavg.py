@@ -45,8 +45,8 @@ def evaluate(self: ServerPerFedAvg, t):
     for id in range(self.cfg.num_clients):
 
         client_state = self.state_mgr.get_state(id)
-        client = self.client_fn(client_cls= self.client_cls, id= id, cfg= self.cfg, comm_round= t, client_state= client_state)
-        client.train_one_step()
+        client = self.client_fn(id= id, comm_round= t, client_state= client_state)
+        client.train_step(num_steps= 1)
         
         res_train = client.evaluate_local(loader= 'train')
         lst_train_res.append(res_train)
