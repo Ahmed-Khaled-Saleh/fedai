@@ -88,7 +88,6 @@ def train_step(self: ClientPerFedAvg, num_steps= None):
     self.local_model = self.local_model.to(self.device)
 
     self.model.train()
-    self.local_model.train()
 
     for _ in range(self.cfg.local_epochs):
         batch = self.get_next_batch()
@@ -110,8 +109,8 @@ def train_step(self: ClientPerFedAvg, num_steps= None):
         loss.backward()
 
         with torch.no_grad():
-            for localweight, model_param in zip(self.local_model.parameters(), self.model.parameters()):
-                localweight.copy_(model_param)
+            for model_param, local_param in zip(self.model.parameters(), self.local_model.parameters()):
+                model_param.copy_(local_param.data.clone())
 
         self.optimizer.step(beta= self.cfg.beta)
 
@@ -149,6 +148,7 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
     self.model = self.model.to(self.device)
     self.train_step(num_steps= 1)
     self.model.eval()
+    self.local_model.eval()
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
     
@@ -171,8 +171,9 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
         total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
 
 
-    for mode_params, local_params in zip(self.model.parameters(), self.local_model.parameters()):
-        mode_params.copy_(local_params)
+    with torch.no_grad():
+        for params, local_params in zip(self.model.parameters(), self.local_model.parameters()):
+            params.copy_(local_params.data.clone())
 
     return {"loss": avg_loss, "metrics": total_metrics}
 
