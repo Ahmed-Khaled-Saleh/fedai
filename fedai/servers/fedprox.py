@@ -46,7 +46,6 @@ def aggregate(self: ServerFedProx, lst_active_ids, comm_round, len_clients_ds):
     m_t = sum(len_clients_ds.values())
     with torch.no_grad():
 
-        prev_global_model = self.model.state_dict()
         for i, id in enumerate(lst_active_ids):
             # state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
             # state = torch.load(state_path, weights_only=False)
@@ -65,18 +64,8 @@ def aggregate(self: ServerFedProx, lst_active_ids, comm_round, len_clients_ds):
             for key in client_state_dict.keys():
                 global_model[key].add_(weight * client_state_dict[key])
 
-        for key in global_model.keys():
-            global_model[key].copy_((1-self.cfg.beta)*global_model[key] + self.cfg.beta*prev_global_model[key])
 
         self.model.load_state_dict(global_model)
-        # server_state = {
-        #     'model': global_model,
-        # }
-        # server_state_path = os.path.join(self.cfg.save_dir, str(comm_round), "global_model", "state.pth")
-        # if not os.path.exists(os.path.dirname(server_state_path)):
-        #     os.makedirs(os.path.dirname(server_state_path), exist_ok=True)
-            
-        # torch.save(server_state, server_state_path)
 
     for i, id in enumerate(lst_active_ids):
         client_state = self.state_mgr.get_state(id)
