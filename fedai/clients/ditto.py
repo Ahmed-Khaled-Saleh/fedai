@@ -70,3 +70,23 @@ def train(self: ClientDitto):
 def fit(self: ClientDitto):
     self.ptrain()
     self.train()
+
+# %% ../../nbs/10h_clients.ditto.ipynb #ff798610
+@patch
+def save_state(self: ClientDitto, save_to_disk= False):
+
+    client_state = {
+        "model": self.model.state_dict(),
+        "model_per": self.model_per.state_dict(),
+        'optimizer': self.optimizer.state_dict(),
+        "optimizer_per": self.optimizer_per.state_dict()
+    }
+
+    if save_to_disk:
+        state_path = os.path.join(self.cfg.server.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
+        if not os.path.exists(os.path.dirname(state_path)):
+            os.makedirs(os.path.dirname(state_path))
+        torch.save(client_state, state_path)
+
+    return client_state
+        
