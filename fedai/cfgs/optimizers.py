@@ -27,8 +27,8 @@ class PerFedavgOptimizerConfig(BaseOptimizerConfig):
 @dataclass
 class pFedMeOptimizerConfig(BaseOptimizerConfig):
     cls: str = "pFedMeOptimizer"
-    lambda_: float = 0.1
-    mu: float = 0.001
+    lambda_: float = 1.0
+    mu: float = 0.0
 
 @dataclass
 class FedProxOptimizerConfig(BaseOptimizerConfig):
