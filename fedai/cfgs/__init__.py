@@ -32,9 +32,11 @@ class MainConfig:
         {"server": "puhti"}
     ])
 
-    algorithm: Any = MISSING #AlgorithmConfig = field(default_factory=FedAvgConfig)
-    model: Any = MISSING #VisionModelConfig = field(default_factory=LeNetConfig)
+
     data: Any = MISSING # DataConfig = field(default_factory=CIFAR10Config)
+    model: Any = MISSING #VisionModelConfig = field(default_factory=LeNetConfig)
+    optimizer: Any = MISSING #OptimizerConfig = field(default_factory=SGDConfig)
+    algorithm: Any = MISSING #AlgorithmConfig = field(default_factory=FedAvgConfig)
     server: Any = MISSING #BaseServerConfig = field(default_factory=PuhtiConfig)
     
     project_name: str = "${algorithm.name}_${data.name}_${model.name}_"

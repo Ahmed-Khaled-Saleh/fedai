@@ -6,6 +6,7 @@ import time
 from fedai.cfgs import MainConfig
 from fedai.cfgs.data import *
 from fedai.cfgs.models import *
+from fedai.cfgs.optimizers import *
 from fedai.cfgs.algos import *
 from fedai.cfgs.gpu_servers import *
 
@@ -27,6 +28,12 @@ cs.store(group="model", name="resnet_18", node= ResNetConfig())
 cs.store(group="model", name="mobilenetv3_small", node= MobileNetConfig())
 cs.store(group="model", name="efficientnet_b0", node= EfficientNetConfig())
 cs.store(group="model", name="vit_small", node= ViTConfig())
+
+cs.store(group="optimizer", name="sgd", node= BaseOptimizerConfig())
+cs.store(group="optimizer", name="perfedavg_opt", node= PerFedavgOptimizerConfig())
+cs.store(group="optimizer", name="pfedme_opt", node= pFedMeOptimizerConfig())
+cs.store(group="optimizer", name="fedprox_opt", node= FedProxOptimizerConfig())
+cs.store(group="optimizer", name="apfl_opt", node= APFLOptimizerConfig())
 
 cs.store(group="algorithm", name="fedavg", node= FedAvgConfig())
 cs.store(group="algorithm", name="sfmtl", node= SFMTLConfig())
