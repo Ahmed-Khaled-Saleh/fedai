@@ -4,7 +4,7 @@
 
 # %% auto #0
 __all__ = ['AlgorithmConfig', 'FedAvgConfig', 'FedAvgFTConfig', 'FedUConfig', 'pFedMeConfig', 'SFMTLConfig', 'FedProxConfig',
-           'DittoConfig', 'PerFedAvgConfig', 'APFLConfig']
+           'DittoConfig', 'PerFedAvgConfig', 'APFLConfig', 'FedALA']
 
 # %% ../../nbs/7a_cfgs.algos.ipynb #f725b3f6
 from fastcore.utils import *
@@ -84,3 +84,11 @@ class PerFedAvgConfig(AlgorithmConfig):
 class APFLConfig(AlgorithmConfig):
     name: str = "apfl"
     alpha: float = 0.25
+
+
+@dataclass
+class FedALA(AlgorithmConfig):
+    name: str = "fedala"
+    rand_percent: int = 80
+    layer_idx: int = 2
+    eta: float = 1.0
