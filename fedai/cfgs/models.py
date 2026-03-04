@@ -26,7 +26,7 @@ class VisionModelConfig:
 @dataclass
 class LeNetConfig(VisionModelConfig):
     name: str= 'lenet_fedavg'
-    img_size: Tuple[int, int, int] = (3, 32, 32)
+    img_size: Tuple[int, int, int] = (1, 28, 28)
     hidden_dim: int = 512
     
 @dataclass
