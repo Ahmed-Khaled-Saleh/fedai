@@ -29,6 +29,8 @@ class ALA:
                 train_data: List[Tuple], 
                 batch_size: int, 
                 rand_percent: int, 
+                data_key: str,
+                label_key: str,
                 layer_idx: int = 0,
                 eta: float = 1.0,
                 device: str = 'cpu', 
@@ -63,6 +65,8 @@ class ALA:
         self.threshold = threshold
         self.num_pre_loss = num_pre_loss
         self.device = device
+        self.data_key = data_key
+        self.label_key = label_key
 
         self.weights = None # Learnable local aggregation weights.
         self.start_phase = True
@@ -135,14 +139,12 @@ def adaptive_local_aggregation(self: ALA,
         losses = []  # record losses
         cnt = 0  # weight training iteration counter
         while True:
-            for x, y in rand_loader:
-                if type(x) == type([]):
-                    x[0] = x[0].to(self.device)
-                else:
-                    x = x.to(self.device)
+            for batch in rand_loader:
+                X, y = batch[self.data_key], batch[self.label_key]
+                X = X.to(self.device)
                 y = y.to(self.device)
                 optimizer.zero_grad()
-                output = model_t(x)
+                output = model_t(X)
                 loss_value = self.criterion(output, y) # modify according to the local objective
                 loss_value.backward()
 
@@ -192,8 +194,16 @@ class ClientFedALA(BaseClient):
                  ):  
                  
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
-        self.ALA = ALA(self.id, self.criterion, self.train_loader.dataset, self.cfg.data.batch_size, 
-                    self.cfg.algorithm.rand_percent, self.cfg.algorithm.layer_idx, self.cfg.algorithm.eta, self.device)
+        self.ALA = ALA(cid= self.id, 
+                       loss= self.criterion,
+                       train_data= self.train_loader.dataset,
+                       batch_size=self.cfg.data.batch_size,
+                       rand_percent= self.cfg.algorithm.rand_percent,
+                       layer_idx= self.cfg.algorithm.layer_idx, 
+                       eta= self.cfg.algorithm.eta,
+                       device= self.device,
+                       data_key= self.data_key,
+                       label_key= self.label_key)
         
 
 # %% ../../nbs/10h_clients.fedala.ipynb #5e44f940
