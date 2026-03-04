@@ -26,7 +26,7 @@ class MainConfig:
 
     defaults: List[Any] = field(default_factory=lambda: [
         "_self_",               # Use values in this class
-        {"model": "lenet_fedavg"},     # Default group choice
+        {"model": "lenet"},     # Default group choice
         {"data": "mnist"},    # Default group choice
         {"optimizer": "sgd"},    # Default group choice
         {"algorithm": "fedavg"},
