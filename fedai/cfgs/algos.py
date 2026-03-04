@@ -46,7 +46,7 @@ class FedUConfig(AlgorithmConfig):
 @dataclass
 class pFedMeConfig(AlgorithmConfig):
     name: str = "pfedme"
-    k: int = 5
+    K: int = 5
     lambda_: float = 15
     personal_lr: float = 0.1
     beta: float = 1.0
