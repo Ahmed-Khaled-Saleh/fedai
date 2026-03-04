@@ -18,7 +18,7 @@ from typing import List, Optional, Tuple, Dict, Any, Union, Literal, Any
 class BaseOptimizerConfig:
     cls: str = "SGD"
     lr: float = 0.01
-    weight_decay: float = 5e-4
+   
 
 
 @dataclass
