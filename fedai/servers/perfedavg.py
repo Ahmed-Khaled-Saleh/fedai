@@ -67,7 +67,6 @@ def aggregate(self: ServerPerFedAvg, lst_active_ids, comm_round, len_clients_ds)
 # %% ../../nbs/11d_servers.perFedAvg.ipynb #98deb03c
 @patch
 def evaluate(self: ServerPerFedAvg, t):
-    self.cfg.agg ="mtl"
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
@@ -82,6 +81,5 @@ def evaluate(self: ServerPerFedAvg, t):
         res_test = client.evaluate_local(loader= 'test')
         lst_test_res.append(res_test)
         
-    self.cfg.agg = "one_model"
     return lst_train_res, lst_test_res    
 
