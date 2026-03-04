@@ -32,11 +32,11 @@ def get_optimizer(cfg):
         'ditto': PerturbedGradientDescent
     }
 
-    if cfg.algorithm.name in custom_opts:
-        opt_cls = custom_opts[cfg.algorithm.name]
-
-    elif cfg.optimizer.cls in built_in_opts:
+    if cfg.optimizer.cls in built_in_opts:
         opt_cls = getattr(optim, cfg.optimizer.cls)
+
+    elif cfg.algorithm.name in custom_opts:
+        opt_cls = custom_opts[cfg.algorithm.name]
 
     else:
         raise ValueError(f"Optimizer {cfg.optimizer.cls} not found in built-in optimizers or custom optimizers.")
