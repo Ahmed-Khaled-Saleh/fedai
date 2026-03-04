@@ -90,9 +90,11 @@ class Transformer(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #20294346
 class ViTBackbone(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, *, img_size, patch_size, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
-        image_height, image_width = pair(image_size)
+        channels = img_size[0]
+        img_size = img_size[1]
+        image_height, image_width = pair(img_size)
         patch_height, patch_width = pair(patch_size)
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
@@ -133,10 +135,10 @@ class ViTBackbone(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #15e598b4
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, img_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
 
-        self.backbone = ViTBackbone(image_size = image_size, patch_size = patch_size, num_classes = num_classes, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, channels = channels, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
+        self.backbone = ViTBackbone(img_size = img_size, patch_size = patch_size, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
         self.head = nn.Sequential(
             nn.LayerNorm(dim),
             nn.Linear(dim, num_classes)
@@ -224,9 +226,9 @@ class SPT(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #3f24b4c4
 class ViTSmallBackbone(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, *, img_size, patch_size, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
-        image_height, image_width = pair(image_size)
+        image_height, image_width = pair(img_size)
         patch_height, patch_width = pair(patch_size)
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
@@ -264,10 +266,11 @@ class ViTSmallBackbone(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #3c3bd4e6
 class ViTSmall(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, img_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
-
-        self.backbone = ViTSmallBackbone(image_size = image_size, patch_size = patch_size, num_classes = num_classes, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, channels = channels, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
+        channels = img_size[0]
+        img_size = img_size[1]
+        self.backbone = ViTSmallBackbone(img_size = img_size, patch_size = patch_size, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, channels = channels, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
         self.head = nn.Sequential(
             nn.LayerNorm(dim),
             nn.Linear(dim, num_classes)

@@ -15,13 +15,12 @@ import torch.nn as nn
 
 # %% ../../../nbs/01b_data.vision.VisionBlock.ipynb #ffb4516c
 class RotateMaskTransform(torch.nn.Module):
-    def __init__(self, rotation_k, mask, patch_size, cfg, data_config):
+    def __init__(self, rotation_k, mask, patch_size, cfg):
         super().__init__()
         self.k = rotation_k
         self.mask = torch.tensor(mask, dtype=torch.float32).unsqueeze(0)
         self.patch_size = patch_size
         self.cfg = cfg
-        self.data_config = data_config
 
     def forward(self, img):
         """
@@ -52,33 +51,31 @@ class RotateMaskTransform(torch.nn.Module):
             
         img_normalized = v2.functional.normalize(
             img_masked, 
-            mean=self.data_config[self.cfg.data.name].mean, 
-            std=self.data_config[self.cfg.data.name].std
+            mean=self.cfg.mean, 
+            std=self.cfg.std
         )
         return img_normalized
 
 # %% ../../../nbs/01b_data.vision.VisionBlock.ipynb #5e96ecb6
 class VisionBlock(torch.utils.data.Dataset):
-    def __init__(self, cfg, idx, data_config, fds, train=True, transform=None):
+    def __init__(self, cfg, idx, fds, train=True, transform=None):
         self.cfg = cfg
-        self.data_config = data_config
         
         split = "train" if train else "test"
-        if split == "test" and self.cfg.data.name == "tiny-imagenet":
+        if split == "test" and self.cfg.name == "tiny-imagenet":
             split = "valid"
             
         self.data = fds.load_partition(partition_id=idx, split=split)
-        self.x_key = self.data_config[self.cfg.data.name].x
-        self.y_key = self.data_config[self.cfg.data.name].y
+        self.x_key = self.cfg.x
+        self.y_key = self.cfg.y
         
         
         def build_transform(transform= None):
-            if self.cfg.data.name == "mnist_rotated_batched_40":
+            if self.cfg.name == "mnist_rotated_batched":
                 transform = RotateMaskTransform(
                     rotation_k=self.data.rotation_k, 
                     mask=self.data.silo_mask,
                     patch_size=2,
-                    data_config=self.data_config,
                     cfg=self.cfg
                 )
             
@@ -86,15 +83,14 @@ class VisionBlock(torch.utils.data.Dataset):
                 transform = v2.Compose([
                     v2.ToImage(),            # 2. Convert to Tensor (H,W,C -> C,H,W)
                     v2.ToDtype(torch.float32, scale=True),
-                    v2.Normalize(self.data_config[self.cfg.data.name].mean, 
-                                self.data_config[self.cfg.data.name].std)
+                    v2.Normalize(self.cfg.mean, 
+                                self.cfg.std)
                 ]) 
             elif transform:
                 transform = transform
 
             else:
-                raise ValueError("""Please provide a valid transform, or extend the `data_config` dictionary to handle the dataset.
-                                    See `fedai.data.data` module.""")
+                raise ValueError("""Please provide a valid transform to handle the dataset. See `fedai.data.data` module.""")
             
             return transform
 

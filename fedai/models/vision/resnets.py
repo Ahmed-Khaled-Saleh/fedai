@@ -71,7 +71,7 @@ class Bottleneck(nn.Module):
 
 # %% ../../../nbs/02c_models.vision.resnets.ipynb #66d8b0b9
 class ResNetBackbone(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks):
         super(ResNetBackbone, self).__init__()
         self.in_planes = 64
 
@@ -106,7 +106,7 @@ class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
-        self.backbone = ResNetBackbone(block, num_blocks, num_classes)
+        self.backbone = ResNetBackbone(block, num_blocks)
         self.head = nn.Linear(512*block.expansion, num_classes)
 
     def forward(self, x):

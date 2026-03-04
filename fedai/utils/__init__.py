@@ -10,11 +10,14 @@ import os
 from fastcore.utils import *  
 from torch.utils.data import DataLoader 
 import yaml
+from omegaconf import OmegaConf, DictConfig
+from dataclasses import is_dataclass
+
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import torch
-from ..data import *
+
 import importlib
 import pkgutil
 import torch.nn as nn
@@ -40,13 +43,10 @@ def get_cls(module_name, class_name):
 
 # %% ../../nbs/05b_utils.ipynb.ipynb #5ad38648
 def load_all_modules(package):
-    """Recursively imports all modules in a package."""
-    for loader, module_name, is_pkg in pkgutil.walk_packages(package.__path__):
-        full_name = f"{package.__name__}.{module_name}"
-        importlib.import_module(full_name)
-        if is_pkg:
-            print(f"Loading package: {full_name}")
-            load_all_modules(importlib.import_module(full_name))
+    """Recursively imports all modules in a package to trigger registration decorators."""
+    importlib.import_module(package.__name__)
+    for loader, module_name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        importlib.import_module(module_name)
 
 # %% ../../nbs/05b_utils.ipynb.ipynb #9a7077ae
 def init_server(algo_name, config, selector, criterion, fds, writer= None):

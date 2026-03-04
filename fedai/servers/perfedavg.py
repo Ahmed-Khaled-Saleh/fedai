@@ -36,7 +36,7 @@ class ServerPerFedAvg(BaseServer):
                  
         super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
 
-# %% ../../nbs/11d_servers.perFedAvg.ipynb #b4be574f
+# %% ../../nbs/11d_servers.perFedAvg.ipynb #94dc39aa
 @patch
 def aggregate(self: ServerPerFedAvg, lst_active_ids, comm_round, len_clients_ds):
     # m_t = sum(len_clients_ds.values())

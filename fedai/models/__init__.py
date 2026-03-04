@@ -12,17 +12,16 @@ import os
 import torch
 
 import fedai.models.vision as vision_models
-
+from omegaconf import OmegaConf, DictConfig
+from dataclasses import is_dataclass, asdict
+from ..core import get_clean_kwargs
 
 # %% ../../nbs/02k_models.ipynb #2f5ecfed
 def create_model(cfg):
-
-    torch.manual_seed(cfg.get("random_seed", 42))
-    np.random.seed(cfg.get("random_seed", 42))
-    random.seed(cfg.get("random_seed", 42))
     
-    if cfg.model.name in vision_models.list_model_names() and cfg.data.modality == ['Vision']:
-        return vision_models.create_model(**cfg.model)
+    kwargs = get_clean_kwargs(cfg.model)
+    if cfg.model.name in vision_models.list_model_names() and cfg.data.modality.lower() == 'vision':
+        return vision_models.create_model(**kwargs)
     
     raise ValueError(f"Model '{cfg.model.name}' is not recognized, the available models are: {vision_models.list_model_names()}")
 

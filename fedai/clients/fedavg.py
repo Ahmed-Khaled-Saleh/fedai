@@ -33,8 +33,3 @@ class ClientFedAvg(BaseClient):
                  
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
 
-
-# %% ../../nbs/10b_clients.fedavg.ipynb #a9c754dd
-@patch
-def fine_tune(self: ClientFedAvg):
-    self.fit()
