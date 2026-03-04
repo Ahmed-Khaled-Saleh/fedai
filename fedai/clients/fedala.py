@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 from .base_client import BaseClient
 from ..utils.registery import AlgorithmRegistry
@@ -91,10 +91,12 @@ def adaptive_local_aggregation(self: ALA,
 
         # randomly sample partial local training data
         rand_ratio = self.rand_percent / 100
-        rand_num = int(rand_ratio*len(self.train_data))
-        rand_idx = random.randint(0, len(self.train_data)-rand_num)
-        rand_loader = DataLoader(self.train_data[rand_idx:rand_idx+rand_num], self.batch_size, drop_last=False)
+        rand_num = int(rand_ratio * len(self.train_data))
+        start_idx = random.randint(0, len(self.train_data) - rand_num)
+        indices = list(range(start_idx, start_idx + rand_num))
 
+        subset_data = Subset(self.train_data, indices)
+        rand_loader = DataLoader(subset_data, batch_size=self.batch_size, drop_last=False)
 
         # obtain the references of the parameters
         params_g = list(global_model.parameters())
