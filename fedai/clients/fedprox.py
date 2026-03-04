@@ -44,9 +44,7 @@ class FedProxClient(BaseClient):
 def fit(self: FedProxClient):
     
     self.model = self.model.to(self.device)
-    self.local_model = self.local_model.to(self.device)
     self.model.train()
-    self.local_model.train()
     for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
             batch = self.send_to_device(batch)
