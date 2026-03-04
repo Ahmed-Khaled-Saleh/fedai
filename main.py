@@ -1,85 +1,62 @@
+import hydra
+from hydra.core.config_store import ConfigStore
+from omegaconf import OmegaConf
+import time
 
-import torch 
-import os 
-from datetime import datetime 
-from copy import deepcopy
-import argparse
-from torch import nn
+from fedai.cfgs import MainConfig
+from fedai.cfgs.data import *
+from fedai.cfgs.models import *
+from fedai.cfgs.algos import *
+from fedai.cfgs.gpu_servers import *
 
-from fedai.data import init_data, IMG_DATA_CONFIGS
+from fedai.data import init_data
+from fedai.models import create_model
 from fedai.client_selector import BaseClientSelector
 from fedai.wandb_writer import WandbWriter
 from fedai.utils import init_server, get_criterion
 
-from omegaconf import OmegaConf 
-from huggingface_hub import login 
-from dotenv import load_dotenv 
+cs = ConfigStore.instance()
+cs.store(group="data", name="cifar10", node= CIFAR10Config())
+cs.store(group="data", name="cifar100", node= CIFAR100Config())
+cs.store(group="data", name="mnist", node= MNISTConfig())
+cs.store(group="data", name="mnist_rotated_batched", node= MNISTRotatedPatchedConfig())
+cs.store(group="data", name="tinyimagenet", node= TinyImageNetConfig())
 
+cs.store(group="model", name="lenet_fedavg", node= LeNetConfig())
+cs.store(group="model", name="resnet_18", node= ResNetConfig())
+cs.store(group="model", name="mobilenetv3_small", node= MobileNetConfig())
+cs.store(group="model", name="efficientnet_b0", node= EfficientNetConfig())
+cs.store(group="model", name="vit_small", node= ViTConfig())
 
+cs.store(group="algorithm", name="fedavg", node= FedAvgConfig())
+cs.store(group="algorithm", name="sfmtl", node= SFMTLConfig())
+cs.store(group="algorithm", name="fedprox", node= FedProxConfig())
 
+cs.store(group="server", name="puhti", node= PuhtiConfig())
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Federated Learning Simulation')
-    parser.add_argument('--config', type=str, help='Path to the YAML config file', required=True)
-    parser.add_argument('--timestamp', type=str, help='Time stamp', required=True)
-    parser.add_argument('--env_file', type=str, help='Path to the .env file', required=False)
-    
+cs.store(name="base_config", node= MainConfig)
 
-    parser.add_argument('--lr', type=float, help='Learning rate local', required=False)
-    parser.add_argument('--batch_size', type=int, help='Batch size', required=False)
-    parser.add_argument('--optimizer', type=str, help='Optimizer', required=False)
-    parser.add_argument('--algorithm', type=str, help='Client class', required=False)
-    parser.add_argument('--agg', type=str, help='Aggregation', required=False)
-    parser.add_argument('--lambda_', type=str, help='lambda for fedu and dmtl', required=False)
-    parser.add_argument('--alpha', type=str, help='alpha for dmtl', required=False)
-    args = parser.parse_args()
+@hydra.main(version_base=None, config_name="base_config")
+def main(cfg: MainConfig):
+    print(f"Algorithm: {cfg.algorithm.name}")
+    print(f"Model: {cfg.model.name}")
+    print(f"Data: {cfg.data.name}")
+    print(f"Server: {cfg.server.name}")
 
-    if args.env_file:
-        load_dotenv(args.env_file)
-        key = os.getenv("WANDB_API_KEY", None)
-        hf_secret = os.getenv("HF_SECRET_CODE", None)
-
-        if key:
-            os.environ["WANDB_API_KEY"] = key
-        if hf_secret:
-            os.environ["HF_SECRET_CODE"] = hf_secret     
-
-    try:
-        with open(args.config, 'r') as file:
-            cfg = OmegaConf.load(file)
-    except:
-        print("Invalid config file path")
-
-
-    cfg.now = args.timestamp 
-
-    cfg.optimizer.lr = float(args.lr) if args.lr else cfg.optimizer.lr
-    cfg.data.batch_size = int(args.batch_size) if args.batch_size else cfg.data.batch_size
-    cfg.optimizer.name = args.optimizer if args.optimizer else cfg.optimizer.name
-
-    cfg.algorithm = args.algorithm if args.algorithm else cfg.algorithm
-
-    cfg.agg = args.agg if args.agg else cfg.agg
-
-    if  cfg.algorithm in ["pfedme", "fedu", "sfmtl"]:
-        cfg.lambda_ = float(args.lambda_) if args.lambda_ else cfg.lambda_
-
-    if cfg.algorithm == "sfmtl":
-        cfg.alpha = float(args.alpha) if args.alpha else cfg.alpha
-
-    
-    cfg.data.partitioner.kwargs.update({"partition_by": IMG_DATA_CONFIGS[cfg.data.name].y})
-    fds = init_data(cfg)
+    fds = init_data(cfg.data)
+    cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
 
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)
     writer = WandbWriter(cfg)
 
-    server = init_server(algo_name= cfg.algorithm,
+    server = init_server(algo_name= cfg.algorithm.name,
                          config= cfg, 
                          selector= client_selector,
                          criterion= criterion,
                          fds= fds,
                          writer= writer)
-    
     server.train()
+
+if __name__ == "__main__":
+    main()
