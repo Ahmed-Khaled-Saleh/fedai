@@ -47,6 +47,7 @@ cs.store(group="algorithm", name="perfedavg", node= PerFedAvgConfig())
 cs.store(group="algorithm", name="ditto", node= DittoConfig())
 cs.store(group="algorithm", name="fedprox", node= FedProxConfig())
 cs.store(group="algorithm", name="apfl", node= APFLConfig())
+cs.store(group="algorithm", name="fedala", node= FedALA())
 
 cs.store(group="server", name="puhti", node= PuhtiConfig())
 
