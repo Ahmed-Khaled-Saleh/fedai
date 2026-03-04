@@ -40,7 +40,7 @@ class ServerFedu(BaseServer):
                  
         super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
 
-        np.random.seed(self.cfg.seed)
+        np.random.seed(self.cfg.random_seed)
         b = np.random.uniform(0,1,size=(self.cfg.num_clients, self.cfg.num_clients))
         b_symm = (b + b.T)/2
         b_symm[b_symm < 0.25] = 0
@@ -51,7 +51,7 @@ class ServerFedu(BaseServer):
 def aggregate(self: ServerFedu, lst_active_ids, comm_round, len_clients_ds):
 
     global_lr = float(self.cfg.optimizer.lr) * float(self.cfg.local_epochs)
-    reg_param = self.cfg.lambda_
+    reg_param = self.cfg.algorithm.lambda_
     
     with torch.no_grad():
         aggregated_states = []

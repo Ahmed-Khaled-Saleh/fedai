@@ -51,7 +51,7 @@ def fit(self: pFedMeClient):
         for i, batch in enumerate(self.train_loader):
             batch = self.send_to_device(batch)
             # find an approximate theta
-            for _ in range(self.cfg.K):
+            for _ in range(self.cfg.algorithm.K):
                 self.optimizer.zero_grad()
                 X, y = batch[self.data_key], batch[self.label_key]
                 outputs = self.model(X)
@@ -63,7 +63,7 @@ def fit(self: pFedMeClient):
             # update local weight after finding aproximate theta
             with torch.no_grad():
                 for localweight, per_param in zip(self.local_model.parameters(), self.persionalized_model_bar):
-                    localweight.sub_(self.cfg.lambda_* self.cfg.optimizer.lr * (localweight - per_param))
+                    localweight.sub_(self.cfg.algorithm.lambda_* self.cfg.optimizer.lr * (localweight - per_param))
 
     with torch.no_grad():
         for model_param, local_param in zip(self.model.parameters(), self.local_model.parameters()):

@@ -76,7 +76,7 @@ def fit(self: SFMTLClient):
             h = self.model.backbone(X)
             outputs = self.model.head(h)    
             
-            loss_anchor = self.anchorloss(h, ys, Lambda = self.cfg.lambda_anchor)
+            loss_anchor = self.anchorloss(h, ys, Lambda = self.cfg.algorithm.lambda_anchor)
             loss = self.criterion(outputs, y_copied) + loss_anchor
             
             for i in set(labels.tolist()):
@@ -89,7 +89,7 @@ def fit(self: SFMTLClient):
                 #compute batch mean anchor according to batch label
                 batch_mean_anchor[i] = batch_mean_anchor[i]/(batch_idx+1)
                 #compute epoch mean anchor according to batch mean anchor
-                lambda_momentum = self.cfg.momentum_anchor #pow(2, -(epoch+1))
+                lambda_momentum = self.cfg.algorithm.momentum_anchor #pow(2, -(epoch+1))
                 # epoch_mean_anchor[i] = lambda_momentum * epoch_mean_anchor[i] + (1-lambda_momentum)*batch_mean_anchor[i]
                 epoch_mean_anchor[i].mul_(lambda_momentum).add_((1 - lambda_momentum) * batch_mean_anchor[i])        
 
@@ -112,7 +112,7 @@ def save_state(self: SFMTLClient, save_to_disk= False):
     state_dict['label_set'] = self.label_set
     
     if save_to_disk:
-        state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
+        state_path = os.path.join(self.cfg.server.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
         if not os.path.exists(os.path.dirname(state_path)):
             os.makedirs(os.path.dirname(state_path))
 

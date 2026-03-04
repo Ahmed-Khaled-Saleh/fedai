@@ -153,7 +153,7 @@ def build_graph_sim(self: SFMTLServer, lst_active_ids, comm_round):
             h_sim_df, h_sim = self.h_similarity(h1, h2, label_set, label_set2)
             # clients_sim_dict[(id, other_id)] = h_sim_df
             
-            val = (self.cfg.alpha) * w_sim + (1 - self.cfg.alpha) * h_sim
+            val = (self.cfg.algorithm.alpha) * w_sim + (1 - self.cfg.algorithm.alpha) * h_sim
             self.logger.info(f"Client {id} and {other_id} similarity: {val}")
             self.logger.info(f"Client {id} and {other_id} h similarity: {h_sim}")
             self.logger.info(f"Client {id} and {other_id} w similarity: {w_sim}")
@@ -181,7 +181,7 @@ def build_graph_sim(self: SFMTLServer, lst_active_ids, comm_round):
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
     
-    df_path = os.path.join(self.cfg.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
+    df_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
     if not os.path.exists(os.path.dirname(df_path)):
         os.makedirs(os.path.dirname(df_path))
     torch.save(clients_sim_dict, df_path)
@@ -189,7 +189,7 @@ def build_graph_sim(self: SFMTLServer, lst_active_ids, comm_round):
     return G, graph
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #9eae7219
-@patch    # save the model to self.cfg.save_dir/comm_round/f"local_output_{id}"/state.pth
+@patch    # save the model to self.cfg.server.save_dir/comm_round/f"local_output_{id}"/state.pth
 def build_random_graph(self: SFMTLServer, lst_active_ids, comm_round):
 
     num_active = len(lst_active_ids)
@@ -219,7 +219,7 @@ def build_random_graph(self: SFMTLServer, lst_active_ids, comm_round):
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
     
-    df_path = os.path.join(self.cfg.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
+    df_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
     if not os.path.exists(os.path.dirname(df_path)):
         os.makedirs(os.path.dirname(df_path))
     torch.save(clients_sim_dict, df_path)
@@ -244,7 +244,7 @@ def build_constant_graph(self: SFMTLServer, lst_active_ids, comm_round):
     for node, label in zip(list(range(num_active)), lst_active_ids):
         G.nodes[node]['label'] = label
 
-    df_path = os.path.join(self.cfg.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
+    df_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"h_sim_df_{str(comm_round)}.pth")
     if not os.path.exists(os.path.dirname(df_path)):
         os.makedirs(os.path.dirname(df_path))
     torch.save(clients_sim_dict, df_path)
@@ -259,9 +259,9 @@ def build_graph(self: SFMTLServer, lst_active_ids, comm_round):
         "random": self.build_random_graph,
         "constant": self.build_constant_graph
     }
-    if self.cfg.graph_type not in func_dict:
-        raise ValueError(f"Unsupported graph type: {self.cfg.graph_type}")
-    return func_dict[self.cfg.graph_type](lst_active_ids, comm_round)
+    if self.cfg.algorithm.graph_type not in func_dict:
+        raise ValueError(f"Unsupported graph type: {self.cfg.algorithm.graph_type}")
+    return func_dict[self.cfg.algorithm.graph_type](lst_active_ids, comm_round)
 
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #4515fe5c
@@ -300,7 +300,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
     torch.save(self.coalitions, coalitions_path)
 
     global_lr = float(self.cfg.optimizer.lr) * float(self.cfg.local_epochs)
-    reg_param = self.cfg.lambda_
+    reg_param = self.cfg.algorithm.lambda_
     
     with torch.no_grad():
         coalitions_reprs = {}
@@ -370,7 +370,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                 aggregated_states.append(clinet_state)
 
                 if save_to_disk:
-                    agg_client_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
+                    agg_client_state_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
                     
                     if not os.path.exists(os.path.dirname(agg_client_state_path)):
                         os.makedirs(os.path.dirname(agg_client_state_path))

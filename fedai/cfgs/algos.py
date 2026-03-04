@@ -42,6 +42,7 @@ class SFMTLConfig(AlgorithmConfig):
     alpha: float = 0.49
     lambda_anchor: float = 0.1
     momentum_anchor: float = 0.5
+    graph_type: str = "similarity"
 
 
 @dataclass
@@ -53,22 +54,25 @@ class FedProxConfig(AlgorithmConfig):
 @dataclass
 class FedUConfig(AlgorithmConfig):
     name: str = "fedu"
-    alpha: float = 0.5
+    lambda_: float = 0.03
 
 @dataclass
 class DittoConfig(AlgorithmConfig):
     name: str = "ditto"
-    lambda_: float = 0.1
+    mu: float = 0.005
 
 
 @dataclass
 class pFedMeConfig(AlgorithmConfig):
     name: str = "pfedme"
-    lambda_: float = 0.1
+    k: int = 5
+    lambda_: float = 15
+    personal_lr: float = 0.1
+    beta: float = 1.0
 
 @dataclass
 class PerFedAvgConfig(AlgorithmConfig):
     name: str = "perfedavg"
-    alpha: float = 0.5
+    beta: float = 0.005
 
 

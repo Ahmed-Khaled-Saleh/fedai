@@ -112,7 +112,7 @@ def train_step(self: ClientPerFedAvg, num_steps= None):
             for model_param, local_param in zip(self.model.parameters(), self.local_model.parameters()):
                 model_param.copy_(local_param.data.clone())
 
-        self.optimizer.step(beta= self.cfg.beta)
+        self.optimizer.step(beta= self.cfg.algorithm.beta)
 
         
 
