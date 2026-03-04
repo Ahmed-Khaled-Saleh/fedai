@@ -145,7 +145,7 @@ def save_state(self: pFedMeClient, save_to_disk= False):
     }
 
     if save_to_disk:
-        state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
+        state_path = os.path.join(self.cfg.server.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
         if not os.path.exists(os.path.dirname(state_path)):
             os.makedirs(os.path.dirname(state_path))
         torch.save(client_state, state_path)

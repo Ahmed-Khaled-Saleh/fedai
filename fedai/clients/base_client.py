@@ -147,7 +147,7 @@ def save_state(self: BaseClient, save_to_disk= False):
     state_dict['optimizer'] = self.optimizer.state_dict()
 
     if save_to_disk:
-        state_path = os.path.join(self.cfg.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
+        state_path = os.path.join(self.cfg.server.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")
         if not os.path.exists(os.path.dirname(state_path)):
             os.makedirs(os.path.dirname(state_path))
 
