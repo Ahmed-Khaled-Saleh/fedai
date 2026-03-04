@@ -39,7 +39,7 @@ cs.store(group="optimizer", name="fedprox", node= FedProxOptimizerConfig())
 cs.store(group="optimizer", name="apfl", node= APFLOptimizerConfig())
 
 cs.store(group="algorithm", name="fedavg", node= FedAvgConfig())
-cs.store(group="server", name="fedavg_ft", node= FedAvgFTConfig())
+cs.store(group="algorithm", name="fedavg_ft", node= FedAvgFTConfig())
 cs.store(group="algorithm", name="pfedme", node= pFedMeConfig())
 cs.store(group="algorithm", name="fedu", node= FedUConfig())
 cs.store(group="algorithm", name="sfmtl", node= SFMTLConfig())
