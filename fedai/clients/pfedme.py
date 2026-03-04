@@ -93,7 +93,9 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 # %% ../../nbs/10c_clients.pfedme.ipynb #4cf8b8b0
 @patch
 def evaluate_local(self: pFedMeClient, loader= 'train'):
-    self.update_parameters(self.model, self.personalized_params)
+    self.personalized_params = [param.to(self.device) for param in self.personalized_params]
+    self.local_params = [param.to(self.device) for param in self.local_params]
+    self.update_parameters(self.model, self.personalized_params) if loader == 'test' else self.update_parameters(self.model, self.local_params)
     data_loader = self.train_loader if loader == 'train' else self.test_loader
     
     total_loss = 0
