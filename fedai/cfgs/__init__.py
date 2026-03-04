@@ -28,6 +28,7 @@ class MainConfig:
         "_self_",               # Use values in this class
         {"model": "lenet_fedavg"},     # Default group choice
         {"data": "cifar10"},    # Default group choice
+        {"optimizer": "sgd"},    # Default group choice
         {"algorithm": "fedavg"},
         {"server": "puhti"}
     ])
