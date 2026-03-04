@@ -66,7 +66,7 @@ def aggregate(self: ServerpFedMe, lst_active_ids, comm_round, len_clients_ds):
                 global_model[key].add_(weight * client_state_dict[key])
 
         for key in global_model.keys():
-            global_model[key].copy_((1-self.cfg.beta)*global_model[key] + self.cfg.beta*prev_global_model[key])
+            global_model[key].copy_((1-self.cfg.algorithm.beta)*global_model[key] + self.cfg.algorithm.beta*prev_global_model[key])
 
         self.model.load_state_dict(global_model)
         # server_state = {
