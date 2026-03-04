@@ -17,10 +17,11 @@ from fedai.wandb_writer import WandbWriter
 from fedai.utils import init_server, get_criterion
 
 cs = ConfigStore.instance()
-cs.store(group="data", name="cifar10", node= CIFAR10Config())
-cs.store(group="data", name="cifar100", node= CIFAR100Config())
+
 cs.store(group="data", name="mnist", node= MNISTConfig())
 cs.store(group="data", name="mnist_rotated_batched", node= MNISTRotatedPatchedConfig())
+cs.store(group="data", name="cifar10", node= CIFAR10Config())
+cs.store(group="data", name="cifar100", node= CIFAR100Config())
 cs.store(group="data", name="tinyimagenet", node= TinyImageNetConfig())
 
 cs.store(group="model", name="lenet", node= LeNetConfig())

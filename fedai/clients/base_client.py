@@ -70,6 +70,12 @@ def __str__(self: BaseClient) -> str:
 def send_to_device(self: BaseClient, batch):
     return {k: v.to(self.device) for k, v in batch.items()}
 
+# %% ../../nbs/10a_clients.base_client.ipynb #c9de27d0
+@patch
+def update_parameters(self: BaseClient, model, new_params):
+    for param, new_param in zip(model.parameters(), new_params):
+        param.data = new_param.data.clone()
+
 # %% ../../nbs/10a_clients.base_client.ipynb #edec8a40
 @patch
 def fit(self: BaseClient):

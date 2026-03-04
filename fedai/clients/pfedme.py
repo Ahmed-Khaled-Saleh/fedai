@@ -37,16 +37,16 @@ class pFedMeClient(BaseClient):
         
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         
-        self.local_model = deepcopy(self.model)    
+        
+        self.local_params = deepcopy(list(self.model.parameters()))  
+        self.personalized_params = deepcopy(list(self.model.parameters()))
 
 # %% ../../nbs/10c_clients.pfedme.ipynb #379ef57a
 @patch
 def fit(self: pFedMeClient):
     
     self.model = self.model.to(self.device)
-    self.local_model = self.local_model.to(self.device)
     self.model.train()
-    self.local_model.train()
     for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
             batch = self.send_to_device(batch)
@@ -58,16 +58,15 @@ def fit(self: pFedMeClient):
                 
                 loss = self.criterion(outputs, y)
                 loss.backward()
-                self.persionalized_model_bar = self.optimizer.step(self.local_model)
+                self.personalized_params = self.optimizer.step(self.local_params, self.device)
 
             # update local weight after finding aproximate theta
             with torch.no_grad():
-                for localweight, per_param in zip(self.local_model.parameters(), self.persionalized_model_bar):
-                    localweight.sub_(self.cfg.algorithm.lambda_* self.cfg.optimizer.lr * (localweight - per_param))
-
-    with torch.no_grad():
-        for model_param, local_param in zip(self.model.parameters(), self.local_model.parameters()):
-            model_param.copy_(local_param)
+                for new_param, localweight in zip(self.personalized_params, self.local_params):
+                    localweight = localweight.to(self.device)
+                    localweight.data = localweight.data - self.cfg.algorithm.lambda_ * self.cfg.optimizer.lr * (localweight.data - new_param.data)
+                    
+    self.update_parameters(self.model, self.local_params)
 
 # %% ../../nbs/10c_clients.pfedme.ipynb #6eb7ef2f
 @patch
@@ -76,7 +75,7 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 
     try:
         X, y = batch[self.data_key], batch[self.label_key]
-        logits = self.pers_model(X)
+        logits = self.model(X)
         loss = self.criterion(logits, y)
         probs = torch.nn.functional.softmax(logits, dim=-1)
         y_pred = probs.argmax(dim=-1)
@@ -91,23 +90,15 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
     return loss, metrics
 
 
-# %% ../../nbs/10c_clients.pfedme.ipynb #16bceaf0
+# %% ../../nbs/10c_clients.pfedme.ipynb #4cf8b8b0
 @patch
-def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
+def evaluate_local(self: pFedMeClient, loader= 'train'):
+    self.update_parameters(self.model, self.personalized_params)
+    data_loader = self.train_loader if loader == 'train' else self.test_loader
+    
     total_loss = 0
     lst_metrics = []
-    
-    original_keys = deepcopy(self.pers_model)
-    self.logger.info(f"type of model before is {type(self.pers_model)} in {loader} evaluation")
-
-    pers_model = deepcopy(self.model)
-    pers_model.load_state_dict(self.pers_model)
-    self.pers_model = pers_model.to(self.device)
-    self.logger.info(f"type of model after is {type(self.pers_model)} in {loader} evaluation")
-    self.pers_model.eval()
-
     num_eval = 0
-    data_loader = self.train_loader if loader == 'train' else self.test_loader
     
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
@@ -125,23 +116,18 @@ def evaluate_local(self: pFedMeClient, loader= 'train') -> dict:
         total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
     else:
         total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
-    self.pers_model = original_keys
-    return {"loss": avg_loss, "metrics": total_metrics}
 
+    return {"loss": avg_loss, "metrics": total_metrics}
 
 # %% ../../nbs/10c_clients.pfedme.ipynb #cf056640
 @patch
 def save_state(self: pFedMeClient, save_to_disk= False):
 
-    self.pers_model = deepcopy(self.model).to(self.device)
-    with torch.no_grad():
-        for p_model, p_updated in zip(self.pers_model.parameters(), self.persionalized_model_bar):
-            p_model.copy_(p_updated)
-
     client_state = {
         "model": self.model.state_dict(),
         'optimizer': self.optimizer.state_dict(),
-        'pers_model': self.pers_model.state_dict(),
+        'local_params': [param.cpu() for param in self.local_params],
+        'personalized_params':   [param.cpu() for param in self.personalized_params],
     }
 
     if save_to_disk:

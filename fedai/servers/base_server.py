@@ -43,7 +43,7 @@ class StateManager:
             elif isinstance(value, dict):
                 # Handle nested dicts (like optimizer.state_dict())
                 self.registry[client_id][key] = self._to_cpu(value)
-            else:
+            else: # handles non-torch objects (like lists, scalars, etc.)
                 self.registry[client_id][key] = value
 
     def get_state(self, client_id):       
