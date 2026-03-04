@@ -193,12 +193,14 @@ class ClientFedALA(BaseClient):
                  
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         self.ALA = ALA(self.id, self.criterion, self.train_loader.dataset, self.cfg.data.batch_size, 
-                    self.cfg.algorithm.rand_percent, self.cfg.algorithm.layer_idx, self.cfg.algorithm.eta, self.device) # TODO: add ALA algo cfg
+                    self.cfg.algorithm.rand_percent, self.cfg.algorithm.layer_idx, self.cfg.algorithm.eta, self.device)
         
 
 # %% ../../nbs/10h_clients.fedala.ipynb #5e44f940
 @patch
 def local_initialization(self: ClientFedALA, received_global_model):
+    self.model.to(self.device)
+    received_global_model.to(self.device)
     self.ALA.adaptive_local_aggregation(received_global_model, self.model)
 
 # %% ../../nbs/10h_clients.fedala.ipynb #d1449cba
