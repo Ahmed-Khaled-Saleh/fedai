@@ -83,4 +83,4 @@ class PerFedAvgConfig(AlgorithmConfig):
 @dataclass
 class APFLConfig(AlgorithmConfig):
     name: str = "apfl"
-    alpha: float = 0.5
+    alpha: float = 0.25
