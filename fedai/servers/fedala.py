@@ -113,5 +113,7 @@ def aggregate(self: ServerFedALA, lst_active_ids, comm_round, len_clients_ds):
             self.state_mgr.set_state(id, {
                     'model': self.model.state_dict(),
                     'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
+                    'start_phase': self.state_mgr.get_state(id).get('start_phase', None),
+                    'weights': self.state_mgr.get_state(id).get('weights', None)
             })
         

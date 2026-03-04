@@ -25,7 +25,7 @@ from ..utils.registery import AlgorithmRegistry
 class ALA:
     def __init__(self,
                 cid: int,
-                loss: nn.Module,
+                criterion: nn.Module,
                 train_data: List[Tuple], 
                 batch_size: int, 
                 rand_percent: int, 
@@ -35,13 +35,15 @@ class ALA:
                 eta: float = 1.0,
                 device: str = 'cpu', 
                 threshold: float = 0.1,
-                num_pre_loss: int = 10) -> None:
+                num_pre_loss: int = 10,
+                start_phase: bool = True,
+                weights: torch.Tensor = None) -> None:
         """
         Initialize ALA module
 
         Args:
             cid: Client ID. 
-            loss: The loss function. 
+            criterion: The loss function. 
             train_data: The reference of the local training data.
             batch_size: Weight learning batch size.
             rand_percent: The percent of the local training data to sample.
@@ -50,13 +52,14 @@ class ALA:
             device: Using cuda or cpu. Default: 'cpu'
             threshold: Train the weight until the standard deviation of the recorded losses is less than a given threshold. Default: 0.1
             num_pre_loss: The number of the recorded losses to be considered to calculate the standard deviation. Default: 10
-
+            start_phase: Whether to start the phase of adaptive local aggregation. Default: True
+            weights: The initial weights for adaptive local aggregation. Default: None
         Returns:
             None.
         """
 
         self.cid = cid
-        self.loss = loss
+        self.criterion = criterion
         self.train_data = train_data
         self.batch_size = batch_size
         self.rand_percent = rand_percent
@@ -68,8 +71,8 @@ class ALA:
         self.data_key = data_key
         self.label_key = label_key
 
-        self.weights = None # Learnable local aggregation weights.
-        self.start_phase = True
+        self.start_phase = start_phase
+        self.weights = weights # Learnable local aggregation weights.
 
 
 # %% ../../nbs/10h_clients.fedala.ipynb #820ce796
@@ -131,6 +134,8 @@ def adaptive_local_aggregation(self: ALA,
         # initialize the weight to all ones in the beginning
         if self.weights == None:
             self.weights = [torch.ones_like(param.data).to(self.device) for param in params_p]
+        else:
+            self.weights = [weight.to(self.device) for weight in self.weights]
 
         # initialize the higher layers in the temp local model
         for param_t, param, param_g, weight in zip(params_tp, params_p, params_gp,
@@ -197,7 +202,7 @@ class ClientFedALA(BaseClient):
                  
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         self.ALA = ALA(cid= self.id, 
-                       loss= self.criterion,
+                       criterion= self.criterion,
                        train_data= self.train_loader.dataset,
                        batch_size=self.cfg.data.batch_size,
                        rand_percent= self.cfg.algorithm.rand_percent,
@@ -205,7 +210,9 @@ class ClientFedALA(BaseClient):
                        eta= self.cfg.algorithm.eta,
                        device= self.device,
                        data_key= self.data_key,
-                       label_key= self.label_key)
+                       label_key= self.label_key,
+                       start_phase= self.start_phase if hasattr(self, 'start_phase') else True,
+                       weights= self.weights if hasattr(self, 'weights') else None)
         
 
 # %% ../../nbs/10h_clients.fedala.ipynb #5e44f940
@@ -236,6 +243,8 @@ def save_state(self: ClientFedALA, save_to_disk= False):
     client_state = {
         'model': self.model.state_dict(),
         'optimizer': self.optimizer.state_dict(),
+        'start_phase': self.ALA.start_phase,
+        'weights': self.ALA.weights
     }
 
     if save_to_disk:
