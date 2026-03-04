@@ -45,7 +45,7 @@ def alpha_update(self: ClientAPFL):
         grad_alpha += dif.view(-1).T.dot(grad.view(-1))
     
     grad_alpha += 0.02 * self.alpha
-    self.alpha = self.alpha - self.learning_rate * grad_alpha
+    self.alpha = self.alpha - self.cfg.optimizer.lr * grad_alpha
     self.alpha = np.clip(self.alpha.item(), 0.0, 1.0)
 
 # %% ../../nbs/10h_clients.apfl.ipynb #d1449cba
@@ -68,9 +68,10 @@ def fit(self: ClientAPFL):
             loss_per.backward()
             self.optimizer_per.step()
 
-
+            self.alpha_update()
+            
     for lp, p in zip(self.model_per.parameters(), self.model.parameters()):
-            lp.data = (1 - self.alpha) * p + self.alpha * lp
+        lp.data = (1 - self.alpha) * p + self.alpha * lp
 
 # %% ../../nbs/10h_clients.apfl.ipynb #ff798610
 @patch
