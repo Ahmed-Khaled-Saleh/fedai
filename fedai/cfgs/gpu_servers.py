@@ -29,3 +29,4 @@ class PuhtiConfig(BaseServerConfig):
     model_dir: str = "/scratch/project_2009050/models"
     logs_dir: str = "/scratch/project_2009050/logs"
     res_dir: str = "/scratch/project_2009050/results"
+    save_dir: str = "/scratch/project_2009050/saved_models"
