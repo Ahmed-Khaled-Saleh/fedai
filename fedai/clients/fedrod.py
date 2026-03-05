@@ -72,7 +72,7 @@ def fit(self: ClientFedRod):
     self.model.train()
     self.head.train()
    
-    for _ in range(self.cfg.algorithm.local_epochs):
+    for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
             self.optimizer.zero_grad()
 
