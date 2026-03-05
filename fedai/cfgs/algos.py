@@ -5,7 +5,7 @@
 # %% auto #0
 __all__ = ['AlgorithmConfig', 'FedAvgConfig', 'FedAvgFTConfig', 'FedUConfig', 'pFedMeConfig', 'SFMTLConfig', 'FedProxConfig',
            'DittoConfig', 'PerFedAvgConfig', 'APFLConfig', 'FedALA', 'IFCAConfig', 'FedPerConfig', 'LGFedAvgConfig',
-           'FedRepConfig']
+           'FedRepConfig', 'FedRodConfig']
 
 # %% ../../nbs/7a_cfgs.algos.ipynb #f725b3f6
 from fastcore.utils import *
@@ -116,4 +116,10 @@ class FedRepConfig(AlgorithmConfig):
     name: str = "fedrep"
     plocal_epochs: int = 5
     backbone_lr : float = 0.05
+    head_lr : float = 0.05
+
+@dataclass
+class FedRodConfig(AlgorithmConfig):
+    name: str = "fedrod"
+    model_lr : float = 0.05
     head_lr : float = 0.05
