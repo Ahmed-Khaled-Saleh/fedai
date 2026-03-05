@@ -29,7 +29,7 @@ from ..optimizers import get_optimizer
 from .base_server import BaseServer
 from ..utils.registery import AlgorithmRegistry
 from ..core import get_clean_kwargs
-from ..optimizers.custom_optimizers import PerturbedGradientDescent
+
 
 # %% ../../nbs/11h_server.fedrod.ipynb #c4456ff3
 @AlgorithmRegistry.register_server("fedrod")
