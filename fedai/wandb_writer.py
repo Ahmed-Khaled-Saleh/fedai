@@ -73,8 +73,8 @@ def avg_lst_dicts(self: WandbWriter, lst_dict):
 # %% ../nbs/10_wandb_writer.ipynb #2789d536
 @patch
 def save(self: WandbWriter, res):
-    train_df = pd.concat([pd.DataFrame(d0) for d0 in res[0]])
-    test_df = pd.concat([pd.DataFrame(d1) for d1 in res[1]])
+    train_df = pd.concat([pd.DataFrame(d0) for r in res for d0 in r[0]])
+    test_df = pd.concat([pd.DataFrame(d1) for r in res for d1 in r[1]])
 
     os.makedirs(self.cfg.server.res_dir, exist_ok=True)
     test_df.to_csv(f"{self.cfg.server.res_dir}/test.csv", index=False)

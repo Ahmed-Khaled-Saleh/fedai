@@ -155,7 +155,6 @@ def train(self: BaseServer):
 
         self.aggregate(lst_active_ids, t, len_clients_ds)#lst_active_ids, comm_round, len_clients_ds
         train_res, test_res = self.evaluate(t)
-        # self.state_mgr.registry.clear() if self.cfg.agg == "one_model" else None
         
         train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
         res.append((train_df, test_df))
