@@ -55,7 +55,7 @@ def client_fn(self: ServerIFCA, id, comm_round, client_state):
     if (comm_round == 1 and client_state == {}) or client_state == {}:
         client_state['k_models'] = [self.k_models[i].state_dict() for i in range(self.cfg.algorithm.K)]
 
-    models = [create_model(self.cfg.model, self.cfg.data) for _ in range(self.cfg.algorithm.K)]
+    models = [create_model(self.cfg) for _ in range(self.cfg.algorithm.K)]
     for i in range(self.cfg.algorithm.K):
         models[i].load_state_dict(client_state['k_models'][i])
 
