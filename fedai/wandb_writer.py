@@ -31,16 +31,22 @@ def write(self: WandbWriter, lst_active_ids, lst_train_res, lst_test_res, round)
     local_train_losses = [r["loss"] for r in lst_train_res] if lst_train_res else []
     local_train_metrics = [r["metrics"] for r in lst_train_res] if lst_train_res else []
 
-    lst_train_histories = [{"client_id": client_id, "loss": loss, **metrics} 
-                           for client_id, loss, metrics in zip(range(len(lst_test_res)), local_train_losses, local_train_metrics)]
+    # lst_train_histories = [{"client_id": client_id, "loss": loss, **metrics} 
+    #                        for client_id, loss, metrics in zip(range(len(lst_test_res)), local_train_losses, local_train_metrics)]
+    lst_train_histories = [
+        {"round": round, "client_id": client_id, "loss": loss, **metrics}
+        for client_id, loss, metrics in zip(lst_active_ids, local_train_losses, local_train_metrics)
+    ]
     train_table = wandb.Table(dataframe=pd.DataFrame(lst_train_histories))
 
     # Test results (for all clients)
     local_test_losses = [r["loss"] for r in lst_test_res] if lst_test_res else []
     local_test_metrics = [r["metrics"] for r in lst_test_res] if lst_test_res else []
 
-    lst_test_histories = [{"client_id": client_id, "loss": loss, **metrics} 
-                          for client_id, loss, metrics in zip(range(len(lst_test_res)), local_test_losses, local_test_metrics)]
+    lst_test_histories = [
+        {"round": round, "client_id": client_id, "loss": loss, **metrics}
+        for client_id, loss, metrics in zip(lst_active_ids, local_test_losses, local_test_metrics)
+    ]
     test_table = wandb.Table(dataframe=pd.DataFrame(lst_test_histories))
 
     # Compute averages safely
@@ -73,8 +79,11 @@ def avg_lst_dicts(self: WandbWriter, lst_dict):
 # %% ../nbs/10_wandb_writer.ipynb #2789d536
 @patch
 def save(self: WandbWriter, res):
-    train_df = pd.concat([pd.DataFrame(d0) for r in res for d0 in r[0]])
-    test_df = pd.concat([pd.DataFrame(d1) for r in res for d1 in r[1]])
+    # train_df = pd.concat([pd.DataFrame(d0) for d0 in res[0]])
+    # test_df = pd.concat([pd.DataFrame(d1) for d1 in res[1]])
+
+    train_df = pd.concat([r[0] for r in res], ignore_index=True)
+    test_df = pd.concat([r[1] for r in res], ignore_index=True)
 
     os.makedirs(self.cfg.server.res_dir, exist_ok=True)
     test_df.to_csv(f"{self.cfg.server.res_dir}/test.csv", index=False)
