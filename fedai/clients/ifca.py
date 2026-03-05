@@ -59,6 +59,7 @@ def cluster_id_estimate(self: ClientIFCA):
 
 # %% ../../nbs/10h_clients.ifca.ipynb #d1449cba
 def fit(self: ClientIFCA):
+    self.logger.info(f"Client {self.id} is training on cluster {self.cluster_id}")
     self.cluster_id = self.cluster_id_estimate()
     self.model = copy.deepcopy(self.k_models[self.cluster_id].to(self.device))
     opt_fn, kwargs = self.optimizer()

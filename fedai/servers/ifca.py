@@ -51,7 +51,7 @@ class ServerIFCA(BaseServer):
 # %% ../../nbs/11h_server.ifca.ipynb #3e572e09
 @patch
 def client_fn(self: ServerIFCA, id, comm_round, client_state):
-
+    self.logger.info(f"Preparing client {id} for communication round {comm_round}")
     if (comm_round == 1 and client_state == {}) or client_state == {}:
         client_state['k_models'] = [self.k_models[i].state_dict() for i in range(self.cfg.algorithm.K)]
 
