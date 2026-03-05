@@ -50,7 +50,7 @@ class ServerFedBabu(BaseServer):
 
 # %% ../../nbs/11h_server.fedbabu.ipynb #3b779c4a
 @patch
-def train(self: BaseServer):
+def train(self: ServerFedBabu):
     res =  []
     selected_clients = self.client_selector.select()
     

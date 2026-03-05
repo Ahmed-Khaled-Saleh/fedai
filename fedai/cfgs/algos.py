@@ -124,7 +124,7 @@ class FedRodConfig(AlgorithmConfig):
     model_lr : float = 0.05
     head_lr : float = 0.05
 
-
+@dataclass
 class FedBabuConfig(AlgorithmConfig):
     name: str = "fedbabu"
     fine_tuning_epochs: int = 5
