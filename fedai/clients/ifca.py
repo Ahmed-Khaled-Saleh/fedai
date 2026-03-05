@@ -76,7 +76,7 @@ def fit(self: ClientIFCA):
 
 # %% ../../nbs/10h_clients.ifca.ipynb #80607400
 @patch
-def evaluate_local(self: BaseClient, loader= 'train') -> dict:
+def evaluate_local(self: ClientIFCA, loader= 'train') -> dict:
     total_loss = 0
     lst_metrics = []
     
