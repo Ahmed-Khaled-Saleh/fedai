@@ -85,6 +85,8 @@ def evaluate(self: ServerIFCA, t):
     lst_train_res = []
     lst_test_res = []
     for id in range(self.cfg.num_clients):
+        if id not in self.lst_active_ids:
+            continue
         client_state = self.state_mgr.get_state(id)
         self.logger.info(f"Evaluating client {id} at round {t} with state: {client_state.keys()}")
         client = self.client_fn(id= id, comm_round= t, client_state= client_state)
@@ -106,6 +108,7 @@ def evaluate(self: ServerIFCA, t):
 @patch
 def aggregate(self: ServerIFCA, lst_active_ids, comm_round, len_clients_ds):
     m_t = sum(len_clients_ds.values())
+    self.lst_active_ids = lst_active_ids
     
     with torch.no_grad():
 
