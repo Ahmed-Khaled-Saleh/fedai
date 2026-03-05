@@ -76,7 +76,7 @@ def train(self: ServerFedBabu):
     
 
     train_res, test_res = [], []
-    for id in range(self.cfg.n_clients):
+    for id in range(self.cfg.num_clients):
         client_state = self.state_mgr.get_state(id)
         client = self.client_fn(id= id, comm_round= t, client_state= client_state)
         client.fine_tune()
