@@ -81,7 +81,7 @@ def fine_tune(self: ClientFedBabu, which_module=['backbone', 'head']):
             batch = self.send_to_device(batch)
             X, y = batch[self.data_key], batch[self.label_key]
             output = self.model(X)
-            loss = self.loss(output, y)
+            loss = self.criterion(output, y)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
