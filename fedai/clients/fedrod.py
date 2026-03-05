@@ -80,7 +80,7 @@ def fit(self: ClientFedRod):
             X, y = batch[self.data_key], batch[self.label_key]
             h = self.model.backbone(X)
             out_g = self.model.head(h)
-            loss_bsm = self.balanced_softmax_loss(y, out_g, self.sample_per_class)
+            loss_bsm = balanced_softmax_loss(y, out_g, self.sample_per_class)
             loss_bsm.backward()
             self.optimizer.step()
           
