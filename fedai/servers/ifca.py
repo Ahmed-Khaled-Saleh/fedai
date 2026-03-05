@@ -128,7 +128,7 @@ def aggregate(self: ServerIFCA, lst_active_ids, comm_round, len_clients_ds):
 
         for id in lst_active_ids:
             self.state_mgr.set_state(id, {
-                    'k_models': copy.deepcopy(self.k_models).state_dict(),
+                    'k_models': [copy.deepcopy(self.k_models[i].state_dict()) for i in range(self.cfg.algorithm.K)],
                     'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
                     'cluster_id': self.state_mgr.get_state(id).get('cluster_id', None),
                     'one_hot_cluster_id': self.state_mgr.get_state(id).get('one_hot_cluster_id', None)
