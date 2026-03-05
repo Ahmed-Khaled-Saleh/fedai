@@ -63,7 +63,7 @@ def cluster_id_estimate(self: ClientIFCA):
 def fit(self: ClientIFCA):
     self.cluster_id = self.cluster_id_estimate()
     self.model = copy.deepcopy(self.k_models[self.cluster_id].to(self.device))
-    opt_fn, kwargs = self.optimizer()
+    opt_fn, kwargs = self.optimizer
     optimizer = opt_fn(self.cfg)(self.model.parameters(), **kwargs)
     self.model.train()
     for _ in range(self.cfg.local_epochs):
