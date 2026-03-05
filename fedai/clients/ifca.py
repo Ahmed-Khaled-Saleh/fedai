@@ -52,7 +52,8 @@ def cluster_id_estimate(self: ClientIFCA):
             for i, batch in enumerate(self.test_loader):
                 batch = self.send_to_device(batch)
                 X, y = batch[self.data_key], batch[self.label_key]
-                loss += self.criterion(X, y).item()
+                y_pred = model(X)
+                loss += self.criterion(y_pred, y).item()
             losses.append(loss)
     cluster_id = np.argmin(losses)
     return cluster_id
