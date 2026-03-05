@@ -77,7 +77,7 @@ def fine_tune(self: ClientFedBabu, which_module=['backbone', 'head']):
             param.requires_grad = False
 
     for epoch in range(self.cfg.algorithm.fine_tuning_epochs):
-        for batch in self.trainloader:
+        for batch in self.train_loader:
             batch = self.send_to_device(batch)
             X, y = batch[self.data_key], batch[self.label_key]
             output = self.model(X)
