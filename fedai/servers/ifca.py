@@ -88,7 +88,6 @@ def evaluate(self: ServerIFCA, t):
         if id not in self.lst_active_ids:
             continue
         client_state = self.state_mgr.get_state(id)
-        self.logger.info(f"Evaluating client {id} at round {t} with state: {client_state.keys()}")
         client = self.client_fn(id= id, comm_round= t, client_state= client_state)
         
         res_train = client.evaluate_local(loader= 'train')
