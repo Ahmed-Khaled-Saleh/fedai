@@ -114,5 +114,6 @@ class LGFedAvgConfig(AlgorithmConfig):
 @dataclass
 class FedRepConfig(AlgorithmConfig):
     name: str = "fedrep"
+    plocal_epochs: int = 5
     backbone_lr : float = 0.05
     head_lr : float = 0.05
