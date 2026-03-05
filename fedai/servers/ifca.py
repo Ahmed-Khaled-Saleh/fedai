@@ -113,6 +113,7 @@ def aggregate(self: ServerIFCA, lst_active_ids, comm_round, len_clients_ds):
             for id in lst_active_ids:
                 if self.state_mgr.get_state(id).get('cluster_id', None) != cluster_id:
                     continue
+                self.logger.info(f"Aggregating client {id} for cluster {cluster_id}")
                 client_state_dict = self.state_mgr.get_state(id).get('model', None)
 
                 if global_model is None:
@@ -123,7 +124,7 @@ def aggregate(self: ServerIFCA, lst_active_ids, comm_round, len_clients_ds):
                 for key in global_model.keys():
                     global_model[key].add_(client_state_dict[key], alpha=weight)
 
-            self.k_models[cluster_id].load_state_dict(global_model)
+            self.k_models[cluster_id].load_state_dict(global_model) if global_model is not None else self.k_models[cluster_id] 
 
         for id in lst_active_ids:
             self.state_mgr.set_state(id, {
