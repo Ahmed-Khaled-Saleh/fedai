@@ -49,6 +49,7 @@ cs.store(group="algorithm", name="fedprox", node= FedProxConfig())
 cs.store(group="algorithm", name="apfl", node= APFLConfig())
 cs.store(group="algorithm", name="fedala", node= FedALA())
 cs.store(group="algorithm", name="ifca", node= IFCAConfig())
+cs.store(group="algorithm", name="fedper", node= FedPerConfig())
 
 cs.store(group="server", name="puhti", node= PuhtiConfig())
 

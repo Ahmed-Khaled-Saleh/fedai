@@ -4,7 +4,7 @@
 
 # %% auto #0
 __all__ = ['AlgorithmConfig', 'FedAvgConfig', 'FedAvgFTConfig', 'FedUConfig', 'pFedMeConfig', 'SFMTLConfig', 'FedProxConfig',
-           'DittoConfig', 'PerFedAvgConfig', 'APFLConfig', 'FedALA', 'IFCAConfig']
+           'DittoConfig', 'PerFedAvgConfig', 'APFLConfig', 'FedALA', 'IFCAConfig', 'FedPerConfig']
 
 # %% ../../nbs/7a_cfgs.algos.ipynb #f725b3f6
 from fastcore.utils import *
@@ -98,3 +98,8 @@ class FedALA(AlgorithmConfig):
 class IFCAConfig(AlgorithmConfig):
     name: str = "ifca"
     K: int = 4
+
+
+@dataclass
+class FedPerConfig(AlgorithmConfig):
+    name: str = "fedper"
