@@ -82,7 +82,7 @@ def client_fn(self: ServerFedDBE, id, comm_round, client_state):
         for k, v in state.items():
             if isinstance(v, torch.Tensor):
                 state[k] = v.to(self.device)
-
+    client_state['opt_client_mean'] = opt_client_mean
 
     train_loader = prepare_dl(self.cfg.data, id, self.fds, train=True, distributed=False)
     test_loader = prepare_dl(self.cfg.data, id, self.fds, train=False, distributed=False)
