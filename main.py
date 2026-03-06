@@ -64,8 +64,6 @@ cs.store(name="base_config", node= MainConfig)
 @hydra.main(version_base=None, config_name="base_config")
 def main(cfg: MainConfig):
     load_dotenv()
-    key = os.getenv("WANDB_API_KEY", None)
-    hf_secret = os.getenv("HF_TOKEN", None)
 
     print(f"Algorithm: {cfg.algorithm.name}")
     print(f"Model: {cfg.model.name}")

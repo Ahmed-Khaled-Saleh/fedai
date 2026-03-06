@@ -40,7 +40,7 @@ class MainConfig:
     algorithm: Any = MISSING #AlgorithmConfig = field(default_factory=FedAvgConfig)
     server: Any = MISSING #BaseServerConfig = field(default_factory=PuhtiConfig)
     
-    project_name: str = "${algorithm.name}_${data.name}_${model.name}_"
+    project_name: str = "collect_all_{data.name}_"#"${algorithm.name}_${data.name}_${model.name}_"
     num_clients: int = 20
     m: float = 0.1
     n_rounds: int = 200 
