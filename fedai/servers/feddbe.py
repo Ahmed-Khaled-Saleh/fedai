@@ -104,7 +104,7 @@ def init_training(self: ServerFedDBE):
     len_clients_ds = {}
     global_mean = 0
     for client_id in range(self.cfg.num_clients):
-        client_state = self.state_mgr.get_state(id=client_id)
+        client_state = self.state_mgr.get_state(client_id)
         client = self.client_fn(id= client_id, comm_round= 1, client_state= client_state)
         client.fit()
         self.state_mgr.set_state(id=client_id, state=client.save_state())
@@ -118,11 +118,11 @@ def init_training(self: ServerFedDBE):
     for client_id in range(self.cfg.num_clients):
         n_k = len_clients_ds[client_id]
         weight = n_k / m_t
-        client_running_mean = self.state_mgr.get_state(id=client_id).get('running_mean', None)
+        client_running_mean = self.state_mgr.get_state(client_id).get('running_mean', None)
         global_mean += client_running_mean * weight
 
     for client_id in range(self.cfg.num_clients):
-        client_state = self.state_mgr.get_state(id=client_id)
+        client_state = self.state_mgr.get_state(client_id)
         client_state['global_mean'] = global_mean.clone()
         self.state_mgr.set_state(id=client_id, state=client_state)
         
