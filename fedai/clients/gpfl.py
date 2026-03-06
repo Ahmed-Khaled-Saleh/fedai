@@ -56,6 +56,7 @@ def fit(self: ClientGPFL):
     self.GCE.train()
     self.CoV.to(self.device)
     self.CoV.train()
+    self.GCE_frozen.to(self.device)
     self.personalized_conditional_input = self.personalized_conditional_input.to(self.device)
     self.generic_conditional_input = self.generic_conditional_input.to(self.device)
    
@@ -76,10 +77,10 @@ def fit(self: ClientGPFL):
             loss = self.criterion(output, y)
             loss += softmax_loss
 
-            # emb = torch.zeros_like(feat)
-            # for i, yy in enumerate(y):
-            #     emb[i, :] = self.GCE_frozen.embedding(yy).detach().data
-            # loss += torch.norm(feat_G - emb, 2) * self.lamda
+            emb = torch.zeros_like(feat)
+            for i, yy in enumerate(y):
+                emb[i, :] = self.GCE_frozen.embedding(yy).detach().data
+            loss += torch.norm(feat_G - emb, 2) * self.cfg.algorithm.lamda
 
             self.optimizer.zero_grad()
             self.GCE_optimizer.zero_grad()
@@ -124,6 +125,11 @@ def train_stats(self: ClientGPFL, batch: dict) -> tuple:
     loss = self.criterion(output, y)
     loss += softmax_loss
 
+    emb = torch.zeros_like(feat)
+    for i, yy in enumerate(y):
+        emb[i, :] = self.GCE_frozen.embedding(yy).detach().data
+    loss += torch.norm(feat_G - emb, 2) * self.cfg.algorithm.lamda
+
     y_pred = output.argmax(dim=-1)
     y_true = batch[self.label_key]
 
@@ -143,6 +149,7 @@ def evaluate_local(self: ClientGPFL, loader= 'train') -> dict:
     self.GCE.eval()
     self.CoV = self.CoV.to(self.device)
     self.CoV.eval()
+    self.GCE_frozen = self.GCE_frozen.to(self.device)
     self.personalized_conditional_input = self.personalized_conditional_input.to(self.device)
     self.generic_conditional_input = self.generic_conditional_input.to(self.device)
     

@@ -110,7 +110,7 @@ def client_fn(self: ServerGPFL, id, comm_round, client_state):
         client_state['model'] = self.model.state_dict()
         client_state['GCE'] = self.GCE.state_dict()
         client_state['CoV'] = self.CoV.state_dict()
-        client_state['GCE_frozen'] = self.GCE.state_dict()
+        client_state['GCE_frozen'] = copy.deepcopy(self.GCE.state_dict())
         client_state['generic_conditional_input'] = torch.zeros(self.cfg.model.hidden_dim)
         client_state['personalized_conditional_input'] = torch.zeros(self.cfg.model.hidden_dim)
 
@@ -119,8 +119,8 @@ def client_fn(self: ServerGPFL, id, comm_round, client_state):
     client_state['model'] = model
 
     inst_GCE = GCE(in_features=self.cfg.model.hidden_dim,
-              num_classes=self.cfg.data.num_classes,
-              device=self.device)
+                                num_classes=self.cfg.data.num_classes,
+                                device=self.device)
     inst_GCE.load_state_dict(client_state['GCE'])
     client_state['GCE'] = inst_GCE
 
@@ -128,6 +128,11 @@ def client_fn(self: ServerGPFL, id, comm_round, client_state):
     inst_CoV.load_state_dict(client_state['CoV'])
     client_state['CoV'] = inst_CoV
     
+    inst_GCE_frozen = GCE(in_features=self.cfg.model.hidden_dim,
+                            num_classes=self.cfg.data.num_classes,
+                            device=self.device)
+    inst_GCE_frozen.load_state_dict(client_state['GCE_frozen'])
+    client_state['GCE_frozen'] = inst_GCE_frozen
     
     kwargs = get_clean_kwargs(self.cfg.optimizer)
     kwargs.pop("cls", None)

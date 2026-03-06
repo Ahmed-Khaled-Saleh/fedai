@@ -134,3 +134,4 @@ class FedGPFLConfig(AlgorithmConfig):
     name: str = "gpfl"
     gce_lr : float = 0.05
     coV_lr : float = 0.05
+    lamda : float = 0.1
