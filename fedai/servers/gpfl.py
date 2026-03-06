@@ -204,7 +204,7 @@ def train(self: ServerGPFL):
         self.global_GCE(lst_active_ids, t, len_clients_ds)
         self.global_CoV(lst_active_ids, t, len_clients_ds)
     
-        train_res, test_res = self.evaluate()        
+        train_res, test_res = self.evaluate(t)    
         train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
         res.append((train_df, test_df))
     
