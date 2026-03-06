@@ -131,6 +131,6 @@ class FedBabuConfig(AlgorithmConfig):
 
 @dataclass
 class FedGPFLConfig(AlgorithmConfig):
-    name: str = "fedgpfl"
+    name: str = "gpfl"
     gce_lr : float = 0.05
     coV_lr : float = 0.05
