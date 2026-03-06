@@ -5,7 +5,7 @@
 # %% auto #0
 __all__ = ['AlgorithmConfig', 'FedAvgConfig', 'FedAvgFTConfig', 'FedUConfig', 'pFedMeConfig', 'SFMTLConfig', 'FedProxConfig',
            'DittoConfig', 'PerFedAvgConfig', 'APFLConfig', 'FedALA', 'IFCAConfig', 'FedPerConfig', 'LGFedAvgConfig',
-           'FedRepConfig', 'FedRodConfig', 'FedBabuConfig', 'FedGPFLConfig']
+           'FedRepConfig', 'FedRodConfig', 'FedBabuConfig', 'FedGPFLConfig', 'FedDBEConfig']
 
 # %% ../../nbs/7a_cfgs.algos.ipynb #f725b3f6
 from fastcore.utils import *
@@ -135,3 +135,9 @@ class FedGPFLConfig(AlgorithmConfig):
     gce_lr : float = 0.05
     coV_lr : float = 0.05
     lamda : float = 0.1
+
+@dataclass
+class FedDBEConfig(AlgorithmConfig):
+    name: str = "feddbe"
+    kl_weight: float = 0.01
+    momentum: float = 0.5
