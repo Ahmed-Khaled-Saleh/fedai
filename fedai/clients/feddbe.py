@@ -63,6 +63,7 @@ def fit(self: ClientFedDBE):
     self.global_mean = self.global_mean.to(self.device) if self.global_mean is not None else None
     self.model.train()
     
+    self.reset_running_stats()
     for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
             self.optimizer.zero_grad()
