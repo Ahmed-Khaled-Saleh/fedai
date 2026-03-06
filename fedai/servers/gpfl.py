@@ -176,43 +176,6 @@ def client_fn(self: ServerGPFL, id, comm_round, client_state):
     return client
 
 
-# %% ../../nbs/11h_server.gpfl.ipynb #3b779c4a
-@patch
-def train(self: ServerGPFL):
-    res =  []
-    selected_clients = self.client_selector.select()
-    
-    for t in range(1, self.cfg.n_rounds + 1):
-        lst_active_ids = selected_clients[t-1]
-        len_clients_ds = {}
-
-        for id in lst_active_ids:
-            client_state = self.state_mgr.get_state(id)
-            client = self.client_fn(id= id, comm_round= t, client_state= client_state)
-            client.fit()
-            self.logger.info(f"Client {id} finished training.")
-            self.logger.info("*"*20)
-            self.state_mgr.set_state(id, client.save_state())
-            
-            len_clients_ds[id] = len(client.train_loader.dataset)
-
-            del client 
-            gc.collect()
-            torch.cuda.empty_cache()
-
-        self.aggregate(lst_active_ids, t, len_clients_ds)
-        self.global_GCE(lst_active_ids, t, len_clients_ds)
-        self.global_CoV(lst_active_ids, t, len_clients_ds)
-    
-        train_res, test_res = self.evaluate(t)    
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
-        res.append((train_df, test_df))
-    
-    self.writer.save(res)
-    self.writer.finish()
-
-    return res
-
 # %% ../../nbs/11h_server.gpfl.ipynb #ce0e22b2
 @patch
 def aggregate(self: ServerGPFL, lst_active_ids, comm_round, len_clients_ds):
@@ -246,6 +209,8 @@ def aggregate(self: ServerGPFL, lst_active_ids, comm_round, len_clients_ds):
                     'model': client_model,
                 })
             
+    self.global_GCE(lst_active_ids, comm_round, len_clients_ds)
+    self.global_CoV(lst_active_ids, comm_round, len_clients_ds)
 
 # %% ../../nbs/11h_server.gpfl.ipynb #a3435760
 @patch
