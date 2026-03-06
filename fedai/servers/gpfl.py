@@ -277,9 +277,9 @@ def global_GCE(self: ServerGPFL, lst_active_ids, comm_round, len_clients_ds):
 
             for key in global_model.keys():
                 self.logger.info(f"Updating client {id} GCE with global GCE parameters.")
-                client_state['GCE'].state_dict()[key].copy_(self.GCE.state_dict()[key])
+                client_state['GCE'][key].copy_(self.GCE.state_dict()[key])
 
-            client_state['GCE_frozen'] = copy.deepcopy(client_state['GCE'].state_dict())
+            client_state['GCE_frozen'] = copy.deepcopy(client_state['GCE'])
 
             self.state_mgr.set_state(id, client_state)
 
