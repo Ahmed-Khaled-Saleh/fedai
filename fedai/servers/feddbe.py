@@ -107,7 +107,7 @@ def init_training(self: ServerFedDBE):
         client_state = self.state_mgr.get_state(client_id)
         client = self.client_fn(id= client_id, comm_round= 1, client_state= client_state)
         client.fit()
-        self.state_mgr.set_state(client_id, state=client.save_state())
+        self.state_mgr.set_state(client_id, client.save_state())
         len_clients_ds[client_id] = len(client.train_loader.dataset)
 
         del client 
@@ -124,7 +124,7 @@ def init_training(self: ServerFedDBE):
     for client_id in range(self.cfg.num_clients):
         client_state = self.state_mgr.get_state(client_id)
         client_state['global_mean'] = global_mean.clone()
-        self.state_mgr.set_state(client_id, state=client_state)
+        self.state_mgr.set_state(client_id, client_state)
         
 
 # %% ../../nbs/11h_server.feddbe.ipynb #99c07788
