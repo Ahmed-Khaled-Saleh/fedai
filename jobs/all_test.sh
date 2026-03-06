@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --account=project_2009050
 #SBATCH --job-name=fedai_mnist
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
