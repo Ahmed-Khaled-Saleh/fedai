@@ -57,9 +57,9 @@ def reset_running_stats(self: ClientFedDBE):
 def fit(self: ClientFedDBE):
     
     self.model.to(self.device)
-    self.running_mean.to(self.device)
-    self.client_mean.to(self.device)
-    self.num_batches_tracked.to(self.device)
+    self.running_mean = self.running_mean.to(self.device)
+    self.client_mean = self.client_mean.to(self.device)
+    self.num_batches_tracked = self.num_batches_tracked.to(self.device)
     self.global_mean = self.global_mean.to(self.device) if self.global_mean is not None else None
     self.model.train()
     
