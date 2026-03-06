@@ -42,7 +42,7 @@ class MainConfig:
     
     project_name: str = "collect_all_${data.name}_"#"${algorithm.name}_${data.name}_${model.name}_"
     num_clients: int = 20
-    m: float = 0.1
+    m: float = 1.0
     n_rounds: int = 200 
     local_epochs: int = 5
     random_seed: int = 42

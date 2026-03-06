@@ -1,11 +1,13 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_mnist
+#SBATCH --job-name=fedai_mnist_rotated_batched
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --array=0-17                # Number of algorithms (0 to N-1)
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=10
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:v100:1             # Request 1 GPU per job
 #SBATCH --time=8:00:00             # Adjust based on expected runtime
