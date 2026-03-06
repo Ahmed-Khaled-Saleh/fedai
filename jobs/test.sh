@@ -18,4 +18,4 @@ cd /projappl/project_2009050/fedai
 export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 
-srun python main.py n_rounds=3 algorithm=feddbe optimizer=sgd
+srun python main.py data=mnist_rotated_batched algorithm=feddbe
