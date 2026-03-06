@@ -12,10 +12,10 @@
 
 module --force purge
 module load pytorch
-source /projappl/project_2009050/code/fed/bin/activate
+source /projappl/project_2009050/fed/bin/activate
 cd /projappl/project_2009050/fedai
 
-export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/code/fedai/mytorch/lib/python3.11/site-packages
+export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 
 srun python main.py n_rounds=3 algorithm=feddbe optimizer=sgd
