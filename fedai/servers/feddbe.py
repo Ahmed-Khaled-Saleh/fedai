@@ -131,7 +131,7 @@ def init_training(self: ServerFedDBE):
 @patch
 def train(self: ServerFedDBE):
 
-    self.init_training(self)
+    self.init_training()
 
     res =  []
     selected_clients = self.client_selector.select()

@@ -12,7 +12,7 @@ license = {text = "Apache-2.0"}
 authors = [{name = "Ahmed-Khaled-Saleh", email = "ahmedkhaledsaleh11@gmail.com"}]
 keywords = ['nbdev', 'jupyter', 'notebook', 'python']
 classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = ['fastcore', 'pandas', 'torch', 'scikit-learn', 'torchvision', 'networkx', 'python-louvain', 'loguru', 'tqdm', 'peft', 'transformers', 'datasets', 'omegaconf', 'h5py', 'hydra-core', 'ujson', 'gdown', 'wandb', 'flwr-datasets[vision]']
+dependencies = ['fastcore', 'pandas', 'torch', 'scikit-learn', 'torchvision', 'networkx', 'python-louvain', 'loguru', 'einops', 'tqdm', 'peft', 'transformers', 'datasets', 'omegaconf', 'h5py', 'hydra-core', 'ujson', 'gdown', 'wandb', 'flwr-datasets[vision]']
 
 [project.urls]
 Repository = "https://github.com/Ahmed-Khaled-Saleh/fedai"
