@@ -1,0 +1,82 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_core.ipynb
+      - 01a_data.vision.partitioners.ipynb
+      - 01b_data.vision.VisionBlock.ipynb
+      - 01c_data.vision.ipynb
+      - 01e_data.ipynb
+      - 02a_models.generics.ipynb
+      - 02b_models.vision.lenets.ipynb
+      - 02c_models.vision.resnets.ipynb
+      - 02d_models.vision.mobilenet.ipynb
+      - 02e_models.vision.efficentnet.ipynb
+      - 02f_models.vision.vits.ipynb
+      - 02g_models.vision.registery.ipynb
+      - 02h_models.vision.ipynb
+      - 02k_models.ipynb
+      - 03_losses.ipynb
+      - 04a_optimizers.custom_optimizers.ipynb
+      - 04b_optimizers.ipynb
+      - 05_metrics.ipynb
+      - 05a_utils.registery.ipynb
+      - 05b_utils.ipynb.ipynb
+      - 06_client_selector.ipynb
+      - 10_wandb_writer.ipynb
+      - 10a_clients.base_client.ipynb
+      - 10b_clients.fedavg.ipynb
+      - 10c_clients.pfedme.ipynb
+      - 10d_clients.perFedAvg.ipynb
+      - 10e_clients.fedprox.ipynb
+      - 10e_clients.fedu.ipynb
+      - 10f_clients.fedavg_ft.ipynb
+      - 10g_clients.local.ipynb
+      - 10h_clients.apfl.ipynb
+      - 10h_clients.ditto.ipynb
+      - 10h_clients.fedala.ipynb
+      - 10h_clients.fedbabu.ipynb
+      - 10h_clients.feddbe.ipynb
+      - 10h_clients.fedper.ipynb
+      - 10h_clients.fedrep.ipynb
+      - 10h_clients.fedrod.ipynb
+      - 10h_clients.gpfl.ipynb
+      - 10h_clients.ifca.ipynb
+      - 10h_clients.lgfedavg.ipynb
+      - 10y_clients.sfmtl.ipynb
+      - 11a_server.base_server.ipynb
+      - 11b_server.fedavg.ipynb
+      - 11c_servers.pfedme.ipynb
+      - 11d_servers.perFedAvg.ipynb
+      - 11e_servers.fedprox.ipynb
+      - 11e_servers.fedu.ipynb
+      - 11f_server.fedavg_ft.ipynb
+      - 11g_server.local.ipynb
+      - 11h_server.apfl.ipynb
+      - 11h_server.ditto.ipynb
+      - 11h_server.fedala.ipynb
+      - 11h_server.fedbabu.ipynb
+      - 11h_server.feddbe.ipynb
+      - 11h_server.fedper.ipynb
+      - 11h_server.fedrep.ipynb
+      - 11h_server.fedrod.ipynb
+      - 11h_server.gpfl.ipynb
+      - 11h_server.ifca.ipynb
+      - 11h_server.lgfedavg.ipynb
+      - 11y_servers.sfmtl.ipynb
+      - 20_results.ipynb
+      - 7a_cfgs.algos.ipynb
+      - 7b_cfgs.partitioners.ipynb
+      - 7c_cfgs.data.ipynb
+      - 7d_cfgs.models.ipynb
+      - 7e_cfgs.gpu_servers.ipynb
+      - 7e_cfgs.optimizers.ipynb
+      - 7f_cfgs.__init__.ipynb
+      - section: examples
+        contents:
+          - examples/baselines.ipynb
+          - examples/essential tools.ipynb
+          - examples/example.ipynb
+          - section: my_examples
+            contents:
+              - examples/my_examples/observer.ipynb

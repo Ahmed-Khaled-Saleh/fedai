@@ -2,7 +2,7 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 import time
-
+import os
 from fedai.cfgs import MainConfig
 from fedai.cfgs.data import *
 from fedai.cfgs.models import *
@@ -15,7 +15,7 @@ from fedai.models import create_model
 from fedai.client_selector import BaseClientSelector
 from fedai.wandb_writer import WandbWriter
 from fedai.utils import init_server, get_criterion
-
+from dotenv import load_dotenv
 cs = ConfigStore.instance()
 
 cs.store(group="data", name="mnist", node= MNISTConfig())
@@ -63,6 +63,10 @@ cs.store(name="base_config", node= MainConfig)
 
 @hydra.main(version_base=None, config_name="base_config")
 def main(cfg: MainConfig):
+    load_dotenv()
+    key = os.getenv("WANDB_API_KEY", None)
+    hf_secret = os.getenv("HF_TOKEN", None)
+
     print(f"Algorithm: {cfg.algorithm.name}")
     print(f"Model: {cfg.model.name}")
     print(f"Data: {cfg.data.name}")
