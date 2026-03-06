@@ -56,8 +56,8 @@ def fit(self: ClientGPFL):
     self.GCE.train()
     self.CoV.to(self.device)
     self.CoV.train()
-    self.personalized_conditional_input.to(self.device)
-    self.generic_conditional_input.to(self.device)
+    self.personalized_conditional_input = self.personalized_conditional_input.to(self.device)
+    self.generic_conditional_input = self.generic_conditional_input.to(self.device)
    
     for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
