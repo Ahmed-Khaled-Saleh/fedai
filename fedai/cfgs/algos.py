@@ -33,6 +33,7 @@ class FedAvgConfig(AlgorithmConfig):
 @dataclass
 class FedAvgFTConfig(AlgorithmConfig):
     name: str = "fedavg_ft"
+    fine_tuning_epochs: int = 5
     server_momentum: float = 0.0  
 
 

@@ -30,6 +30,8 @@ if [ "$CURRENT_ALGO" == "pfedme" ]; then
     OPT_OVERRIDE="optimizer=pfedme"
 elif [ "$CURRENT_ALGO" == "fedprox" ]; then
     OPT_OVERRIDE="optimizer=fedprox"
+elif [ "$CURRENT_ALGO" == "perfedavg" ]; then
+    OPT_OVERRIDE="optimizer=perfedavg"
 else
     # Default optimizer for everyone else (e.g., sgd)
     OPT_OVERRIDE="optimizer=sgd"
