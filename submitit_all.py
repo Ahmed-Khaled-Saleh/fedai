@@ -33,7 +33,14 @@ for algo in algorithms:
     
     # Submit the job
     print(f"Submitting {algo}...")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    # result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(
+    " ".join(cmd), 
+    shell=True, 
+    executable='/bin/bash', 
+    capture_output=True, 
+    text=True
+)
     
     if result.returncode == 0:
         print(f"  Success: {result.stdout.strip()}")
