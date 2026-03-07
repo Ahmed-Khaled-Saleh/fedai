@@ -1,14 +1,38 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai
+#SBATCH --job-name=fedai_mnist_rotated_batched
+#SBATCH --output=logs/fedai_%A_%a.out
+#SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
+#SBATCH --array=0-2            # Number of algorithms (0 to N-1)
+#SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=100G
-#SBATCH --time=08:00:00
-#SBATCH --gres=gpu:v100:1
-#SBATCH --output=./logs/out_%j_%x_%N.log  # includes time stamp (t), job ID(j), job name (x), and node name (N)
-#SBATCH --error=./logs/err_%j_%x_%N.err
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=32G
+#SBATCH --gres=gpu:v100:1             # Request 1 GPU per job
+#SBATCH --time=8:00:00             # Adjust based on expected runtime
+
+algos=(
+    "fedavg_ft" "perfedavg" "fedper"
+)
+
+# 2. Get the specific algorithm for THIS task
+CURRENT_ALGO=${algos[$SLURM_ARRAY_TASK_ID]}
+
+OPT_OVERRIDE=""
+
+# Logic to switch optimizer for specific algorithms
+
+if [ "$CURRENT_ALGO" == "perfedavg" ]; then
+    OPT_OVERRIDE="optimizer=perfedavg"
+else
+    # Default optimizer for everyone else (e.g., sgd)
+    OPT_OVERRIDE="optimizer=sgd"
+fi
+
+
+echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=mnist_rotated_batched"
+
 
 module --force purge
 module load pytorch
@@ -18,4 +42,8 @@ cd /projappl/project_2009050/fedai
 export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 
-srun python main.py data=mnist_rotated_batched algorithm=feddbe
+python main.py \
+    algorithm=$CURRENT_ALGO \
+    data=mnist_rotated_batched  \
+    optimizer=$OPT_OVERRIDE \
+    server=puhti
