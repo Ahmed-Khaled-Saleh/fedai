@@ -45,5 +45,5 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 python main.py \
     algorithm=$CURRENT_ALGO \
     data=mnist_rotated_batched  \
-    optimizer=$OPT_OVERRIDE \
+    $OPT_OVERRIDE \
     server=puhti
