@@ -65,14 +65,19 @@ def aggregate(self: ServerFedPer, lst_active_ids, comm_round, len_clients_ds):
             n_k = len_clients_ds[id]
             weight = n_k / m_t
             for key in global_model.keys():
-                if key.startswith("head"):
+                if key.startswith("backbone"):
                     global_model[key].add_(client_state_dict[key], alpha=weight)
 
-        self.model.load_state_dict(global_model)
+        self.model.backbone.load_state_dict(global_model)
 
         for id in lst_active_ids:
+            client_model = self.state_mgr.get_state(id).get('model', None)
+            for key in client_model.keys():
+                if key.startswith("backbone"):
+                    client_model[key] = self.model.backbone.state_dict()[key]
+
             self.state_mgr.set_state(id, {
-                    'model': self.model.state_dict(),
+                    'model': client_model,
                     'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
             })
         
