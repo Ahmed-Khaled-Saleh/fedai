@@ -46,6 +46,7 @@ for algo in algorithms:
         print(f"  Success: {result.stdout.strip()}")
     else:
         print(f"  Failed: {result.stderr.strip()}")
+        print(f"  STDERR: {result.stderr.strip()}")
     
     # Small delay to keep the scheduler happy
     time.sleep(0.5)
