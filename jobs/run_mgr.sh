@@ -17,4 +17,4 @@ cd /projappl/project_2009050/fedai
 export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 
-srun python submit_all.py
+srun python submitit_all.py
