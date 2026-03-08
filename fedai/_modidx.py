@@ -864,4 +864,5 @@ d = { 'settings': { 'branch': 'main',
                                                                                'fedai/wandb_writer.py'),
                                     'fedai.wandb_writer.WandbWriter.save': ('wandb_writer.html#wandbwriter.save', 'fedai/wandb_writer.py'),
                                     'fedai.wandb_writer.WandbWriter.write': ( 'wandb_writer.html#wandbwriter.write',
-                                                                              'fedai/wandb_writer.py')}}}
+                                                                              'fedai/wandb_writer.py'),
+                                    'fedai.wandb_writer.extract_log_cfg': ('wandb_writer.html#extract_log_cfg', 'fedai/wandb_writer.py')}}}
