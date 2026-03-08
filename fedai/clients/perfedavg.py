@@ -153,6 +153,8 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             batch = self.get_next_batch()
+            if batch[0] is None or batch[1] is None:
+                continue
             model = self.model
             loss, metrics = self.train_test_stats(batch, model)                 
             if not math.isnan(loss.item()):
