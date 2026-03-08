@@ -136,8 +136,8 @@ def save_state(self: pFedMeClient, save_to_disk= False):
     client_state = {
         "model": self.model.state_dict(),
         'optimizer': self.optimizer.state_dict(),
-        'local_params': [param.cpu() for param in self.local_params],
-        'personalized_params':   [param.cpu() for param in self.personalized_params],
+        'local_params': [param.detach().cpu().clone() for param in self.local_params],
+        'personalized_params': [param.detach().cpu().clone() for param in self.personalized_params],
     }
 
     if save_to_disk:
