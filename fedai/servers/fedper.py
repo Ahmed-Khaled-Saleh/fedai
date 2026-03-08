@@ -70,11 +70,15 @@ def aggregate(self: ServerFedPer, lst_active_ids, comm_round, len_clients_ds):
 
         self.model.load_state_dict(global_model)
 
+        current_global_state = self.model.state_dict()
+
         for id in lst_active_ids:
-            client_model = self.state_mgr.get_state(id).get('model', None)
+            client_state = self.state_mgr.get_state(id)
+            client_model = client_state.get('model', None)
+            
             for key in client_model.keys():
                 if key.startswith("backbone"):
-                    client_model[key] = self.model.backbone.state_dict()[key]
+                    client_model[key] = current_global_state[key]
 
             self.state_mgr.set_state(id, {
                     'model': client_model,
