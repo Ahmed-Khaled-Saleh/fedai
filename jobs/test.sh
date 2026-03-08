@@ -13,7 +13,7 @@
 #SBATCH --time=8:00:00             # Adjust based on expected runtime
 
 algos=(
-    "fedavg_ft" "fedper"
+    "fedavg_ft" "fedper" "pfedme"
 )
 
 # 2. Get the specific algorithm for THIS task
@@ -22,8 +22,9 @@ CURRENT_ALGO=${algos[$SLURM_ARRAY_TASK_ID]}
 OPT_OVERRIDE=""
 
 # Logic to switch optimizer for specific algorithms
-
-if [ "$CURRENT_ALGO" == "perfedavg" ]; then
+if [ "$CURRENT_ALGO" == "pfedme" ]; then
+    OPT_OVERRIDE="optimizer=pfedme"
+elif [ "$CURRENT_ALGO" == "perfedavg" ]; then
     OPT_OVERRIDE="optimizer=perfedavg"
 else
     # Default optimizer for everyone else (e.g., sgd)

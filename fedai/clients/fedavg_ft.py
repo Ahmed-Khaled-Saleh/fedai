@@ -40,7 +40,7 @@ def fine_tune(self: ClientFedAvgFT):
     
     self.model.to(self.device)
     self.model.train()
-    for _ in range(self.cfg.algorithm.fine_tuning_epoch):
+    for _ in range(self.cfg.algorithm.fine_tuning_epochs):
         for i, batch in enumerate(self.train_loader):
             self.optimizer.zero_grad()
 

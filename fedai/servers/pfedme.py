@@ -21,6 +21,10 @@ import torch.nn.functional as F
 
 from .base_server import BaseServer
 from ..utils.registery import AlgorithmRegistry
+from ..data import prepare_dl
+from ..models import create_model
+from ..optimizers import get_optimizer
+from ..core import get_clean_kwargs
 
 # %% ../../nbs/11c_servers.pfedme.ipynb #8d941e9e
 @AlgorithmRegistry.register_server("pfedme")
@@ -38,6 +42,44 @@ class ServerpFedMe(BaseServer):
                  
         super().__init__(cfg, client_selector, client_cls, criterion, fds, writer, device, **kwargs) 
         
+
+# %% ../../nbs/11c_servers.pfedme.ipynb #ee943108
+@patch
+def client_fn(self: ServerpFedMe, id, comm_round, client_state):
+
+    if (comm_round == 1 and client_state == {}) or client_state == {}:
+        client_state['model'] = self.model.state_dict()
+
+    model = create_model(self.cfg)
+    model.load_state_dict(client_state['model'])
+    client_state['model'] = model
+    
+    kwargs = get_clean_kwargs(self.cfg.optimizer)
+    kwargs.pop("cls", None)
+    kwargs.pop("lr", None)
+    p_learning_rate = kwargs.pop("p_learning_rate", 0.01)
+    optimizer = get_optimizer(self.cfg)(model.parameters(), lr= p_learning_rate, **kwargs)
+    optimizer.load_state_dict(client_state['optimizer']) if 'optimizer' in client_state else None
+    for state in optimizer.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.to(self.device)
+
+    client_state['optimizer'] = optimizer
+
+    train_loader = prepare_dl(self.cfg.data, id, self.fds, train=True, distributed=False)
+    test_loader = prepare_dl(self.cfg.data, id, self.fds, train=False, distributed=False)
+    client = self.client_cls(id= id, 
+                             cfg= self.cfg,
+                             train_loader= train_loader,
+                             test_loader= test_loader,
+                             state= client_state,
+                             criterion= self.criterion,
+                             device= self.device,
+                             t= comm_round)
+    client.logger = self.logger
+    return client
+
 
 # %% ../../nbs/11c_servers.pfedme.ipynb #0005248d
 @patch

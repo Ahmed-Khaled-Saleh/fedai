@@ -38,8 +38,15 @@ class pFedMeClient(BaseClient):
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         
         
-        self.local_params = deepcopy(list(self.model.parameters()))  
-        self.personalized_params = deepcopy(list(self.model.parameters()))
+        if not hasattr(self, 'local_params'):
+            self.local_params = deepcopy(list(self.model.parameters()))  
+        else:
+            self.local_params = [param.to(self.device) for param in self.local_params]
+            
+        if not hasattr(self, 'personalized_params'):
+            self.personalized_params = deepcopy(list(self.model.parameters())) 
+        else:
+            self.personalized_params = [param.to(self.device) for param in self.personalized_params]
 
 # %% ../../nbs/10c_clients.pfedme.ipynb #379ef57a
 @patch
@@ -59,12 +66,13 @@ def fit(self: pFedMeClient):
                 loss = self.criterion(outputs, y)
                 loss.backward()
                 self.personalized_params = self.optimizer.step(self.local_params, self.device)
+                
 
-            # update local weight after finding aproximate theta
-            with torch.no_grad():
-                for new_param, localweight in zip(self.personalized_params, self.local_params):
-                    localweight = localweight.to(self.device)
-                    localweight.data = localweight.data - self.cfg.algorithm.lambda_ * self.cfg.optimizer.lr * (localweight.data - new_param.data)
+            # update local weight after finding aproximate theta (self.local_params = self.personalized_params - lambda * lr * (self.personalized_params - self.local_params))
+            # with torch.no_grad():
+            for new_param, localweight in zip(self.personalized_params, self.local_params):
+                localweight = localweight.to(self.device)
+                localweight.data = localweight.data - self.cfg.algorithm.lambda_ * self.cfg.optimizer.lr * (localweight.data - new_param.data)
                     
     self.update_parameters(self.model, self.local_params)
 
@@ -95,7 +103,7 @@ def train_test_stats(self: pFedMeClient, batch: dict) -> tuple:
 def evaluate_local(self: pFedMeClient, loader= 'train'):
     self.personalized_params = [param.to(self.device) for param in self.personalized_params]
     self.local_params = [param.to(self.device) for param in self.local_params]
-    self.update_parameters(self.model, self.personalized_params) if loader == 'test' else self.update_parameters(self.model, self.local_params)
+    self.update_parameters(self.model, self.personalized_params)# if loader == 'test' else self.update_parameters(self.model, self.local_params)
     data_loader = self.train_loader if loader == 'train' else self.test_loader
     
     total_loss = 0
