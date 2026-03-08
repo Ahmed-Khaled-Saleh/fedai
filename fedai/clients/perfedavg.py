@@ -38,7 +38,6 @@ class ClientPerFedAvg(BaseClient):
         
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         
-        self.local_model = deepcopy(self.model)
         self.iter_trainloader = iter(self.train_loader)
         self.iter_testloader = iter(self.test_loader)
 
@@ -61,60 +60,60 @@ def get_next_batch(self: ClientPerFedAvg, train= True) -> dict:
             batch = next(to_iter)
             X = batch[self.data_key]
             y = batch[self.label_key]
-            
+            return (X.to(self.device), y.to(self.device))
+        
         except StopIteration:
 
             if train:
                 self.iter_trainloader = iter(self.train_loader)
-                to_iter = self.iter_trainloader
             else:
                 self.iter_testloader = iter(self.test_loader)
-                to_iter = self.iter_testloader
 
-            batch = next(to_iter)
-            X = batch[self.data_key]
-            y = batch[self.label_key]
-
-            
-        return (X.to(self.device), y.to(self.device))
+            # batch = next(to_iter)
+            X = None
+            y = None
+            return (X, y)      
 
 
 # %% ../../nbs/10d_clients.perFedAvg.ipynb #f8f56932
 @patch
 def train_step(self: ClientPerFedAvg, num_steps= None):
-    # self.num_minibatch = int(len(self.train_ds) / int(self.cfg.data.batch_size))
 
     self.model = self.model.to(self.device)
-    self.local_model = self.local_model.to(self.device)
 
     self.model.train()
 
     for _ in range(self.cfg.local_epochs):
-        batch = self.get_next_batch()
-        X, y = batch
-        self.optimizer.zero_grad()
-        output = self.model(X)
-        loss = self.criterion(output, y)
-        loss.backward()
-        self.optimizer.step()
+        while True:
+            batch = self.get_next_batch()
+            X, y = batch
+            if X is None or y is None:
+                break
 
-        if num_steps == 1:
-            break
-        
-        batch = self.get_next_batch()
-        X, y = batch
-        self.optimizer.zero_grad()
-        output = self.model(X)
-        loss = self.criterion(output, y)
-        loss.backward()
+            temp_model = deepcopy(list(self.model.parameters()))
+            self.optimizer.zero_grad()
+            output = self.model(X)
+            loss = self.criterion(output, y)
+            loss.backward()
+            self.optimizer.step()
 
-        with torch.no_grad():
-            for model_param, local_param in zip(self.model.parameters(), self.local_model.parameters()):
-                model_param.copy_(local_param.data.clone())
+            if num_steps == 1:
+                for old_param, new_param in zip(self.model.parameters(), temp_model):
+                    old_param.data = new_param.data.clone()
+                break
+            
+            batch = self.get_next_batch()
+            X, y = batch
+            self.optimizer.zero_grad()
+            output = self.model(X)
+            loss = self.criterion(output, y)
+            loss.backward()
+            
+            for old_param, new_param in zip(self.model.parameters(), temp_model):
+                old_param.data = new_param.data.clone()
+            
 
-        self.optimizer.step(beta= self.cfg.algorithm.beta)
-
-        
+            self.optimizer.step(beta= self.cfg.algorithm.beta)
 
 
 # %% ../../nbs/10d_clients.perFedAvg.ipynb #7cf7eff5
@@ -148,14 +147,13 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
     self.model = self.model.to(self.device)
     self.train_step(num_steps= 1)
     self.model.eval()
-    self.local_model.eval()
     num_eval = 0
     data_loader = self.train_loader if loader == 'train' else self.test_loader
     
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             batch = self.get_next_batch()
-            model = self.model if loader == 'test' else self.local_model
+            model = self.model
             loss, metrics = self.train_test_stats(batch, model)                 
             if not math.isnan(loss.item()):
                 total_loss += loss.item()  
@@ -169,11 +167,6 @@ def evaluate_local(self: ClientPerFedAvg, loader= 'train') -> dict:
         total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
     else:
         total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
-
-
-    with torch.no_grad():
-        for params, local_params in zip(self.model.parameters(), self.local_model.parameters()):
-            params.copy_(local_params.data.clone())
-
+        
     return {"loss": avg_loss, "metrics": total_metrics}
 
