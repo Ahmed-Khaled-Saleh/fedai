@@ -13,7 +13,7 @@
 #SBATCH --time=8:00:00             # Adjust based on expected runtime
 
 algos=(
-    "fedavg_ft" "fedper" "pfedme"
+    "perfedavg" "fedper" "pfedme"
 )
 
 # 2. Get the specific algorithm for THIS task
