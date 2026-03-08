@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
-#SBATCH --array=0-1            # Number of algorithms (0 to N-1)
+#SBATCH --array=0-2            # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
