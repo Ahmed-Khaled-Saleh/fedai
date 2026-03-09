@@ -21,7 +21,7 @@ export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-
 echo "Current PYTHONPATH: $PYTHONPATH"
 
 python main.py \
-    algorithm=perfedavg \
+    algorithm=fedavg \
     data=mnist_rotated_batched  \
-    optimizer=perfedavg \
+    optimizer=sgd \
     server=puhti

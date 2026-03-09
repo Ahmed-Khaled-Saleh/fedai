@@ -155,9 +155,9 @@ def train(self: BaseServer):
             gc.collect()
             torch.cuda.empty_cache()
 
-        self.aggregate(lst_active_ids, t, len_clients_ds)#lst_active_ids, comm_round, len_clients_ds
+        self.aggregate(lst_active_ids, t, len_clients_ds)
         train_res, test_res = self.evaluate(t)
-        self.checkpoint_states(lst_active_ids, test_res, t) # TODO: add this to the server config
+        self.checkpoint_states(lst_active_ids, t, test_res)
 
         train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
         res.append((train_df, test_df))
@@ -196,7 +196,8 @@ def evaluate(self: BaseServer, t):
 
 
 # %% ../../nbs/11a_server.base_server.ipynb #de2df642
-def checkpoint_states(self: BaseServer, lst_active_ids, test_res, comm_round):
+def checkpoint_states(self: BaseServer, lst_active_ids, comm_round, test_res):
+    self.logger.info(f"Checkpointing client states... {test_res}")
     for id in lst_active_ids:
         client_state = self.state_mgr.get_state(id)
         ckpt_cls = self.checkpointers[id]
