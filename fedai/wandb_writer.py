@@ -66,7 +66,7 @@ class WandbWriter:
         self.cfg = extract_log_cfg(cfg)
         self.cfg = argparse.Namespace(**self.cfg)
         print(self.cfg.algorithm)
-        self.exp_name = self.cfg.algorithm + f"_{self.cfg.random_seed}"
+        self.exp_name = self.cfg.algorithm #+ f"_{self.cfg.random_seed}"
         key = os.getenv("WANDB_API_KEY")
         wandb.login(key=key, verify=False)
         self.run = wandb.init(project=self.cfg.project_name, name= self.exp_name, config=self.cfg)
