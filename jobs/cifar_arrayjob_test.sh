@@ -37,7 +37,7 @@ else
     OPT_OVERRIDE="optimizer=sgd"
 fi
 
-
+IMG_SIZE="[3,32,32]"
 echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=cifar10"
 
 # 3. Load your environment (Conda, modules, etc.)
@@ -59,6 +59,6 @@ python main.py \
     data=cifar10 \
     model=lenet \
     model.name=lenet_cifar10 \
-    model.img_size='(3, 32, 32)' \
+    model.img_size=$IMG_SIZE \
     server=puhti \
     $OPT_OVERRIDE
