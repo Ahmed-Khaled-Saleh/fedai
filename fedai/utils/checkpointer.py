@@ -7,49 +7,79 @@ __all__ = ['BaseCheckpointer', 'RetrospectiveCheckpointer']
 
 # %% ../../nbs/05b_utils.checkpointer.ipynb #5a6a2472
 import os
+import pathlib
+from pathlib import Path
 import heapq
 import torch
 
 # %% ../../nbs/05b_utils.checkpointer.ipynb #c381b503
 class BaseCheckpointer:
-    def __init__(self, cfg):
-        self.checkpoint_dir = cfg.get('checkpoint_dir', 'checkpoints')
+    def __init__(self, cfg, client_id, rank=0):
+        self.checkpoint_dir = cfg.get('checkpoint_dir', 'checkpoints') # TODO: add this to the server config
+        self.client_id = client_id
+        self.rank = rank
+
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
-    def save_to_disk(self, model_state, file_name, score):
-        filepath = os.path.join(self.checkpoint_dir, file_name)
-        # Here you would save the model_state to disk (e.g., using torch.save for PyTorch)
-        print(f"Saving checkpoint: {filepath} with score: {score}")
-        torch.save(model_state, filepath)  # Uncomment when using actual model state
+    def process_checkpoint(self, state, current_acc, step):
+        raise NotImplementedError("Must implement process_checkpoint in subclass")
+    
+    def get_best_checkpoint_path(self):
+        raise NotImplementedError("Must implement get_best_checkpoint_path in subclass")
 
-# %% ../../nbs/05b_utils.checkpointer.ipynb #c60972a6
+# %% ../../nbs/05b_utils.checkpointer.ipynb #74f124ac
 class RetrospectiveCheckpointer(BaseCheckpointer):
-    def __init__(self, cfg, checkpoint_dir=None, n_best=5, mode='min'):
-        super().__init__(cfg)
-        self.n_best = n_best
-        self.mode = mode # 'min' for loss, 'max' for accuracy
-        self.best_checkpoints = [] # List of (score, filename)
+    def __init__(self, cfg, client_id, rank= 0, n_best=3):
+        super().__init__(cfg, client_id, rank)
 
-    def save_if_best(self, current_score, model_state, step):
-        # Adjust score for min-heap if we are maximizing
-        comparison_score = current_score if self.mode == 'min' else -current_score
+        self.n_best = n_best
+        self.best_checkpoints = []
+        self.last_path = os.path.join(self.checkpoint_dir, "last_state.pt")
         
-        filename = f"checkpoint_step_{step}.pt"
+        if self.rank == 0 and not os.path.exists(self.checkpoint_dir):
+            os.makedirs(self.checkpoint_dir)
+
+    def process_checkpoint(self, state, current_acc, step):
+        """
+        state: Your dict containing model, optimizer, etc.
+        current_acc: The global validation accuracy.
+        step: Current training step.
+        """
+        if self.rank != 0:
+            return
+
+        # 1. Always save as "Last" for resilience
+        state['id'] = self.client_id
+        torch.save(state, self.last_path)
+
+        # 2. Retrospective "Top N" Logic
+        filename = f"best_state_step_{step}_acc_{current_acc:.4f}.pt"
         filepath = os.path.join(self.checkpoint_dir, filename)
 
+        # If we have space in our Top N
         if len(self.best_checkpoints) < self.n_best:
-            self.save_to_disk(model_state, filepath)
-            heapq.heappush(self.best_checkpoints, (-comparison_score, filename))
-        
-        elif -comparison_score > self.best_checkpoints[0][0]:
-            # Remove the worst of the "best"
-            worst_score, worst_filename = heapq.heappop(self.best_checkpoints)
-            os.remove(os.path.join(self.checkpoint_dir, worst_filename))
+            torch.save(state, filepath)
+            heapq.heappush(self.best_checkpoints, (current_acc, filename))
+            print(f"[Rank 0] Saved new best: {filename}")
+
+        # If this model is better than the worst of the best
+        elif current_acc > self.best_checkpoints[0][0]:
+            # Remove the worst performing file
+            old_acc, old_filename = heapq.heappop(self.best_checkpoints)
+            old_filepath = os.path.join(self.checkpoint_dir, old_filename)
+            
+            if os.path.exists(old_filepath):
+                os.remove(old_filepath)
             
             # Save the new one
-            self.save_to_disk(model_state, filepath)
-            heapq.heappush(self.best_checkpoints, (-comparison_score, filename))
+            torch.save(state, filepath)
+            heapq.heappush(self.best_checkpoints, (current_acc, filename))
+            print(f"[Rank 0] Replaced {old_filename} with {filename}")
 
-    def get_best(self):
-        # Returns the filename with the absolute best score
-        return max(self.best_checkpoints, key=lambda x: x[0])[1]
+    def get_best_checkpoint_path(self):
+        """Returns the path of the absolute highest accuracy checkpoint."""
+        if not self.best_checkpoints:
+            return None
+        # Max in our heap (which tracks accuracy)
+        best_filename = max(self.best_checkpoints, key=lambda x: x[0])[1]
+        return os.path.join(self.checkpoint_dir, best_filename)

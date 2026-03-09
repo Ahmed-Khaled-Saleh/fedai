@@ -24,9 +24,11 @@ class BaseServerConfig:
 @dataclass
 class PuhtiConfig(BaseServerConfig):
     name: str = "Puhti"
-    root_dir: str = "/scratch/project_2009050/"
-    data_dir: str = "/scratch/project_2009050/data"
-    model_dir: str = "/scratch/project_2009050/models"
-    logs_dir: str = "/scratch/project_2009050/logs"
-    res_dir: str = "/scratch/project_2009050/results"
-    save_dir: str = "/scratch/project_2009050/saved_models"
+    root_dir: str = "/scratch/project_2009050/fedai"
+    checkpoint_dir: str = "/scratch/project_2009050/fedai/checkpoints"
+    save_dir: str = "/scratch/project_2009050/fedai/checkpoints"
+    data_dir: str = "/scratch/project_2009050/fedai/data"
+    model_dir: str = "/scratch/project_2009050/fedai/models"
+    logs_dir: str = "/scratch/project_2009050/fedai/logs"
+    res_dir: str = "/scratch/project_2009050/fedai/results"
+    
