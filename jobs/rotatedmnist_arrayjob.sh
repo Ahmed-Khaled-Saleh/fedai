@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_fashionmnist
+#SBATCH --job-name=fedai_mnist_rotated_batched
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
@@ -38,7 +38,7 @@ else
 fi
 
 IMG_SIZE="[1,28,28]"
-echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=fashionmnist"
+echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=mnist_rotated_batched"
 
 # 3. Load your environment (Conda, modules, etc.)
 # module load cuda
@@ -56,9 +56,11 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 # We override the 'algorithm' and 'data' groups specifically
 python main.py \
     algorithm=$CURRENT_ALGO \
-    data=fashionmnist \
+    data=mnist_rotated_batched \
     model=lenet \
     model.name=lenet_fedavg \
     model.img_size=$IMG_SIZE \
     server=puhti \
     $OPT_OVERRIDE
+    num_clients=100 \
+    m=0.3

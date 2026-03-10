@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_cinic10
+#SBATCH --job-name=fedai_cifar10
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
-#SBATCH --array=0-16               # Number of algorithms (0 to N-1)
+#SBATCH --array=0-17                # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -15,7 +15,7 @@
 # 1. Define your array of algorithms (must match the names in your cs.store)
 algos=(
     "fedavg" "fedavg_ft" "pfedme" "fedu" "sfmtl" 
-    "ditto" "fedprox" "apfl" "fedala" 
+    "perfedavg" "ditto" "fedprox" "apfl" "fedala" 
     "ifca" "fedper" "lgfedavg" "fedrep" "fedrod" 
     "fedbabu" "gpfl" "feddbe"
 )
@@ -38,7 +38,7 @@ else
 fi
 
 IMG_SIZE="[3,32,32]"
-echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=cinic10"
+echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=cifar10"
 
 # 3. Load your environment (Conda, modules, etc.)
 # module load cuda
@@ -56,7 +56,7 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 # We override the 'algorithm' and 'data' groups specifically
 python main.py \
     algorithm=$CURRENT_ALGO \
-    data=cinic10 \
+    data=cifar10 \
     model=lenet \
     model.name=lenet_cifar10 \
     model.img_size=$IMG_SIZE \
