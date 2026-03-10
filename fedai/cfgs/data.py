@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict, Any
+from omegaconf import OmegaConf, MISSING
 from .partitioners import *
 
 # %% ../../nbs/7c_cfgs.data.ipynb #91b83577
@@ -29,7 +30,11 @@ class VisionDataConfig(DataConfig):
 
 @dataclass
 class FederatedVisionDataConfig(VisionDataConfig):
-    partitioner: Optional[PartitionerConfig] = field(default_factory=PathologicalConfig)
+    defaults: List[Any] = field(default_factory=lambda: [
+        {"partitioner": "pathological"}
+    ])
+    # partitioner: Optional[PartitionerConfig] = field(default_factory=PathologicalConfig)
+    partitioner: PartitionerConfig = MISSING
     hf_name: Optional[str] = None
 
 
@@ -39,7 +44,6 @@ class MNISTConfig(FederatedVisionDataConfig):
     num_classes: int = 10
     hf_name: str = 'ylecun/mnist'
     img_size: Tuple[int, int, int] = (1, 28, 28)
-    partitioner: Optional[PartitionerConfig] = field(default_factory=PathologicalConfig)
     classes: List[str] = field(default_factory=lambda: [str(i) for i in range(10)])
     x:  str = 'image'
     y: str = 'label'
@@ -49,8 +53,15 @@ class MNISTConfig(FederatedVisionDataConfig):
 
 @dataclass
 class MNISTRotatedPatchedConfig(MNISTConfig):
-    name: str = 'mnist_rotated_batched'
-    partitioner: Optional[PartitionerConfig] = field(default_factory=RotatedBatchedConfig)
+
+    defaults = [
+        {"partitioner": "rotated"}
+    ]
+
+    name: str = "mnist_rotated_batched"
+# class MNISTRotatedPatchedConfig(MNISTConfig):
+#     name: str = 'mnist_rotated_batched'
+#     partitioner: Optional[PartitionerConfig] = field(default_factory=RotatedBatchedConfig)
     
 
 @dataclass

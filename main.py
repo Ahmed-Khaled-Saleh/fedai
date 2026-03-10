@@ -5,6 +5,7 @@ import time
 import os
 from fedai.cfgs import MainConfig
 from fedai.cfgs.data import *
+from fedai.cfgs.partitioners import *
 from fedai.cfgs.models import *
 from fedai.cfgs.optimizers import *
 from fedai.cfgs.algos import *
@@ -25,6 +26,11 @@ cs.store(group="data", name="cifar10", node= CIFAR10Config())
 cs.store(group="data", name="cifar100", node= CIFAR100Config())
 cs.store(group="data", name="cinic10", node= Cinic10Config())
 cs.store(group="data", name="tinyimagenet", node= TinyImageNetConfig())
+
+cs.store(group="partitioner", name="pathological", node=PathologicalConfig())
+cs.store(group="partitioner", name="dirichlet", node=DirichletConfig())
+cs.store(group="partitioner", name="size", node=SizePartitionerConfig())
+cs.store(group="partitioner", name="rotated", node=RotatedBatchedConfig())
 
 cs.store(group="model", name="lenet", node= LeNetConfig())
 cs.store(group="model", name="resnet", node= ResNetConfig())
@@ -70,6 +76,8 @@ def main(cfg: MainConfig):
     print(f"Algorithm: {cfg.algorithm.name}")
     print(f"Model: {cfg.model.name}")
     print(f"Data: {cfg.data.name}")
+    print(f"Partitioner: {cfg.data.partitioner.name}")
+    print(f"Optimizer: {cfg.optimizer.name}")
     print(f"Server: {cfg.server.name}")
 
     fds = init_data(cfg.data)
