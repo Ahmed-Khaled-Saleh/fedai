@@ -39,7 +39,8 @@ def init_data(cfg):
     partitioner = partitioner_cls(**kwargs)
     test_partitioner = partitioner_cls(**kwargs)
     
-    fds = FederatedDataset(dataset= cfg.hf_name, partitioners= {"train": partitioner, "test": test_partitioner})
+    # load_kwargs = cfg.load_dataset_kwargs if hasattr(cfg, "load_dataset_kwargs") else {}
+    fds = FederatedDataset(dataset= cfg.hf_name, partitioners= {"train": partitioner, "test": test_partitioner})#, **load_kwargs)
     
     return fds
 
