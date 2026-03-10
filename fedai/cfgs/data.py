@@ -4,7 +4,7 @@
 
 # %% auto #0
 __all__ = ['DataConfig', 'VisionDataConfig', 'FederatedVisionDataConfig', 'CIFAR10Config', 'CIFAR100Config', 'MNISTConfig',
-           'MNISTRotatedPatchedConfig', 'TinyImageNetConfig']
+           'MNISTRotatedPatchedConfig', 'FashionMNISTConfig', 'TinyImageNetConfig']
 
 # %% ../../nbs/7c_cfgs.data.ipynb #f725b3f6
 from fastcore.utils import *
@@ -75,6 +75,18 @@ class MNISTRotatedPatchedConfig(MNISTConfig):
     name: str = 'mnist_rotated_batched'
     partitioner: Optional[PartitionerConfig] = field(default_factory=RotatedBatchedConfig)
     
+
+@dataclass
+class FashionMNISTConfig(FederatedVisionDataConfig):
+    name: str = 'fashionmnist'
+    num_classes: int = 10
+    hf_name: str = 'zalando-datasets/fashion_mnist'
+    img_size: Tuple[int, int, int] = (1, 28, 28)
+    classes: List[str] = field(default_factory=lambda: ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot'])
+    x:  str = 'image'
+    y: str = 'label'
+    mean: Tuple[float] = (0.2860,)
+    std: Tuple[float] = (0.3530,)
 
 @dataclass
 class TinyImageNetConfig(FederatedVisionDataConfig):
