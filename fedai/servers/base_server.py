@@ -93,7 +93,7 @@ class BaseServer:
             setattr(self, key, value)
         self.state_mgr = StateManager()
         self.logger = logger
-        self.checkpointers = [RetrospectiveCheckpointer(self.cfg.server, id, n_best = 5) for id in range(self.cfg.num_clients)]
+        self.checkpointers = [RetrospectiveCheckpointer(self.cfg, id, n_best = 5) for id in range(self.cfg.num_clients)]
 
 # %% ../../nbs/11a_server.base_server.ipynb #e7538af5
 @patch

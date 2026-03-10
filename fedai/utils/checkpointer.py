@@ -15,7 +15,8 @@ import torch
 # %% ../../nbs/05b_utils.checkpointer.ipynb #c381b503
 class BaseCheckpointer:
     def __init__(self, cfg, client_id, rank=0):
-        self.checkpoint_dir = cfg.get('checkpoint_dir', 'checkpoints') # TODO: add this to the server config
+        self.checkpoint_dir = cfg.server.get('checkpoint_dir', 'checkpoints')
+        self.checkpoint_dir = os.path.join(self.checkpoint_dir, cfg.project_name, str(cfg.random_seed), f"client_{client_id}")
         self.client_id = client_id
         self.rank = rank
 
