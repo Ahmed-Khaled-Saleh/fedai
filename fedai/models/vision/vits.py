@@ -90,7 +90,7 @@ class Transformer(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #20294346
 class ViTBackbone(nn.Module):
-    def __init__(self, *, img_size, patch_size, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, *, img_size, patch_size, hidden_dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
         channels = img_size[0]
         img_size = img_size[1]
@@ -105,14 +105,14 @@ class ViTBackbone(nn.Module):
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_height, p2 = patch_width),
-            nn.Linear(patch_dim, dim),
+            nn.Linear(patch_dim, hidden_dim),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, hidden_dim))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.dropout = nn.Dropout(emb_dropout)
 
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+        self.transformer = Transformer(hidden_dim, depth, heads, dim_head, mlp_dim, dropout)
 
         self.pool = pool
         self.to_latent = nn.Identity()
@@ -135,13 +135,13 @@ class ViTBackbone(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #15e598b4
 class ViT(nn.Module):
-    def __init__(self, img_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, img_size, patch_size, num_classes, hidden_dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
 
-        self.backbone = ViTBackbone(img_size = img_size, patch_size = patch_size, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
+        self.backbone = ViTBackbone(img_size = img_size, patch_size = patch_size, hidden_dim= hidden_dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
         self.head = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, num_classes)
+            nn.LayerNorm(hidden_dim),
+            nn.Linear(hidden_dim, num_classes)
         )
 
     def forward(self, x):
@@ -226,7 +226,7 @@ class SPT(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #3f24b4c4
 class ViTSmallBackbone(nn.Module):
-    def __init__(self, *, img_size, patch_size, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, *, img_size, patch_size, hidden_dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
         image_height, image_width = pair(img_size)
         patch_height, patch_width = pair(patch_size)
@@ -237,13 +237,13 @@ class ViTSmallBackbone(nn.Module):
         patch_dim = channels * patch_height * patch_width
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
-        self.to_patch_embedding = SPT(dim = dim, patch_size = patch_size, channels = channels)
+        self.to_patch_embedding = SPT(dim = hidden_dim, patch_size = patch_size, channels = channels)
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, hidden_dim))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.dropout = nn.Dropout(emb_dropout)
 
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+        self.transformer = Transformer(hidden_dim, depth, heads, dim_head, mlp_dim, dropout)
 
         self.pool = pool
         self.to_latent = nn.Identity()
@@ -266,14 +266,14 @@ class ViTSmallBackbone(nn.Module):
 
 # %% ../../../nbs/02f_models.vision.vits.ipynb #3c3bd4e6
 class ViTSmall(nn.Module):
-    def __init__(self, img_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, img_size, patch_size, num_classes, hidden_dim, depth, heads, mlp_dim, pool = 'cls', dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
         channels = img_size[0]
         img_size = img_size[1]
-        self.backbone = ViTSmallBackbone(img_size = img_size, patch_size = patch_size, dim= dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, channels = channels, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
+        self.backbone = ViTSmallBackbone(img_size = img_size, patch_size = patch_size, hidden_dim= hidden_dim, depth= depth, heads= heads, mlp_dim= mlp_dim, pool = pool, channels = channels, dim_head = dim_head, dropout = dropout, emb_dropout = emb_dropout)  
         self.head = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, num_classes)
+            nn.LayerNorm(hidden_dim),
+            nn.Linear(hidden_dim, num_classes)
         )
 
     def forward(self, x):

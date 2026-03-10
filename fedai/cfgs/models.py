@@ -32,12 +32,14 @@ class LeNetConfig(VisionModelConfig):
 @dataclass
 class ResNetConfig(VisionModelConfig):
     name: str = "resnet_18"
-    preactivation: bool = False
+    preactivation: bool = True
+    img_size: Tuple[int, int, int] = (3, 32, 32)
+    hidden_dim: int = 512
 
 @dataclass
 class MobileNetConfig(VisionModelConfig):
     name: str = 'mobilenetv3_small'
-
+    img_size: Tuple[int, int, int] = (3, 32, 32)
 
 @dataclass
 class EfficientNetConfig(VisionModelConfig):
@@ -48,7 +50,7 @@ class ViTConfig(VisionModelConfig):
     name: str = 'vit_small'
     img_size: Tuple[int, int, int] = (3, 32, 32)
     patch_size: int = 4
-    dim: int = 512
+    hidden_dim: int = 512
     depth: int = 6
     heads: int = 8
     mlp_dim: int = 1024
