@@ -23,6 +23,7 @@ cs.store(group="data", name="mnist_rotated_batched", node= MNISTRotatedPatchedCo
 cs.store(group="data", name="fashionmnist", node= FashionMNISTConfig())
 cs.store(group="data", name="cifar10", node= CIFAR10Config())
 cs.store(group="data", name="cifar100", node= CIFAR100Config())
+cs.store(group="data", name="cinic10", node= Cinic10Config())
 cs.store(group="data", name="tinyimagenet", node= TinyImageNetConfig())
 
 cs.store(group="model", name="lenet", node= LeNetConfig())
