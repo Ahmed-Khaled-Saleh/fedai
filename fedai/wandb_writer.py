@@ -35,7 +35,7 @@ def extract_log_cfg(cfg):
 
 
     log_cfg.data = cfg.data.name
-    log_cfg.partitioner = cfg.data.partitioner
+    log_cfg.partitioner = cfg.partitioner
 
     log_cfg.model = cfg.model.name
     log_cfg.hidden_dim = cfg.model.hidden_dim

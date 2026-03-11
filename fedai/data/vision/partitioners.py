@@ -14,13 +14,14 @@ from flwr_datasets.partitioner import Partitioner
 
 # %% ../../../nbs/01a_data.vision.partitioners.ipynb #7d376085
 class RotatedPatchedPartitioner(Partitioner):
-    def __init__(self, num_partitions=40, num_rotations=4, patch_size=2):
+    def __init__(self, num_partitions=40, num_rotations=4, patch_size=2, seed=42):
         super().__init__()
         self._num_partitions = num_partitions
         self.num_rotations = num_rotations
         self.patch_size = patch_size
         self.noise_levels = [0.0, 0.15, 0.30, 0.50]
         self.root_seed = int((np.e ** np.euler_gamma) ** np.pi * 1000)
+        self.seed = self.root_seed
 
     @property
     def num_partitions(self) -> int:

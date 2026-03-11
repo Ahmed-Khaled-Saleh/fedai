@@ -13,7 +13,6 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict, Any
 from omegaconf import OmegaConf, MISSING
-from .partitioners import *
 
 # %% ../../nbs/7c_cfgs.data.ipynb #91b83577
 @dataclass
@@ -30,11 +29,6 @@ class VisionDataConfig(DataConfig):
 
 @dataclass
 class FederatedVisionDataConfig(VisionDataConfig):
-    defaults: List[Any] = field(default_factory=lambda: [
-        {"partitioner": "pathological"}
-    ])
-    # partitioner: Optional[PartitionerConfig] = field(default_factory=PathologicalConfig)
-    partitioner: PartitionerConfig = MISSING
     hf_name: Optional[str] = None
 
 
@@ -53,15 +47,7 @@ class MNISTConfig(FederatedVisionDataConfig):
 
 @dataclass
 class MNISTRotatedPatchedConfig(MNISTConfig):
-
-    defaults = [
-        {"partitioner": "rotated"}
-    ]
-
-    name: str = "mnist_rotated_batched"
-# class MNISTRotatedPatchedConfig(MNISTConfig):
-#     name: str = 'mnist_rotated_batched'
-#     partitioner: Optional[PartitionerConfig] = field(default_factory=RotatedBatchedConfig)
+    name: str = 'mnist_rotated_batched'
     
 
 @dataclass

@@ -76,12 +76,13 @@ def main(cfg: MainConfig):
     print(f"Algorithm: {cfg.algorithm.name}")
     print(f"Model: {cfg.model.name}")
     print(f"Data: {cfg.data.name}")
-    print(f"Partitioner: {cfg.data.partitioner.name}")
+    print(f"Partitioner: {cfg.partitioner.cls}")
     print(f"Optimizer: {cfg.optimizer.name}")
     print(f"Server: {cfg.server.name}")
 
-    fds = init_data(cfg.data)
+    fds = init_data(cfg)
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
+    cfg.paritioner.num_clients = cfg.num_clients
 
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)

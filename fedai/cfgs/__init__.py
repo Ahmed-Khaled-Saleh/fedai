@@ -34,11 +34,11 @@ class MainConfig:
     ])
 
 
-    data: Any = MISSING # DataConfig = field(default_factory=CIFAR10Config)
-    model: Any = MISSING #VisionModelConfig = field(default_factory=LeNetConfig)
-    optimizer: Any = MISSING #OptimizerConfig = field(default_factory=SGDConfig)
-    algorithm: Any = MISSING #AlgorithmConfig = field(default_factory=FedAvgConfig)
-    server: Any = MISSING #BaseServerConfig = field(default_factory=PuhtiConfig)
+    data: Any = MISSING
+    model: Any = MISSING 
+    optimizer: Any = MISSING 
+    algorithm: Any = MISSING 
+    server: Any = MISSING 
     
     project_name: str = "crossDevice_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
     num_clients: int = 20
