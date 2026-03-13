@@ -199,9 +199,11 @@ def evaluate(self: BaseServer, t):
 @patch
 def checkpoint_states(self: BaseServer, lst_active_ids, comm_round, test_res):
     self.logger.info(f"Checkpointing client states... {test_res}")
-    for id in lst_active_ids:
-        client_state = self.state_mgr.get_state(id)
-        ckpt_cls = self.checkpointers[id]
-        curr_acc = test_res[id]['metrics']['accuracy_score']
-        ckpt_cls.process_checkpoint(client_state, curr_acc, comm_round)
-    
+    if self.cfg.algorithm.name in ["sfmtl", "feddbe", "gpfl", "fedala"]:
+
+        for id in lst_active_ids:
+            client_state = self.state_mgr.get_state(id)
+            ckpt_cls = self.checkpointers[id]
+            curr_acc = test_res[id]['metrics']['accuracy_score']
+            ckpt_cls.process_checkpoint(client_state, curr_acc, comm_round)
+        
