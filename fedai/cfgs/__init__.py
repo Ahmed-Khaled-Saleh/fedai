@@ -40,7 +40,7 @@ class MainConfig:
     algorithm: Any = MISSING 
     server: Any = MISSING 
     
-    project_name: str = "crossDevice_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
+    project_name: str = "${algorithm.name}_Tuning_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
     num_clients: int = 20
     m: float = 1.0
     n_rounds: int = 200 
