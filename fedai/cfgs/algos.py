@@ -133,12 +133,12 @@ class FedBabuConfig(AlgorithmConfig):
 @dataclass
 class FedGPFLConfig(AlgorithmConfig):
     name: str = "gpfl"
-    gce_lr : float = 0.05
-    coV_lr : float = 0.05
+    gce_lr : float = 0.005
+    coV_lr : float = 0.005
     lamda : float = 0.1
 
 @dataclass
 class FedDBEConfig(AlgorithmConfig):
     name: str = "feddbe"
-    kl_weight: float = 0.01
-    momentum: float = 0.5
+    kl_weight: float = 50.0
+    momentum: float = 1.0
