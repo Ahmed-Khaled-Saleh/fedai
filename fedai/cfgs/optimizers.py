@@ -56,7 +56,7 @@ class PerFedavgOptimizerConfig(BaseOptimizerConfig):
 @dataclass
 class pFedMeOptimizerConfig(BaseOptimizerConfig):
     cls: str = "pFedMeOptimizer"
-    lr: float = 0.005
+    lr: float = 0.01
     lambda_: float = 10
     mu: float = 0.001
     p_learning_rate: float = 0.01
@@ -65,7 +65,7 @@ class pFedMeOptimizerConfig(BaseOptimizerConfig):
 @dataclass
 class FedProxOptimizerConfig(BaseOptimizerConfig):
     cls: str = "PerturbedGradientDescent"
-    mu: float = 0.0
+    mu: float = 0.1
 
 @dataclass
 class APFLOptimizerConfig(BaseOptimizerConfig):
