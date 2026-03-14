@@ -73,7 +73,7 @@ def set_parameters(self: ClientFedAS, model: nn.Module):
             mean_prototypes.append(None)
 
     # Align global model's prototype with the local prototype
-    alignment_optimizer = torch.optim.SGD(model.head.parameters(), lr=0.01)  # Adjust learning rate and optimizer as needed
+    alignment_optimizer = torch.optim.SGD(model.backbone.parameters(), lr=0.01)  # Adjust learning rate and optimizer as needed
     alignment_loss_fn = torch.nn.MSELoss()
 
     # print(f'client{self.id}')
