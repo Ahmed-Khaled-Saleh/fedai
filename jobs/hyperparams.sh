@@ -58,7 +58,7 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 python main.py \
     algorithm=$ALGO \
     data=cinic10 \
-    partition=pathological \
+    partitioner=pathological \
     model=lenet \
     model.name=lenet_cifar10 \
     model.img_size="[3,32,32]" \
