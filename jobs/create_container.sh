@@ -16,6 +16,21 @@ installdir="/scratch/project_462001088/$USER/DEMO1"
 # sed -e "s|^\(versionsuffix.*\)-singularity-\(.*\)|\1-Mycontainer-singularity-\2|" -i PyTorch-2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410.eb
 # eb PyTorch-2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410.eb
 
+
+
+
+# cat > lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-Mycontainer.def <<EOF
+
+# Bootstrap: localimage
+
+# From: /scratch/project_462001088/EasyBuild/SW/container/PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-dockerhash-ef203c810cc9.sif
+
+# %post
+
+# zypper -n install -y Mesa libglvnd libgthread-2_0-0 hostname
+
+# EOF
+
 cd "$installdir/tmp"
 
 module purge
@@ -30,10 +45,21 @@ module load LUMI/24.03
 # 2. Now unload the module safely
 # module unload PyTorch/2.7.1-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250827
 
-# 3. Load the build tools
-module load systools/24.03
+# # 3. Load the build tools
+# module load systools/24.03
+# --- Use local proot binary instead of systools/24.03 ---
+PROOT_BIN="/scratch/project_462001088/"   # <-- adjust this path to where your proot binary lives
+export PATH="$PROOT_BIN:$PATH"
 
+# Verify proot is found before proceeding
+if ! command -v proot &>/dev/null; then
+    echo "ERROR: proot not found in $PROOT_BIN" >&2
+    exit 1
+fi
+echo "Using proot: $(which proot)"
 
-# 4. Run the build using the saved variable
-
-singularity build --force /scratch/project_462001088/EasyBuild/SW/container/PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-dockerhash-ef203c810cc9.sif lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-Mycontainer.def
+# Build the container using proot-based unprivileged build
+singularity build --force \
+    /scratch/project_462001088/EasyBuild/SW/container/PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-dockerhash-ef203c810cc9.sif \
+    lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-Mycontainer.def
+    
