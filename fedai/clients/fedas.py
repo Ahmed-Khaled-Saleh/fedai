@@ -153,56 +153,6 @@ def fit(self: ClientFedAS, active: bool):
     self.fim_trace_history.append(fim_trace_sum.item())
 
 
-# %% ../../nbs/10u_clients.fedas.ipynb #3e9b73f5
-@patch
-def train_test_stats(self: ClientFedAS, batch: dict) -> tuple:
-    metrics = {k: 0 for k in list(self.cfg.training_metrics)}  # Ensure metrics is always defined
-
-    X, y = batch[self.data_key], batch[self.label_key]
-    rep = self.model.backbone(X)
-    logits = self.model.head(rep + self.client_mean)
-    loss = self.criterion(logits, y)
-    y_pred = logits.argmax(dim=-1)
-    y_true = batch[self.label_key]
-
-    metrics = self.training_metrics.compute(y_pred= y_pred, y_true= y_true)
-
-    return loss, metrics
-
-
-# %% ../../nbs/10u_clients.fedas.ipynb #5443f82d
-@patch
-def evaluate_local(self: ClientFedAS, loader= 'train') -> dict:
-    total_loss = 0
-    lst_metrics = []
-
-    self.model = self.model.to(self.device)
-    self.client_mean = self.client_mean.to(self.device)
-    self.model.eval()
-    num_eval = 0
-    data_loader = self.train_loader if loader == 'train' else self.test_loader
-    
-    with torch.no_grad():
-        for i, batch in enumerate(data_loader):
-            batch = self.send_to_device(batch)
-            loss, metrics = self.train_test_stats(batch)                 
-            if not math.isnan(loss.item()):
-                total_loss += loss.item()  
-                num_eval += len(batch[self.data_key])  # Ensure num_eval is updated
-                lst_metrics.append(metrics)           
-    
-    avg_loss = total_loss / num_eval if num_eval > 0 else 0.0
-    self.logger.info(f"Average {loader} Loss is : {avg_loss}")
-    
-    if lst_metrics:
-        total_metrics = {k: sum(m.get(k, 0) for m in lst_metrics) / len(lst_metrics) for k in self.cfg.test_metrics}
-    else:
-        total_metrics = {k: 0.0 for k in self.cfg.test_metrics}
-
-    self.logger.info(f"Average {loader} Metrics: {total_metrics}")
-    return {"loss": avg_loss, "metrics": total_metrics}
-
-
 # %% ../../nbs/10u_clients.fedas.ipynb #91932e11
 @patch
 def save_state(self: ClientFedAS, save_to_disk= False):  
