@@ -43,7 +43,8 @@ class ClientFedAS(BaseClient):
 @patch
 def set_parameters(self: ClientFedAS, model: nn.Module):
     local_prototypes = [[] for _ in range(self.cfg.data.num_classes)]
-
+    self.model.to(self.device)
+    model.to(self.device)
     # print(f'client{id}')
     for batch in self.train_loader:
         batch = self.send_to_device(batch)
