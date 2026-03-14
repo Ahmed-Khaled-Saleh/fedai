@@ -3,6 +3,7 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 import time
 import os
+import numpy as np
 from fedai.cfgs import MainConfig
 from fedai.cfgs.data import *
 from fedai.cfgs.partitioners import *
@@ -85,7 +86,7 @@ def main(cfg: MainConfig):
     fds = init_data(cfg)
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
     cfg.partitioner.num_partitions = cfg.num_clients
-
+    cfg.random_seed = np.random.randint(0, 100000)
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)
     writer = WandbWriter(cfg)
