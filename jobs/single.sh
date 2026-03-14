@@ -23,7 +23,7 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 IMG_SIZE="[3,32,32]"
 
 python main.py \
-    algorithm=local \
+    algorithm=fedas \
     data=cinic10 \
     model=lenet \
     model.name=lenet_cifar10 \
