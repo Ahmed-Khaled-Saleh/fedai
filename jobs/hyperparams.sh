@@ -15,7 +15,7 @@
 # 1. Define your hyperparameter grids
 algos=("fedala")
 layer_idxs=(0 1 2 3)
-rand_percents=("0.2" "0.5" "0.8")
+rand_percents=(0.2 0.5 0.8)
 
 # 2. Build the combinations list
 combinations=()
