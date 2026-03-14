@@ -51,7 +51,7 @@ def set_parameters(self: ClientFedAS, model: nn.Module):
         X, y = batch[self.data_key], batch[self.label_key]
 
         with torch.no_grad():
-            proto_batch = self.model.head(X)
+            proto_batch = self.model.backbone(X)
 
         # Scatter the prototypes based on their labels
         for proto, y in zip(proto_batch, y):
@@ -81,7 +81,7 @@ def set_parameters(self: ClientFedAS, model: nn.Module):
         for batch in self.train_loader:
             batch = self.send_to_device(batch)
             X, y = batch[self.data_key], batch[self.label_key]
-            global_proto_batch = model.head(X)
+            global_proto_batch = model.backbone(X)
             loss = 0
             total_samples = len(y)
             for label in y.unique():
@@ -94,7 +94,7 @@ def set_parameters(self: ClientFedAS, model: nn.Module):
             alignment_optimizer.step()
 
     # Substitute the parameters of the base, enabling personalization
-    for new_param, old_param in zip(model.head.parameters(), self.model.head.parameters()):
+    for new_param, old_param in zip(model.backbone.parameters(), self.model.backbone.parameters()):
         old_param.data = new_param.data.clone()
 
 
