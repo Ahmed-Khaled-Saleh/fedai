@@ -52,7 +52,7 @@ class ServerFedAS(BaseServer):
 def client_fn(self: ServerFedAS, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['model'] = self.model.state_dict()
+        client_state['model'] = copy.deepcopy(self.model.state_dict())
         client_state['fim_trace_history'] = []
 
     model = create_model(self.cfg)

@@ -42,7 +42,6 @@ class MainConfig:
     algorithm: Any = MISSING 
     server: Any = MISSING 
     
-    project_name: str = "$Fedas_test_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
     num_clients: int = 20
     m: float = 1.0
     n_rounds: int = 200 
@@ -50,7 +49,9 @@ class MainConfig:
     random_seed: int = 42
     batch_size: int = 128
     now: Optional[str] = None
-    
+
+    project_name: str = "$Fedas_test_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
+
     writer: str = "WandbWriter"
 
     training_metrics: List[str] = field(default_factory=lambda: ["accuracy_score"])

@@ -54,8 +54,8 @@ class ServerLGFedAvg(BaseServer):
 def client_fn(self: ServerLGFedAvg, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['local_model'] = self.model.backbone.state_dict()
-        client_state['global_head'] = self.global_model.state_dict()
+        client_state['local_model'] = copy.deepcopy(self.model.backbone.state_dict())
+        client_state['global_head'] = copy.deepcopy(self.global_model.state_dict())
 
     local_model = create_model(self.cfg).backbone
     local_model.load_state_dict(client_state['local_model'])

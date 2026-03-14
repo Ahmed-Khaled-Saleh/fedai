@@ -14,7 +14,7 @@ import pandas as pd
 from loguru import logger
 from fastcore.utils import *
 from fastcore.all import *
-
+import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,7 +48,7 @@ class ServerpFedMe(BaseServer):
 def client_fn(self: ServerpFedMe, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['model'] = self.model.state_dict()
+        client_state['model'] = copy.deepcopy(self.model.state_dict())
 
     model = create_model(self.cfg)
     model.load_state_dict(client_state['model'])

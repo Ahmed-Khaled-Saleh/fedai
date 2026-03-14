@@ -53,8 +53,8 @@ class ServerFedRep(BaseServer):
 def client_fn(self: ServerFedRep, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['backbone'] = self.model.backbone.state_dict()
-        client_state['head'] = self.model.head.state_dict()
+        client_state['backbone'] =copy.deepcopy(self.model.backbone.state_dict())
+        client_state['head'] = copy.deepcopy(self.model.head.state_dict())
 
     backbone = create_model(self.cfg).backbone
     backbone.load_state_dict(client_state['backbone'])

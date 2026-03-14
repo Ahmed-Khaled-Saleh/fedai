@@ -107,9 +107,9 @@ class ServerGPFL(BaseServer):
 def client_fn(self: ServerGPFL, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['model'] = self.model.state_dict()
-        client_state['GCE'] = self.GCE.state_dict()
-        client_state['CoV'] = self.CoV.state_dict()
+        client_state['model'] = copy.deepcopy(self.model.state_dict())
+        client_state['GCE'] = copy.deepcopy(self.GCE.state_dict())
+        client_state['CoV'] = copy.deepcopy(self.CoV.state_dict())
         client_state['GCE_frozen'] = copy.deepcopy(self.GCE.state_dict())
         client_state['generic_conditional_input'] = torch.zeros(self.cfg.model.hidden_dim)
         client_state['personalized_conditional_input'] = torch.zeros(self.cfg.model.hidden_dim)

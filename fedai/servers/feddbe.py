@@ -54,7 +54,7 @@ class ServerFedDBE(BaseServer):
 def client_fn(self: ServerFedDBE, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
-        client_state['model'] = self.model.state_dict()
+        client_state['model'] = copy.deepcopy(self.model.state_dict())
         client_state['global_mean'] = None
         client_state['running_mean'] = torch.zeros(self.cfg.model.hidden_dim)
         client_state['num_batches_tracked'] = torch.tensor(0, dtype=torch.long)
