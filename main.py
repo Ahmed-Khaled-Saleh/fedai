@@ -77,7 +77,7 @@ def main(cfg: MainConfig):
     print(f"Model: {cfg.model.name}")
     print(f"Data: {cfg.data.name}")
     print(f"Partitioner: {cfg.partitioner.cls}")
-    print(f"Optimizer: {cfg.optimizer.name}")
+    print(f"Optimizer: {cfg.optimizer.cls}")
     print(f"Server: {cfg.server.name}")
 
     fds = init_data(cfg)
