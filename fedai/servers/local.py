@@ -42,6 +42,6 @@ class ServerLocal(BaseServer):
 
 # %% ../../nbs/11b_server.local.ipynb #ce0e22b2
 @patch
-def aggregate(self: ServerLocal, lst_active_ids, comm_round, len_clients_ds):
+def aggregate(self: ServerLocal, lst_active_ids, comm_round, len_clients_ds):    
     pass
-        
+    

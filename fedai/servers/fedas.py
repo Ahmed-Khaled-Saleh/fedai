@@ -53,34 +53,23 @@ def client_fn(self: ServerFedAS, id, comm_round, client_state):
 
     if (comm_round == 1 and client_state == {}) or client_state == {}:
         client_state['model'] = self.model.state_dict()
-        client_state['global_mean'] = None
-        client_state['running_mean'] = torch.zeros(self.cfg.model.hidden_dim)
-        client_state['num_batches_tracked'] = torch.tensor(0, dtype=torch.long)
-        client_state['client_mean'] = nn.Parameter(torch.zeros(self.cfg.model.hidden_dim))
+        client_state['fim_trace_history'] = []
 
     model = create_model(self.cfg)
     model.load_state_dict(client_state['model'])
     client_state['model'] = model
-
+    
     kwargs = get_clean_kwargs(self.cfg.optimizer)
     kwargs.pop("cls", None)
-    optimizer = get_optimizer(self.cfg)(model.parameters(), **kwargs)
+    
+    optimizer = get_optimizer(self.cfg)(client_state['model'].parameters(), **kwargs)
     optimizer.load_state_dict(client_state['optimizer']) if 'optimizer' in client_state else None
     for state in optimizer.state.values():
         for k, v in state.items():
             if isinstance(v, torch.Tensor):
                 state[k] = v.to(self.device)
-
     client_state['optimizer'] = optimizer
 
-    kwargs.pop("lr", None)
-    opt_client_mean = get_optimizer(self.cfg)([client_state['client_mean']], **kwargs)
-    opt_client_mean.load_state_dict(client_state['opt_client_mean']) if 'opt_client_mean' in client_state else None
-    for state in opt_client_mean.state.values():
-        for k, v in state.items():
-            if isinstance(v, torch.Tensor):
-                state[k] = v.to(self.device)
-    client_state['opt_client_mean'] = opt_client_mean
 
     train_loader = prepare_dl(self.cfg, id, self.fds, train=True, distributed=False)
     test_loader = prepare_dl(self.cfg, id, self.fds, train=False, distributed=False)
@@ -96,51 +85,23 @@ def client_fn(self: ServerFedAS, id, comm_round, client_state):
     return client
 
 
-# %% ../../nbs/11u_server.fedas.ipynb #8324efba
-@patch
-def init_training(self: ServerFedAS):
-    len_clients_ds = {}
-    global_mean = 0
-    for client_id in range(self.cfg.num_clients):
-        client_state = self.state_mgr.get_state(client_id)
-        client = self.client_fn(id= client_id, comm_round= 1, client_state= client_state)
-        client.fit()
-        self.state_mgr.set_state(client_id, client.save_state())
-        len_clients_ds[client_id] = len(client.train_loader.dataset)
-
-        del client 
-        gc.collect()
-        torch.cuda.empty_cache()
-
-    m_t = sum(len_clients_ds.values())
-    for client_id in range(self.cfg.num_clients):
-        n_k = len_clients_ds[client_id]
-        weight = n_k / m_t
-        client_running_mean = self.state_mgr.get_state(client_id).get('running_mean', None)
-        global_mean += client_running_mean * weight
-
-    for client_id in range(self.cfg.num_clients):
-        client_state = self.state_mgr.get_state(client_id)
-        client_state['global_mean'] = global_mean.clone()
-        self.state_mgr.set_state(client_id, client_state)
-        
-
 # %% ../../nbs/11u_server.fedas.ipynb #99c07788
 @patch
 def train(self: ServerFedAS):
 
-    self.init_training()
-
     res =  []
     selected_clients = self.client_selector.select()
     for t in range(1, self.cfg.n_rounds + 1):
-        lst_active_ids = selected_clients[t-1]
+        self.lst_active_ids = selected_clients[t-1]
+        self.alled_clients = list(range(self.cfg.num_clients))
         len_clients_ds = {}
 
-        for id in lst_active_ids:
+        for id in self.alled_clients:
             client_state = self.state_mgr.get_state(id)
             client = self.client_fn(id= id, comm_round= t, client_state= client_state)
-            client.fit()
+            client.set_parameters(self.model)
+            client.fit(client.id in self.lst_active_ids)
+            
             self.logger.info(f"Client {id} finished training.")
             self.logger.info("*"*20)
             self.state_mgr.set_state(id, client.save_state())
@@ -151,10 +112,10 @@ def train(self: ServerFedAS):
             gc.collect()
             torch.cuda.empty_cache()
 
-        self.aggregate(lst_active_ids, t, len_clients_ds)#lst_active_ids, comm_round, len_clients_ds
+        self.aggregate(self.lst_active_ids, t, len_clients_ds)#lst_active_ids, comm_round, len_clients_ds
         train_res, test_res = self.evaluate(t)
         
-        train_df, test_df = self.writer.write(lst_active_ids, train_res, test_res, t) 
+        train_df, test_df = self.writer.write(self.lst_active_ids, train_res, test_res, t) 
         res.append((train_df, test_df))
         
     self.writer.save(res)
@@ -165,30 +126,33 @@ def train(self: ServerFedAS):
 # %% ../../nbs/11u_server.fedas.ipynb #ce0e22b2
 @patch
 def aggregate(self: ServerFedAS, lst_active_ids, comm_round, len_clients_ds):
-    m_t = sum(len_clients_ds.values())
+
+
+    FIM_weight_list = []
+    for id in lst_active_ids:
+        client_fim = self.state_mgr.get_state(id).get('fim_trace_history', None)
+        FIM_weight_list.append(client_fim[-1])
+    FIM_weight_list = [FIM_value/sum(FIM_weight_list) for FIM_value in FIM_weight_list]
+
+    global_model = None
     
-    with torch.no_grad():
-        global_model = None
-        
-        for id in lst_active_ids:
-            client_state_dict = self.state_mgr.get_state(id).get('model', None)
+    for id in lst_active_ids:
+        client_state_dict = self.state_mgr.get_state(id).get('model', None)
 
-            if global_model is None:
-                global_model = {k: torch.zeros_like(v) for k, v in client_state_dict.items()}
+        if global_model is None:
+            global_model = {k: torch.zeros_like(v) for k, v in client_state_dict.items()}
 
-            n_k = len_clients_ds[id]
-            weight = n_k / m_t
-            for key in global_model.keys():
-                global_model[key].add_(client_state_dict[key], alpha=weight)
+        for key in global_model.keys():
+            global_model[key].add_(client_state_dict[key], alpha=FIM_weight_list[lst_active_ids.index(id)])
 
-        self.model.load_state_dict(global_model)
-        
-        for id in lst_active_ids:
-            client_model = self.state_mgr.get_state(id).get('model', None)
-            for key in global_model.keys():
-                client_model[key] = self.model.state_dict()[key]
+    self.model.load_state_dict(global_model)
+    
+    for id in lst_active_ids:
+        client_model = self.state_mgr.get_state(id).get('model', None)
+        for key in global_model.keys():
+            client_model[key] = self.model.state_dict()[key]
 
-            self.state_mgr.set_state(id, {
-                    **self.state_mgr.get_state(id),
-                    'model': client_model,
-                })
+        self.state_mgr.set_state(id, {
+                **self.state_mgr.get_state(id),
+                'model': client_model,
+            })

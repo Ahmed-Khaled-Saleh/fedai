@@ -18,6 +18,8 @@ from torch.utils.data import DataLoader, Subset
 
 from .base_client import BaseClient
 from ..utils.registery import AlgorithmRegistry
+from torch.autograd import grad
+
 
 # %% ../../nbs/10u_clients.fedas.ipynb #c4456ff3
 @AlgorithmRegistry.register_client("fedas")
@@ -36,52 +38,118 @@ class ClientFedAS(BaseClient):
                  
         super().__init__(id, cfg, train_loader, test_loader, state, criterion, device, t, **kwargs)
         
-        self.klw = self.cfg.algorithm.kl_weight
-        self.momentum = self.cfg.algorithm.momentum
 
-
-# %% ../../nbs/10u_clients.fedas.ipynb #f251b5b1
+# %% ../../nbs/10u_clients.fedas.ipynb #f559e6ae
 @patch
-def fit(self: ClientFedAS):
-    
+def set_parameters(self: ClientFedAS, model: nn.Module):
+    local_prototypes = [[] for _ in range(self.cfg.data.num_classes)]
+
+    # print(f'client{id}')
+    for batch in self.train_loader:
+        batch = self.send_to_device(batch)
+        X, y = batch[self.data_key], batch[self.label_key]
+
+        with torch.no_grad():
+            proto_batch = self.model.head(X)
+
+        # Scatter the prototypes based on their labels
+        for proto, y in zip(proto_batch, y):
+            local_prototypes[y.item()].append(proto)
+
+    mean_prototypes = []
+
+    # print(f'client{self.id}')
+    for class_prototypes in local_prototypes:
+
+        if not class_prototypes == []:
+            # Stack the tensors for the current class
+            stacked_protos = torch.stack(class_prototypes)
+
+            # Compute the mean tensor for the current class
+            mean_proto = torch.mean(stacked_protos, dim=0)
+            mean_prototypes.append(mean_proto)
+        else:
+            mean_prototypes.append(None)
+
+    # Align global model's prototype with the local prototype
+    alignment_optimizer = torch.optim.SGD(model.head.parameters(), lr=0.01)  # Adjust learning rate and optimizer as needed
+    alignment_loss_fn = torch.nn.MSELoss()
+
+    # print(f'client{self.id}')
+    for _ in range(1):  # Iterate for 1 epochs; adjust as needed
+        for batch in self.train_loader:
+            batch = self.send_to_device(batch)
+            X, y = batch[self.data_key], batch[self.label_key]
+            global_proto_batch = model.head(X)
+            loss = 0
+            total_samples = len(y)
+            for label in y.unique():
+                if mean_prototypes[label.item()] is not None:
+                    class_samples = (y == label).sum()
+                    class_loss = alignment_loss_fn(global_proto_batch[y == label], mean_prototypes[label.item()])
+                    loss += class_loss * (class_samples / total_samples)
+            alignment_optimizer.zero_grad()
+            loss.backward()
+            alignment_optimizer.step()
+
+    # Substitute the parameters of the base, enabling personalization
+    for new_param, old_param in zip(model.head.parameters(), self.model.head.parameters()):
+        old_param.data = new_param.data.clone()
+
+
+    # end
+
+
+
+# %% ../../nbs/10u_clients.fedas.ipynb #2b58e8fa
+@patch
+def train_step(self: ClientFedAS):
     self.model.to(self.device)
-    self.running_mean = self.running_mean.to(self.device)
-    self.client_mean = self.client_mean.to(self.device)
-    self.num_batches_tracked = self.num_batches_tracked.to(self.device)
-    self.global_mean = self.global_mean.to(self.device) if self.global_mean is not None else None
     self.model.train()
     
-    self.reset_running_stats()
+    self.model.to(self.device)
+    self.model.train()
     for _ in range(self.cfg.local_epochs):
         for i, batch in enumerate(self.train_loader):
             self.optimizer.zero_grad()
 
             batch = self.send_to_device(batch)
             X, y = batch[self.data_key], batch[self.label_key]
-            rep = self.model.backbone(X)
-            running_mean = torch.mean(rep, dim=0)
-
-            if self.num_batches_tracked is not None:
-                self.num_batches_tracked.add_(1)
-
-            self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * running_mean
+            outputs = self.model(X)
             
-            if self.global_mean is not None:
-                reg_loss = torch.mean(0.5 * (self.running_mean - self.global_mean)**2)
-                output = self.model.head(rep + self.client_mean)
-                loss = self.criterion(output, y)
-                loss = loss + reg_loss * self.klw
-            else:
-                output = self.model.head(rep)
-                loss = self.criterion(output, y)
-            # ====== end
-
-            self.opt_client_mean.zero_grad()
-            self.optimizer.zero_grad()
+            loss = self.criterion(outputs, y)
             loss.backward()
             self.optimizer.step()
-            self.opt_client_mean.step()
-            self.detach_running()
+
+
+# %% ../../nbs/10u_clients.fedas.ipynb #f251b5b1
+@patch
+def fit(self: ClientFedAS, active: bool):
+    
+    self.model.to(self.device)
+    if active:
+        self.train_step()
+
+    self.model.eval()
+    # Compute FIM and its trace after training
+    fim_trace_sum = 0
+    for i, batch in enumerate(self.train_loader):
+        # Forward pass
+        batch = self.send_to_device(batch)
+        X, y = batch[self.data_key], batch[self.label_key]
+        outputs = self.model(X)
+        # Negative log likelihood as our loss
+        nll = -torch.nn.functional.log_softmax(outputs, dim=1)[range(len(y)), y].mean()
+
+        # Compute gradient of the negative log likelihood w.r.t. model parameters
+        grads = grad(nll, self.model.parameters())
+
+        # Compute and accumulate the trace of the Fisher Information Matrix
+        for g in grads:
+            fim_trace_sum += torch.sum(g ** 2).detach()
+
+    # add the fisher log
+    self.fim_trace_history.append(fim_trace_sum.item())
 
 
 # %% ../../nbs/10u_clients.fedas.ipynb #3e9b73f5
@@ -140,10 +208,8 @@ def save_state(self: ClientFedAS, save_to_disk= False):
 
     state_dict = {}
     state_dict['model'] = self.model.state_dict()
-    state_dict['global_mean'] = self.global_mean
-    state_dict['running_mean'] = self.running_mean
-    state_dict['num_batches_tracked'] = self.num_batches_tracked
-    state_dict['client_mean'] = self.client_mean
+    state_dict['optimizer'] = self.optimizer.state_dict()
+    state_dict['fim_trace_history'] = self.fim_trace_history
 
     if save_to_disk:
         state_path = os.path.join(self.cfg.server.save_dir, str(self.t), f"local_output_{self.id}", "state.pth")

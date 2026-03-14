@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
-#SBATCH --array=0-16               # Number of algorithms (0 to N-1)
+#SBATCH --array=0-17               # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -14,11 +14,12 @@
 
 # 1. Define your array of algorithms (must match the names in your cs.store)
 algos=(
-    "fedavg" "fedavg_ft" "pfedme" "fedu" "sfmtl" 
+    "local" "fedavg" "fedavg_ft" "pfedme" "fedu" "sfmtl" 
     "ditto" "fedprox" "apfl" "fedala" 
     "ifca" "fedper" "lgfedavg" "fedrep" "fedrod" 
     "fedbabu" "gpfl" "feddbe"
 )
+
 
 # 2. Get the specific algorithm for THIS task
 CURRENT_ALGO=${algos[$SLURM_ARRAY_TASK_ID]}
@@ -62,5 +63,3 @@ python main.py \
     model.img_size=$IMG_SIZE \
     server=puhti \
     $OPT_OVERRIDE
-    num_clients=100 \
-    m=0.3
