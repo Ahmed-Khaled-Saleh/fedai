@@ -87,7 +87,9 @@ def set_parameters(self: ClientFedAS, model: nn.Module):
             for label in y.unique():
                 if mean_prototypes[label.item()] is not None:
                     class_samples = (y == label).sum()
-                    class_loss = alignment_loss_fn(global_proto_batch[y == label], mean_prototypes[label.item()])
+                    target = mean_prototypes[label.item()].unsqueeze(0) # Shape becomes [1, feature_dim]
+                    class_loss = alignment_loss_fn(global_proto_batch[y == label], target.expand_as(global_proto_batch[y == label]))
+                    # class_loss = alignment_loss_fn(global_proto_batch[y == label], mean_prototypes[label.item()])
                     loss += class_loss * (class_samples / total_samples)
             alignment_optimizer.zero_grad()
             loss.backward()
