@@ -63,5 +63,5 @@ python main.py \
     model.img_size="[3,32,32]" \
     server=puhti \
     optimizer=sgd \
-    algorithm.k=$K_IDX \
+    algorithm.K=$K_IDX \
     local_epochs=$LE_IDX
