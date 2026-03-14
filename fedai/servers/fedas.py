@@ -143,7 +143,7 @@ def aggregate(self: ServerFedAS, lst_active_ids, comm_round, len_clients_ds):
             global_model = {k: torch.zeros_like(v) for k, v in client_state_dict.items()}
 
         for key in global_model.keys():
-            global_model[key].add_(client_state_dict[key], alpha=FIM_weight_list[lst_active_ids.index(id)])
+            global_model[key].add_(client_state_dict[key], alpha=FIM_weight_list[lst_active_ids.tolist().index(id)])
 
     self.model.load_state_dict(global_model)
     
