@@ -4,21 +4,22 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
-#SBATCH --array=0-17               # Number of algorithms (0 to N-1)
+#SBATCH --array=0-18               # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:v100:1             # Request 1 GPU per job
-#SBATCH --time=24:00:00             # Adjust based on expected runtime
+#SBATCH --time=36:00:00             # Adjust based on expected runtime
 
 # 1. Define your array of algorithms (must match the names in your cs.store)
 algos=(
-    "local" "fedavg" "fedavg_ft" "pfedme" "fedu" "sfmtl" 
-    "ditto" "fedprox" "apfl" "fedala" 
+    "local" "fedavg" "fedavg_ft" "pfedme" "fedu" 
+    "sfmtl" "ditto" "fedprox" "apfl" "fedala" 
     "ifca" "fedper" "lgfedavg" "fedrep" "fedrod" 
-    "fedbabu" "gpfl" "feddbe"
+    "fedbabu" "gpfl" "feddbe" "fedas"
 )
+
 
 
 # 2. Get the specific algorithm for THIS task
@@ -58,8 +59,10 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 python main.py \
     algorithm=$CURRENT_ALGO \
     data=mnist_rotated_batched \
+    partitioner=pathological \
     model=lenet \
     model.name=lenet_fedavg \
     model.img_size=$IMG_SIZE \
+    optimizer=sgd \
     server=puhti \
     $OPT_OVERRIDE

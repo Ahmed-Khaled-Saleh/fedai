@@ -50,7 +50,7 @@ class MainConfig:
     batch_size: int = 128
     now: Optional[str] = None
 
-    project_name: str = "$Fedas_test_${data.name}"#"${algorithm.name}_${data.name}_${model.name}_"
+    project_name: str = "Final_${data.name}_${num_clients}_clients"
 
     writer: str = "WandbWriter"
 
