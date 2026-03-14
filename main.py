@@ -82,7 +82,7 @@ def main(cfg: MainConfig):
 
     fds = init_data(cfg)
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
-    cfg.paritioner.num_clients = cfg.num_clients
+    cfg.partitioner.num_partitions = cfg.num_clients
 
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)

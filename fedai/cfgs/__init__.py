@@ -28,6 +28,7 @@ class MainConfig:
         "_self_",               # Use values in this class
         {"model": "lenet"},     # Default group choice
         {"data": "mnist"},    # Default group choice
+        {"partition": "pathological"},    # Default group choice
         {"optimizer": "sgd"},    # Default group choice
         {"algorithm": "fedavg"},
         {"server": "puhti"}
@@ -35,6 +36,7 @@ class MainConfig:
 
 
     data: Any = MISSING
+    partition: Any = MISSING
     model: Any = MISSING 
     optimizer: Any = MISSING 
     algorithm: Any = MISSING 
