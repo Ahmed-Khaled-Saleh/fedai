@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_mnist_rotated_batched
+#SBATCH --job-name=fedai_test_single
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
@@ -23,7 +23,7 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 IMG_SIZE="[3,32,32]"
 
 python main.py \
-    algorithm=fedas \
+    algorithm=local \
     data=cinic10 \
     model=lenet \
     model.name=lenet_cifar10 \
