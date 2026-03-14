@@ -50,7 +50,7 @@ class MainConfig:
     batch_size: int = 128
     now: Optional[str] = None
 
-    project_name: str = "$Dirichlet(${partitioner.alpha})_${m}" #  "Final_${data.name}_${num_clients}_clients"
+    project_name: str = "Final_${data.name}_${num_clients}_clients" # "$Dirichlet(${partitioner.alpha})_${m}"
 
     writer: str = "WandbWriter"
 
