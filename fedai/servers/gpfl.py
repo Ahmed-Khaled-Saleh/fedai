@@ -162,8 +162,8 @@ def client_fn(self: ServerGPFL, id, comm_round, client_state):
                 state[k] = v.to(self.device)
     client_state['CoV_optimizer'] = CoV_opt
 
-    train_loader = prepare_dl(self.cfg.data, id, self.fds, train=True, distributed=False)
-    test_loader = prepare_dl(self.cfg.data, id, self.fds, train=False, distributed=False)
+    train_loader = prepare_dl(self.cfg, id, self.fds, train=True, distributed=False)
+    test_loader = prepare_dl(self.cfg, id, self.fds, train=False, distributed=False)
     client = self.client_cls(id= id, 
                              cfg= self.cfg,
                              train_loader= train_loader,

@@ -64,8 +64,8 @@ def client_fn(self: ServerIFCA, id, comm_round, client_state):
     kwargs.pop("cls", None)
     client_state['optimizer'] = [get_optimizer, kwargs]
 
-    train_loader = prepare_dl(self.cfg.data, id, self.fds, train=True, distributed=False)
-    test_loader = prepare_dl(self.cfg.data, id, self.fds, train=False, distributed=False)
+    train_loader = prepare_dl(self.cfg, id, self.fds, train=True, distributed=False)
+    test_loader = prepare_dl(self.cfg, id, self.fds, train=False, distributed=False)
     client = self.client_cls(id= id, 
                              cfg= self.cfg,
                              train_loader= train_loader,

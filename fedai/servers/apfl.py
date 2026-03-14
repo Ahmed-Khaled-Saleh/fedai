@@ -88,8 +88,8 @@ def client_fn(self: ServerAPFL, id, comm_round, client_state):
 
     client_state['optimizer_per'] = optimizer_per
 
-    train_loader = prepare_dl(self.cfg.data, id, self.fds, train=True, distributed=False)
-    test_loader = prepare_dl(self.cfg.data, id, self.fds, train=False, distributed=False)
+    train_loader = prepare_dl(self.cfg, id, self.fds, train=True, distributed=False)
+    test_loader = prepare_dl(self.cfg, id, self.fds, train=False, distributed=False)
     client = self.client_cls(id= id, 
                              cfg= self.cfg,
                              train_loader= train_loader,
