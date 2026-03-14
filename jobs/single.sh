@@ -20,8 +20,13 @@ cd /projappl/project_2009050/fedai
 export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 
+IMG_SIZE="[3,32,32]"
+
 python main.py \
-    algorithm=fedavg \
-    data=mnist_rotated_batched  \
+    algorithm=fedas \
+    data=cinic10 \
+    model=lenet \
+    model.name=lenet_cifar10 \
+    model.img_size=$IMG_SIZE \
+    server=puhti \
     optimizer=sgd \
-    server=puhti
