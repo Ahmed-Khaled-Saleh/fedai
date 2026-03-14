@@ -63,4 +63,5 @@ python main.py \
     model.img_size=$IMG_SIZE \
     optimizer=sgd \
     server=puhti \
-    $OPT_OVERRIDE
+    $OPT_OVERRIDE \
+    random_seed=0
