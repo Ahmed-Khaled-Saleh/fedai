@@ -67,9 +67,13 @@ class WandbWriter:
         self.cfg = argparse.Namespace(**self.cfg)
         print(self.cfg.algorithm)
         self.exp_name = self.cfg.algorithm #+ f"_{self.cfg.random_seed}"
+        self.wandb_log_dir = os.path.join(self.server.logs_dir, self.exp_name, self.cfg.random_seed)
+        if not os.path.exists(self.wandb_log_dir):
+            os.makedirs(self.wandb_log_dir, exist_ok=True)
+
         key = os.getenv("WANDB_API_KEY")
         wandb.login(key=key, verify=False)
-        self.run = wandb.init(project=self.cfg.project_name, name= self.exp_name, config=self.cfg)
+        self.run = wandb.init(project=self.cfg.project_name, name= self.exp_name, config=self.cfg, dir= self.wandb_log_dir)
 
 # %% ../nbs/10_wandb_writer.ipynb #26127248
 @patch

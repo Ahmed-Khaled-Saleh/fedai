@@ -1,15 +1,15 @@
 #!/bin/bash
-#SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_all
+#SBATCH --account=project_462001088
+#SBATCH --job-name=fedai_drichlet_cifar10
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
-#SBATCH --partition=gpu
-#SBATCH --array=0-304          # Number of algorithms (0 to N-1)
+#SBATCH --partition=small-g
+#SBATCH --array=0-304             # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
+#SBATCH --gpus-per-node=1
 #SBATCH --mem=32G
-#SBATCH --gres=gpu:v100:1             # Request 1 GPU per job
 #SBATCH --time=36:00:00             # Adjust based on expected runtime
 
 # 1. Define your array of algorithms (must match the names in your cs.store)
@@ -83,31 +83,40 @@ else
     MODEL_NAME="lenet_cifar10"
 fi 
 
+if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
+    CURRENT_PARTITIONER="pathological_mnist"
+else
+    CURRENT_PARTITIONER="rotated"
+fi
+
+
 
 echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=$CURRENT_DATA with Image Size=$IMG_SIZE"
 
-# 3. Load your environment (Conda, modules, etc.)
-# module load cuda
-# source activate your_env
-module --force purge
-module load pytorch
-source /projappl/project_2009050/fed/bin/activate
-cd /projappl/project_2009050/fedai
 
-export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/fed/lib/python3.12/site-packages
-echo "Current PYTHONPATH: $PYTHONPATH"
+SIF_FILE="/scratch/project_462001088/EasyBuild/SW/container/PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-dockerhash-ef203c810cc9.sif"  # Update this path to your actual container
+cd /projappl/project_462001088/fedai
 
+module purge
+module load LUMI/24.03
+module load PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410
 
-# 4. Launch Hydra
-# We override the 'algorithm' and 'data' groups specifically
-python main.py \
+singularity exec \
+    --no-home \
+    -B /dev/dri \
+    -B /dev/kfd \
+    --pwd /projappl/project_462001088/fedai \
+    -B /projappl/project_462001088 \
+    -B /scratch/project_462001088 \
+    $SIF_FILE \
+    python main.py \
     algorithm=$CURRENT_ALGO \
     data=$CURRENT_DATA \
-    partitioner=pathological \
+    partitioner=$CURRENT_PARTITIONER \
     model=lenet \
     model.name=$MODEL_NAME \
     model.img_size=$IMG_SIZE \
     $OPT_OVERRIDE \
-    server=puhti \
+    server=lumi \
     m=$CURRENT_M \
     num_clients=$CURRENT_NUM_CLIENTS \

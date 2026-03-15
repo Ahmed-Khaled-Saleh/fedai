@@ -69,6 +69,8 @@ cs.store(group="algorithm", name="feddbe", node= FedDBEConfig())
 cs.store(group="algorithm", name="fedas", node= FedASConfig())
 
 cs.store(group="server", name="puhti", node= PuhtiConfig())
+cs.store(group="server", name="mahti", node= MahtiConfig())
+cs.store(group="server", name="lumi", node= LumiConfig())
 
 cs.store(name="base_config", node= MainConfig)
 
