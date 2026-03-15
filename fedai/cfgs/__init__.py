@@ -51,7 +51,7 @@ class MainConfig:
     now: Optional[str] = None
 
     # project_name: str = "Final_${data.name}_${num_clients}_clients"
-    project_name: str = "$Dirichlet(${partitioner.alpha})_${m}"
+    project_name: str = "Dirichlet(${partitioner.alpha})_${m}"
 
     writer: str = "WandbWriter"
 
