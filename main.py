@@ -85,10 +85,11 @@ def main(cfg: MainConfig):
     print(f"Optimizer: {cfg.optimizer.cls}")
     print(f"Server: {cfg.server.name}")
 
-    fds = init_data(cfg)
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
     cfg.partitioner.num_partitions = cfg.num_clients
     cfg.random_seed = np.random.randint(0, 100000)
+    
+    fds = init_data(cfg)
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)
     writer = WandbWriter(cfg)
