@@ -105,6 +105,9 @@ def model_similarity(self: SFMTLServer, h1, h2, model1, model2):
 
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #8dc37c93
+from timm import data
+
+
 @patch
 def h_similarity(self: SFMTLServer, h1, h2, label_set, label_set2):
     h1 = h1.reshape(self.cfg.data.num_classes, self.cfg.model.hidden_dim)
@@ -120,10 +123,10 @@ def h_similarity(self: SFMTLServer, h1, h2, label_set, label_set2):
     # index only data for the label_set
     data = data[label_set][:, label_set2]
 
-    cols1 = [self.idx_to_cls[i] for i in label_set]
-    cols2 = [self.idx_to_cls[i] for i in label_set2]
+    cols1 = [self.idx_to_cls[i] for i in label_set]   # rows  (dim 0)
+    cols2 = [self.idx_to_cls[i] for i in label_set2]  # cols  (dim 1)
 
-    df = pd.DataFrame(data, columns= cols1, index= cols2)
+    df = pd.DataFrame(data, index= cols1, columns= cols2)
     return df, max_similarity.item()
 
 # %% ../../nbs/11y_servers.sfmtl.ipynb #e697f179

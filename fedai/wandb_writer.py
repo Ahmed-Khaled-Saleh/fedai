@@ -73,7 +73,10 @@ class WandbWriter:
 
         key = os.getenv("WANDB_API_KEY")
         wandb.login(key=key, verify=False)
-        self.run = wandb.init(project=self.cfg.project_name, name= self.exp_name, config=self.cfg, dir= self.wandb_log_dir)
+        self.run = wandb.init(project=self.cfg.project_name,
+                              name= self.exp_name,
+                              config=self.cfg,
+                              dir= self.wandb_log_dir)
 
 # %% ../nbs/10_wandb_writer.ipynb #26127248
 @patch
