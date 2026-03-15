@@ -68,11 +68,11 @@ echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=cifa
 SIF_FILE="/scratch/project_462001088/EasyBuild/SW/container/PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410/lumi-pytorch-rocm-6.2.4-python-3.12-pytorch-v2.6.0-dockerhash-ef203c810cc9.sif"  # Update this path to your actual container
 cd /projappl/project_462001088/fedai
 
+module purge
 module load LUMI/24.03
 module load PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410
 
 singularity exec \
-    --no-home \
     -B /dev/dri \
     -B /dev/kfd \
     --pwd /projappl/project_462001088/fedai \
@@ -88,6 +88,5 @@ singularity exec \
     model=lenet \
     model.name=lenet_cifar10 \
     model.img_size=$IMG_SIZE \
-    optimizer=sgd \
-    server=lumi \
-    $OPT_OVERRIDE
+    $OPT_OVERRIDE \
+    server=lumi
