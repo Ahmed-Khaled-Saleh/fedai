@@ -88,6 +88,5 @@ python main.py \
     model=lenet \
     model.name=lenet_cifar10 \
     model.img_size=$IMG_SIZE \
-    optimizer=sgd \
-    server=puhti \
-    $OPT_OVERRIDE
+    $OPT_OVERRIDE \
+    server=puhti
