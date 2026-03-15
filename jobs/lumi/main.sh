@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=small-g
-#SBATCH --array=0-303             # Number of algorithms (0 to N-1)
+#SBATCH --array=0-151             # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -23,16 +23,13 @@ algos=(
 datasets=(
     "cifar10" "fashionmnist" "cinic10" "mnist_rotated_batched"
 )
-m=(1.0 0.3)
 num_clients=(20 100)
 
 combinations=()
 for a in "${algos[@]}"; do
     for d in "${datasets[@]}"; do
-        for mm in "${m[@]}"; do
-            for nc in "${num_clients[@]}"; do
-                combinations+=("$a|$d|$mm|$nc") # Use a separator
-            done
+        for nc in "${num_clients[@]}"; do
+            combinations+=("$a|$d|$nc")
         done
     done
 done
@@ -43,8 +40,14 @@ current_pair=${combinations[$SLURM_ARRAY_TASK_ID]}
 # Split the pair back into two variables
 CURRENT_ALGO=$(echo $current_pair | cut -d'|' -f1)
 CURRENT_DATA=$(echo $current_pair | cut -d'|' -f2)
-CURRENT_M=$(echo $current_pair | cut -d'|' -f3)
-CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f4)
+CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f3)
+
+CURRENT_M=0.3
+if [ "$CURRENT_NUM_CLIENTS" -eq 20 ]; then
+    CURRENT_M=1.0
+elif [ "$CURRENT_NUM_CLIENTS" -eq 100 ]; then
+    CURRENT_M=0.3
+fi
 
 
 OPT_OVERRIDE=""
