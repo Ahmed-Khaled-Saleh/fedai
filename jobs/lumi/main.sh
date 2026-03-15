@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=small-g
-#SBATCH --array=0-304             # Number of algorithms (0 to N-1)
+#SBATCH --array=0-303             # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -84,9 +84,9 @@ else
 fi 
 
 if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    CURRENT_PARTITIONER="pathological_mnist"
-else
     CURRENT_PARTITIONER="rotated"
+else
+    CURRENT_PARTITIONER="pathological"
 fi
 
 
@@ -102,7 +102,6 @@ module load LUMI/24.03
 module load PyTorch/2.6.0-rocm-6.2.4-python-3.12-Mycontainer-singularity-20250410
 
 singularity exec \
-    --no-home \
     -B /dev/dri \
     -B /dev/kfd \
     --pwd /projappl/project_462001088/fedai \
@@ -119,4 +118,4 @@ singularity exec \
     $OPT_OVERRIDE \
     server=lumi \
     m=$CURRENT_M \
-    num_clients=$CURRENT_NUM_CLIENTS \
+    num_clients=$CURRENT_NUM_CLIENTS
