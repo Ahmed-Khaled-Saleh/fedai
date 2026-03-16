@@ -294,12 +294,16 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
     else:
         self.graph, self.akl_connection = self.graph_state_mgr.get_graph()
 
-    graph_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, str(comm_round), f"graph_{str(comm_round)}.gpickle")
+    graph_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, self.cfg.algorithm.name, str(self.cfg.random_seed), str(comm_round), f"graph.gpickle")
+    if not os.path.exists(os.path.dirname(graph_path)):
+        os.makedirs(os.path.dirname(graph_path))
     with open(graph_path, "wb") as f:
         pickle.dump(self.graph, f, pickle.HIGHEST_PROTOCOL)
 
     self.coalitions = self.get_coalitions(self.graph)
-    coalitions_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, str(comm_round), "coalitions.pth")
+    coalitions_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, self.cfg.algorithm.name, str(self.cfg.random_seed), str(comm_round), "coalitions.pth")
+    if not os.path.exists(os.path.dirname(coalitions_path)):
+        os.makedirs(os.path.dirname(coalitions_path))
     torch.save(self.coalitions, coalitions_path)
 
     global_lr = float(self.cfg.optimizer.lr) * float(self.cfg.local_epochs)

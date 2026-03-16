@@ -66,8 +66,8 @@ class WandbWriter:
         self.cfg = extract_log_cfg(cfg)
         self.cfg = argparse.Namespace(**self.cfg)
         print(self.cfg.algorithm)
-        self.exp_name = self.cfg.algorithm #+ f"_{self.cfg.random_seed}"
-        self.wandb_log_dir = os.path.join(self.server.logs_dir, self.exp_name, str(self.cfg.random_seed))
+        self.exp_name = self.cfg.algorithm
+        self.wandb_log_dir = os.path.join(self.server.logs_dir, cfg.project_name, cfg.algorithm.name , str(self.cfg.random_seed))
         if not os.path.exists(self.wandb_log_dir):
             os.makedirs(self.wandb_log_dir, exist_ok=True)
 
