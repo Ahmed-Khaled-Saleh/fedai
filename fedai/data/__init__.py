@@ -55,7 +55,7 @@ def init_data(cfg):
     fds = FederatedDataset(dataset= cfg.data.hf_name, 
                            partitioners= {"train": partitioner},
                            preprocessor= preprocessor,
-                           seed= cfg.random_seed)
+                           seed= 42)
     
     return fds
 
@@ -63,7 +63,7 @@ def init_data(cfg):
 def get_block(cfg, client_id, fds= None, train=True):
 
     if cfg.data.modality.lower() == "vision":
-        return VisionBlock(cfg.data, client_id, train= train, fds= fds, seed= cfg.random_seed)
+        return VisionBlock(cfg.data, client_id, train= train, fds= fds, seed= 42)
 
 # %% ../../nbs/01e_data.ipynb #c30b3e12
 def prepare_dl_dist(

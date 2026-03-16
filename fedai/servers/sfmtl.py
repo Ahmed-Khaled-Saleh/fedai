@@ -294,12 +294,12 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
     else:
         self.graph, self.akl_connection = self.graph_state_mgr.get_graph()
 
-    graph_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"graph_{str(comm_round)}.gpickle")
+    graph_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, str(comm_round), f"graph_{str(comm_round)}.gpickle")
     with open(graph_path, "wb") as f:
         pickle.dump(self.graph, f, pickle.HIGHEST_PROTOCOL)
 
     self.coalitions = self.get_coalitions(self.graph)
-    coalitions_path = os.path.join(self.cfg.server.save_dir, str(comm_round), "coalitions.pth")
+    coalitions_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, str(comm_round), "coalitions.pth")
     torch.save(self.coalitions, coalitions_path)
 
     global_lr = float(self.cfg.optimizer.lr) * float(self.cfg.local_epochs)
@@ -313,7 +313,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
             for i, id in enumerate(lst_clients):
                 if not id in lst_active_ids:
                     continue
-                # state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
+                # state_path = os.path.join(self.cfg.save_dir, self.cfg.project_name, str(comm_round), f"local_output_{id}", "state.pth")
                 # state = torch.load(state_path, weights_only= False)
                 state = self.state_mgr.get_state(id)
                 client_h = state['h']
@@ -333,7 +333,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
             for i, id in enumerate(lst_clients):
                 if not id in lst_active_ids:
                     continue
-                # state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
+                # state_path = os.path.join(self.cfg.save_dir, self.cfg.project_name, str(comm_round), f"local_output_{id}", "state.pth")
                 # state = torch.load(state_path, weights_only= False)
                 
                 state = self.state_mgr.get_state(id)
@@ -348,7 +348,7 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                 for j, other_id in enumerate(lst_clients):
                     if i == j:
                         continue
-                    # other_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{other_id}", "state.pth")
+                    # other_state_path = os.path.join(self.cfg.save_dir, self.cfg.project_name, str(comm_round), f"local_output_{other_id}", "state.pth")
                     # other_state = torch.load(other_state_path, weights_only= False)
 
                     other_state = self.state_mgr.get_state(other_id)
@@ -373,8 +373,8 @@ def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, sav
                 aggregated_states.append(clinet_state)
 
                 if save_to_disk:
-                    agg_client_state_path = os.path.join(self.cfg.server.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
-                    
+                    agg_client_state_path = os.path.join(self.cfg.server.save_dir, self.cfg.project_name, str(comm_round), f"aggregated_model_{id}", "state.pth")
+
                     if not os.path.exists(os.path.dirname(agg_client_state_path)):
                         os.makedirs(os.path.dirname(agg_client_state_path))
 
