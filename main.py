@@ -90,7 +90,7 @@ def main(cfg: MainConfig):
 
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
     cfg.partitioner.num_partitions = cfg.num_clients
-    cfg.random_seed = np.random.randint(0, 100000)
+    cfg.random_seed = 42#np.random.randint(0, 100000)
 
     fds = init_data(cfg)
     client_selector = BaseClientSelector(cfg)
