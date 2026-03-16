@@ -28,7 +28,7 @@ class MainConfig:
         "_self_",               # Use values in this class
         {"model": "lenet"},     # Default group choice
         {"data": "mnist"},    # Default group choice
-        {"partitioner": "pathological"},    # Default group choice
+        {"partitioner": "grouped_distribution"},    # Default group choice # grouped_distribution
         {"optimizer": "sgd"},    # Default group choice
         {"algorithm": "fedavg"},
         {"server": "puhti"}
@@ -50,7 +50,7 @@ class MainConfig:
     batch_size: int = 128
     now: Optional[str] = None
 
-    project_name: str = "${data.name}_${num_clients}_clients"
+    project_name: str = "${data.name}_${num_clients}_clients_partitioned by ${partitioner.cls}_${m}"
     # project_name: str = "Dirichlet(${partitioner.alpha})_${m}"
 
     writer: str = "WandbWriter"

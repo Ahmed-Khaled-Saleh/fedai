@@ -42,11 +42,11 @@ CURRENT_ALGO=$(echo $current_pair | cut -d'|' -f1)
 CURRENT_DATA=$(echo $current_pair | cut -d'|' -f2)
 CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f3)
 
-CURRENT_M=0.3
+CURRENT_M=0.5
 if [ "$CURRENT_NUM_CLIENTS" -eq 20 ]; then
     CURRENT_M=1.0
 elif [ "$CURRENT_NUM_CLIENTS" -eq 100 ]; then
-    CURRENT_M=0.3
+    CURRENT_M=0.5
 fi
 
 
@@ -89,7 +89,7 @@ fi
 if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
     CURRENT_PARTITIONER="rotated"
 else
-    CURRENT_PARTITIONER="pathological"
+    CURRENT_PARTITIONER="grouped_distribution"
 fi
 
 
