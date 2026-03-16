@@ -16,7 +16,7 @@ import torch
 class BaseCheckpointer:
     def __init__(self, cfg, client_id, rank=0):
         self.checkpoint_dir = cfg.server.get('checkpoint_dir', 'checkpoints')
-        self.checkpoint_dir = os.path.join(self.checkpoint_dir, cfg.project_name, str(cfg.random_seed), f"client_{client_id}")
+        self.checkpoint_dir = os.path.join(self.checkpoint_dir, cfg.project_name, cfg.algorithm.name ,str(cfg.random_seed), f"client_{client_id}")
         self.client_id = client_id
         self.rank = rank
 
