@@ -32,6 +32,9 @@ cs.store(group="partitioner", name="pathological", node=PathologicalConfig())
 cs.store(group="partitioner", name="dirichlet", node=DirichletConfig())
 cs.store(group="partitioner", name="size", node=SizePartitionerConfig())
 cs.store(group="partitioner", name="rotated", node=RotatedBatchedConfig())
+cs.store(group="partitioner", name="grouped_distribution", node= GroupedDistributionPartitionerConfig())
+cs.store(group="partitioner", name="grouped", node= GroupedClassPartitionerConfig())
+cs.store(group="partitioner", name="variable_class", node= VariableClassPartitionerConfig())
 
 cs.store(group="model", name="lenet", node= LeNetConfig())
 cs.store(group="model", name="resnet", node= ResNetConfig())
@@ -88,7 +91,7 @@ def main(cfg: MainConfig):
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
     cfg.partitioner.num_partitions = cfg.num_clients
     cfg.random_seed = np.random.randint(0, 100000)
-    
+
     fds = init_data(cfg)
     client_selector = BaseClientSelector(cfg)
     criterion = get_criterion(None)
