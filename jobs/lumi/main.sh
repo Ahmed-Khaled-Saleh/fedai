@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=small-g
-#SBATCH --array=0-151             # Number of algorithms (0 to N-1)
+#SBATCH --array=0-76             # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -23,7 +23,7 @@ algos=(
 datasets=(
     "cifar10" "fashionmnist" "cinic10" "mnist_rotated_batched"
 )
-num_clients=(20 100)
+num_clients=(20) #100)
 
 combinations=()
 for a in "${algos[@]}"; do
