@@ -89,7 +89,7 @@ fi
 if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
     CURRENT_PARTITIONER="rotated"
 else
-    CURRENT_PARTITIONER="grouped_distribution"
+    CURRENT_PARTITIONER="pathological"
 fi
 
 

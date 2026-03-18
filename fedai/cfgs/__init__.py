@@ -28,7 +28,7 @@ class MainConfig:
         "_self_",               # Use values in this class
         {"model": "lenet"},     # Default group choice
         {"data": "mnist"},    # Default group choice
-        {"partitioner": "grouped_distribution"},    # Default group choice # grouped_distribution
+        {"partitioner": "pathological"},    # Default group choice # grouped_distribution
         {"optimizer": "sgd"},    # Default group choice
         {"algorithm": "fedavg"},
         {"server": "puhti"}
