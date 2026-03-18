@@ -4,7 +4,7 @@
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
-#SBATCH --array=0-304          # Number of algorithms (0 to N-1)
+#SBATCH --array=0-151          # Number of algorithms (0 to N-1)
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
@@ -23,19 +23,17 @@ algos=(
 datasets=(
     "cifar10" "fashionmnist" "cinic10" "mnist_rotated_batched"
 )
-m=(1.0 0.3)
 num_clients=(20 100)
 
 combinations=()
 for a in "${algos[@]}"; do
     for d in "${datasets[@]}"; do
-        for mm in "${m[@]}"; do
-            for nc in "${num_clients[@]}"; do
-                combinations+=("$a|$d|$mm|$nc") # Use a separator
-            done
+        for nc in "${num_clients[@]}"; do
+            combinations+=("$a|$d|$nc")
         done
     done
 done
+
 
 # Get the pair for THIS specific task index
 current_pair=${combinations[$SLURM_ARRAY_TASK_ID]}
@@ -43,8 +41,14 @@ current_pair=${combinations[$SLURM_ARRAY_TASK_ID]}
 # Split the pair back into two variables
 CURRENT_ALGO=$(echo $current_pair | cut -d'|' -f1)
 CURRENT_DATA=$(echo $current_pair | cut -d'|' -f2)
-CURRENT_M=$(echo $current_pair | cut -d'|' -f3)
-CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f4)
+CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f3)
+
+CURRENT_M=0.5
+if [ "$CURRENT_NUM_CLIENTS" -eq 20 ]; then
+    CURRENT_M=1.0
+elif [ "$CURRENT_NUM_CLIENTS" -eq 100 ]; then
+    CURRENT_M=0.5
+fi
 
 
 OPT_OVERRIDE=""
@@ -83,6 +87,13 @@ else
     MODEL_NAME="lenet_cifar10"
 fi 
 
+if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
+    CURRENT_PARTITIONER="rotated"
+else
+    CURRENT_PARTITIONER="pathological"
+fi
+
+
 
 echo "Running task $SLURM_ARRAY_TASK_ID: Algorithm=$CURRENT_ALGO on Dataset=$CURRENT_DATA with Image Size=$IMG_SIZE"
 
@@ -103,11 +114,11 @@ echo "Current PYTHONPATH: $PYTHONPATH"
 python main.py \
     algorithm=$CURRENT_ALGO \
     data=$CURRENT_DATA \
-    partitioner=pathological \
+    partitioner=$CURRENT_PARTITIONER \
     model=lenet \
     model.name=$MODEL_NAME \
     model.img_size=$IMG_SIZE \
     $OPT_OVERRIDE \
-    server=puhti \
+    server=lumi \
     m=$CURRENT_M \
-    num_clients=$CURRENT_NUM_CLIENTS \
+    num_clients=$CURRENT_NUM_CLIENTS
