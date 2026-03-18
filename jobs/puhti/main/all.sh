@@ -119,6 +119,6 @@ python main.py \
     model.name=$MODEL_NAME \
     model.img_size=$IMG_SIZE \
     $OPT_OVERRIDE \
-    server=lumi \
+    server=puhti \
     m=$CURRENT_M \
     num_clients=$CURRENT_NUM_CLIENTS
