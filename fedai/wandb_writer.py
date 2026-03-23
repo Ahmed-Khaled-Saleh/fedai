@@ -38,7 +38,7 @@ def extract_log_cfg(cfg):
     log_cfg.partitioner = cfg.partitioner
 
     log_cfg.model = cfg.model.name
-    log_cfg.hidden_dim = cfg.model.hidden_dim
+    log_cfg.hidden_dim = cfg.model.hidden_dim if hasattr(cfg.model, 'hidden_dim') else 512
 
 
 
