@@ -33,8 +33,6 @@ class LeNetConfig(VisionModelConfig):
 class ResNetConfig(VisionModelConfig):
     name: str = "resnet_18"
     preactivation: bool = True
-    img_size: Tuple[int, int, int] = (3, 32, 32)
-    hidden_dim: int = 512
 
 @dataclass
 class MobileNetConfig(VisionModelConfig):
