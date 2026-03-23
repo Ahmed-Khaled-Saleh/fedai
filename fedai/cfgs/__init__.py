@@ -50,7 +50,7 @@ class MainConfig:
     batch_size: int = 128
     now: Optional[str] = None
 
-    project_name: str = "${data.name}_${num_clients}_clients_partitioned by ${partitioner.cls}_${m}"
+    project_name: str = "graph_type_${data.name}"
     # project_name: str = "Dirichlet(${partitioner.alpha})_${m}"
 
     writer: str = "WandbWriter"

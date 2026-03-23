@@ -287,7 +287,7 @@ def get_coalitions(self: SFMTLServer, G):
 @patch
 def aggregate(self: SFMTLServer, lst_active_ids, comm_round, len_clients_ds, save_to_disk= False):
 
-    freq = self.cfg.get("build_graph_freq", 1)
+    freq = self.cfg.algorithm.build_graph_freq
     if comm_round % freq == 0 or comm_round == 1:
         self.graph, self.akl_connection = self.build_graph(lst_active_ids, comm_round)
         self.graph_state_mgr.set_graph(self.graph, self.akl_connection)

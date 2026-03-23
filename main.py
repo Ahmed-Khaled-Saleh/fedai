@@ -90,7 +90,7 @@ def main(cfg: MainConfig):
 
     cfg.now = time.strftime("%Y-%m-%d_%H-%M-%S")
     cfg.partitioner.num_partitions = cfg.num_clients
-    cfg.random_seed = 0#np.random.randint(0, 100000)
+    cfg.random_seed = np.random.randint(0, 100000)
 
     if cfg.partitioner.cls == "grouped_distribution":
         cfg.distribution_array = np.random.lognormal(0, 1, size=(2, cfg.num_clients)).tolist()

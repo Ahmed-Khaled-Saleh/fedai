@@ -149,6 +149,7 @@ class SFMTLConfig(AlgorithmConfig):
     alpha: float = 0.49
     lambda_anchor: float = 0.1
     momentum_anchor: float = 0.5
+    build_graph_freq: int = 1
     graph_type: str = "similarity"
 
 
