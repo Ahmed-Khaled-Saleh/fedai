@@ -21,16 +21,16 @@ datasets=(
     "cifar10" "fashionmnist" "cinic10" "mnist_rotated_batched"
 )
 num_clients=(20)
-alpha=(
-    0.1 0.3 0.5 0.8 0.9 1.0
+lambda=(
+    0.1 0.3 0.5 1.0 5.0 10.0
 )
 
 combinations=()
 for a in "${algos[@]}"; do
     for d in "${datasets[@]}"; do
         for nc in "${num_clients[@]}"; do
-            for al in "${alpha[@]}"; do
-                combinations+=("$a|$d|$nc|$al")
+            for la in "${lambda[@]}"; do
+                combinations+=("$a|$d|$nc|$la")
             done
         done
     done
@@ -44,7 +44,7 @@ current_pair=${combinations[$SLURM_ARRAY_TASK_ID]}
 CURRENT_ALGO=$(echo $current_pair | cut -d'|' -f1)
 CURRENT_DATA=$(echo $current_pair | cut -d'|' -f2)
 CURRENT_NUM_CLIENTS=$(echo $current_pair | cut -d'|' -f3)
-CURRENT_ALPHA=$(echo $current_pair | cut -d'|' -f4)
+CURRENT_LAMBDA=$(echo $current_pair | cut -d'|' -f4)
 
 CURRENT_M=0.5
 if [ "$CURRENT_NUM_CLIENTS" -eq 20 ]; then
@@ -125,4 +125,4 @@ python main.py \
     server=puhti \
     m=$CURRENT_M \
     num_clients=$CURRENT_NUM_CLIENTS \
-    algorithm.alpha=$CURRENT_ALPHA
+    algorithm.lambda=$CURRENT_LAMBDA
