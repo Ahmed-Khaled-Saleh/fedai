@@ -125,4 +125,4 @@ python main.py \
     server=puhti \
     m=$CURRENT_M \
     num_clients=$CURRENT_NUM_CLIENTS \
-    algorithm.lambda=$CURRENT_LAMBDA
+    algorithm.lambda_=$CURRENT_LAMBDA
