@@ -21,6 +21,8 @@ def create_model(cfg):
     
     kwargs = get_clean_kwargs(cfg.model)
     if cfg.model.name in vision_models.list_model_names() and cfg.data.modality.lower() == 'vision':
+        if "resnet" in cfg.model.name:
+            kwargs = {k: v for k, v in kwargs.items() if k not in ["img_size", "hidden_dim"]}
         return vision_models.create_model(**kwargs)
     
     raise ValueError(f"Model '{cfg.model.name}' is not recognized, the available models are: {vision_models.list_model_names()}")
