@@ -81,7 +81,7 @@ elif [ "$CURRENT_DATA" == "fashionmnist" ]; then
 elif [ "$CURRENT_DATA" == "cinic10" ]; then
     MODEL_NAME="lenet_cifar10"
 elif [ "$CURRENT_DATA" == "tinyimagenet" ]; then
-    MODEL_NAME="resnet_18"
+    MODEL_NAME="vit_small"
 else
     MODEL_NAME="lenet_cifar10"
 fi 
@@ -114,7 +114,7 @@ python main.py \
     algorithm=$CURRENT_ALGO \
     data=$CURRENT_DATA \
     partitioner=$CURRENT_PARTITIONER \
-    model=resnet \
+    model=vit \
     model.name=$MODEL_NAME \
     model.img_size=$IMG_SIZE \
     $OPT_OVERRIDE \
