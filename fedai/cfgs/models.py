@@ -32,6 +32,7 @@ class LeNetConfig(VisionModelConfig):
 @dataclass
 class ResNetConfig(VisionModelConfig):
     name: str = "resnet_18"
+    num_classes: int = 200
     preactivation: bool = True
     hidden_dim: int = 512
     img_size: Tuple[int, int, int] = (3, 32, 32)
@@ -48,11 +49,12 @@ class EfficientNetConfig(VisionModelConfig):
 @dataclass
 class ViTConfig(VisionModelConfig):
     name: str = 'vit_small'
+    num_classes: int = 200
     img_size: Tuple[int, int, int] = (3, 32, 32)
     patch_size: int = 4
     hidden_dim: int = 512
     depth: int = 6
-    heads: int = 8
+    heads: int = 3
     mlp_dim: int = 1024
     pool: str = 'cls'
     dropout: float = 0.1
