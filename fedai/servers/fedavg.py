@@ -44,26 +44,28 @@ class ServerFedAvg(BaseServer):
 @patch
 def aggregate(self: ServerFedAvg, lst_active_ids, comm_round, len_clients_ds):
     m_t = sum(len_clients_ds.values())
-    
     with torch.no_grad():
         global_model = None
-        
         for id in lst_active_ids:
             client_state_dict = self.state_mgr.get_state(id).get('model', None)
-
             if global_model is None:
                 global_model = {k: torch.zeros_like(v) for k, v in client_state_dict.items()}
-
             n_k = len_clients_ds[id]
             weight = n_k / m_t
             for key in global_model.keys():
+                if not client_state_dict[key].is_floating_point():
+                    continue
                 global_model[key].add_(client_state_dict[key], alpha=weight)
+
+        # copy integer buffers directly from last client (they should all be the same)
+        for key in global_model.keys():
+            if not global_model[key].is_floating_point():
+                global_model[key].copy_(client_state_dict[key])
 
         self.model.load_state_dict(global_model)
 
         for id in lst_active_ids:
             self.state_mgr.set_state(id, {
-                    'model': self.model.state_dict(),
-                    'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
+                'model': self.model.state_dict(),
+                'optimizer': self.state_mgr.get_state(id).get('optimizer', None),
             })
-        

@@ -46,7 +46,7 @@ class ServerFedu(BaseServer):
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
 
-# %% ../../nbs/11i_servers.fedu.ipynb #bab85d32
+# %% ../../nbs/11i_servers.fedu.ipynb #bc01f93d
 @patch
 def aggregate(self: ServerFedu, lst_active_ids, comm_round, len_clients_ds):
 
@@ -56,9 +56,6 @@ def aggregate(self: ServerFedu, lst_active_ids, comm_round, len_clients_ds):
     with torch.no_grad():
         aggregated_states = []
         for i, id in enumerate(lst_active_ids):
-            # state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
-            # state = torch.load(state_path, weights_only= False)
-            # client_state_dict = state['model']
             client_state = self.state_mgr.get_state(id)
             client_state_dict = client_state['model']
 
@@ -70,22 +67,18 @@ def aggregate(self: ServerFedu, lst_active_ids, comm_round, len_clients_ds):
             for j, other_id in enumerate(lst_active_ids):
                 if i == j:
                     continue
-                # other_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{other_id}", "state.pth")
-                
-                # other_state = torch.load(other_state_path, weights_only= False)
-                # other_state_dict = other_state['model']
                 other_state_dict = self.state_mgr.get_state(other_id).get('model', None)
 
                 weight = self.alk_connection[int(id)][int(other_id)]
                 for key in client_state_dict.keys():
+                    if not client_state_dict[key].is_floating_point():
+                        continue
                     client_diff[key].add_(weight * (client_state_dict[key] - other_state_dict[key]))
 
             for key in client_state_dict:
+                if not client_state_dict[key].is_floating_point():
+                    continue
                 client_state_dict[key].sub_(global_lr * reg_param * client_diff[key])
-
-            # clinet_state = {
-            #     'model': client_state_dict,
-            # }
 
             clinet_state = {
                     'model': client_state_dict,
@@ -93,12 +86,5 @@ def aggregate(self: ServerFedu, lst_active_ids, comm_round, len_clients_ds):
                 }
             aggregated_states.append(clinet_state)
 
-            # agg_client_state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"aggregated_model_{id}", "state.pth")
-            
-            # if not os.path.exists(os.path.dirname(agg_client_state_path)):
-            #     os.makedirs(os.path.dirname(agg_client_state_path))
-
-            # torch.save(clinet_state, agg_client_state_path)
-
         for i, id in enumerate(lst_active_ids):
-            self.state_mgr.set_state(id, aggregated_states[i])  
+            self.state_mgr.set_state(id, aggregated_states[i])

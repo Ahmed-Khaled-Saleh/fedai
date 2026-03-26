@@ -62,29 +62,10 @@ else
     OPT_OVERRIDE="optimizer=sgd"
 fi
 
-IMG_SIZE=""
-if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    IMG_SIZE="[1,28,28]"
-elif [ "$CURRENT_DATA" == "fashionmnist" ]; then
-    IMG_SIZE="[1,28,28]"
-elif [ "$CURRENT_DATA" == "cinic10" ]; then
-    IMG_SIZE="[3,32,32]"
-else
-    IMG_SIZE="[3,64,64]"
-fi 
+IMG_SIZE="[3,64,64]"
 
-MODEL_NAME=""
-if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    MODEL_NAME="lenet_fedavg"
-elif [ "$CURRENT_DATA" == "fashionmnist" ]; then
-    MODEL_NAME="lenet_fedavg"
-elif [ "$CURRENT_DATA" == "cinic10" ]; then
-    MODEL_NAME="lenet_cifar10"
-elif [ "$CURRENT_DATA" == "tinyimagenet" ]; then
-    MODEL_NAME="resnet_18"
-else
-    MODEL_NAME="lenet_cifar10"
-fi 
+MODEL_NAME="resnet_18"
+
 
 if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
     CURRENT_PARTITIONER="rotated"

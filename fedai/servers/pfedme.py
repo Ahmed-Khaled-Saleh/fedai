@@ -81,38 +81,40 @@ def client_fn(self: ServerpFedMe, id, comm_round, client_state):
     return client
 
 
-# %% ../../nbs/11f_servers.pfedme.ipynb #0005248d
+# %% ../../nbs/11f_servers.pfedme.ipynb #79c2c7d2
 @patch
 def aggregate(self: ServerpFedMe, lst_active_ids, comm_round, len_clients_ds):
-
     m_t = sum(len_clients_ds.values())
     with torch.no_grad():
-
         prev_global_model = self.model.state_dict()
         for i, id in enumerate(lst_active_ids):
-            # state_path = os.path.join(self.cfg.save_dir, str(comm_round), f"local_output_{id}", "state.pth")
-            # state = torch.load(state_path, weights_only=False)
             state = self.state_mgr.get_state(id)
             client_state_dict = state['model']
-
             if i == 0:
                 global_model = {
                     key: torch.zeros_like(value) 
                     for key, value in client_state_dict.items()
                 }
-
             n_k = len_clients_ds[id]
-            weight =  n_k / m_t 
-
+            weight = n_k / m_t
             for key in client_state_dict.keys():
+                if not client_state_dict[key].is_floating_point():
+                    continue
                 global_model[key].add_(weight * client_state_dict[key])
 
         for key in global_model.keys():
-            global_model[key].copy_((1-self.cfg.algorithm.beta)*global_model[key] + self.cfg.algorithm.beta*prev_global_model[key])
+            if not global_model[key].is_floating_point():
+                # copy integer buffers directly from prev global model
+                global_model[key].copy_(prev_global_model[key])
+                continue
+            global_model[key].copy_(
+                (1 - self.cfg.algorithm.beta) * global_model[key] 
+                + self.cfg.algorithm.beta * prev_global_model[key]
+            )
 
         self.model.load_state_dict(global_model)
-        
-    for i, id in enumerate(lst_active_ids):
-        client_state = self.state_mgr.get_state(id)
-        client_state['model'] = global_model
-        self.state_mgr.set_state(id, client_state)
+
+        for i, id in enumerate(lst_active_ids):
+            client_state = self.state_mgr.get_state(id)
+            client_state['model'] = global_model
+            self.state_mgr.set_state(id, client_state)
