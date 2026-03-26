@@ -90,7 +90,6 @@ python main.py \
     partitioner=$CURRENT_PARTITIONER \
     model=vit \
     model.name=$MODEL_NAME \
-    model.img_size=$IMG_SIZE \
     $OPT_OVERRIDE \
     server=puhti \
     m=$CURRENT_M \

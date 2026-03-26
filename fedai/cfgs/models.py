@@ -50,7 +50,7 @@ class EfficientNetConfig(VisionModelConfig):
 class ViTConfig(VisionModelConfig):
     name: str = 'vit_small'
     num_classes: int = 200
-    img_size: Tuple[int, int, int] = (3, 32, 32)
+    img_size: Tuple[int, int, int] = (3, 64, 64)
     patch_size: int = 4
     hidden_dim: int = 512
     depth: int = 6
