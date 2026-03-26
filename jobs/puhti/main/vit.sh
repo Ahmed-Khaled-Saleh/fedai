@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedai_resnet_tiny
+#SBATCH --job-name=fedai_vit_tiny
 #SBATCH --output=logs/fedai_%A_%a.out
 #SBATCH --error=logs/fedai_%A_%a.err
 #SBATCH --partition=gpu
@@ -62,35 +62,9 @@ else
     OPT_OVERRIDE="optimizer=sgd"
 fi
 
-IMG_SIZE=""
-if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    IMG_SIZE="[1,28,28]"
-elif [ "$CURRENT_DATA" == "fashionmnist" ]; then
-    IMG_SIZE="[1,28,28]"
-elif [ "$CURRENT_DATA" == "cinic10" ]; then
-    IMG_SIZE="[3,32,32]"
-else
-    IMG_SIZE="[3,64,64]"
-fi 
-
-MODEL_NAME=""
-if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    MODEL_NAME="lenet_fedavg"
-elif [ "$CURRENT_DATA" == "fashionmnist" ]; then
-    MODEL_NAME="lenet_fedavg"
-elif [ "$CURRENT_DATA" == "cinic10" ]; then
-    MODEL_NAME="lenet_cifar10"
-elif [ "$CURRENT_DATA" == "tinyimagenet" ]; then
-    MODEL_NAME="vit_small"
-else
-    MODEL_NAME="lenet_cifar10"
-fi 
-
-if [ "$CURRENT_DATA" == "mnist_rotated_batched" ]; then
-    CURRENT_PARTITIONER="rotated"
-else
-    CURRENT_PARTITIONER="pathological"
-fi
+IMG_SIZE="[3,64,64]"
+MODEL_NAME="vit_small"
+CURRENT_PARTITIONER="pathological"
 
 
 

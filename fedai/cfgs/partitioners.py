@@ -26,7 +26,7 @@ class PathologicalConfig(PartitionerConfig):
     num_partitions: int = 20
     partition_by: str = 'label'
     num_classes_per_partition: int = 2
-    class_assignment_mode: str = "random"# "deterministic" # random
+    class_assignment_mode: str = "deterministic"# "deterministic" # random
     
 @dataclass
 class DirichletConfig(PartitionerConfig):
